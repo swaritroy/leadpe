@@ -7,6 +7,7 @@ import Navbar from "./components/Navbar";
 import Index from "./pages/Index";
 import Developer from "./pages/Developer";
 import Business from "./pages/Business";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,12 +18,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/developer" element={<Developer />} />
-          <Route path="/business" element={<Business />} />
-          <Route path="*" element={<NotFound />} />
+          {/* Admin has its own nav */}
+          <Route path="/admin" element={<Admin />} />
+          {/* Public routes with shared Navbar */}
+          <Route path="*" element={
+            <>
+              <Navbar />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/developer" element={<Developer />} />
+                <Route path="/business" element={<Business />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </>
+          } />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

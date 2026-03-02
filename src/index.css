@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -45,6 +48,25 @@
     --synapse-surface-dark: 217 33% 12%;
     --synapse-surface-darker: 222 47% 8%;
     --synapse-glow: 239 84% 67%;
+
+    /* Growth Infrastructure tokens */
+    --gi-bg: 222 47% 7%;
+    --gi-surface: 220 20% 11%;
+    --gi-surface-hover: 220 20% 14%;
+    --gi-border: 220 13% 18%;
+    --gi-border-subtle: 220 13% 14%;
+    --gi-text: 210 40% 98%;
+    --gi-text-secondary: 215 16% 57%;
+    --gi-text-muted: 215 13% 40%;
+    --gi-emerald: 160 84% 39%;
+    --gi-emerald-muted: 160 40% 20%;
+    --gi-amber: 38 92% 50%;
+    --gi-amber-muted: 38 40% 20%;
+    --gi-red: 0 72% 51%;
+    --gi-red-muted: 0 40% 20%;
+    --gi-indigo: 239 84% 67%;
+    --gi-indigo-muted: 239 40% 20%;
+    --gi-cyan: 187 80% 45%;
 
     --gradient-hero: linear-gradient(135deg, hsl(239 84% 67%), hsl(187 92% 41%));
     --gradient-dark: linear-gradient(180deg, hsl(222 84% 5%), hsl(217 33% 12%));
@@ -152,5 +174,55 @@
 
   .hexagon-clip {
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  /* Growth Infrastructure utilities */
+  .gi-bg {
+    background-color: hsl(var(--gi-bg));
+  }
+  .gi-surface {
+    background-color: hsl(var(--gi-surface));
+  }
+  .gi-surface-hover {
+    background-color: hsl(var(--gi-surface-hover));
+  }
+  .gi-border {
+    border-color: hsl(var(--gi-border));
+  }
+  .gi-border-subtle {
+    border-color: hsl(var(--gi-border-subtle));
+  }
+  .gi-text {
+    color: hsl(var(--gi-text));
+  }
+  .gi-text-secondary {
+    color: hsl(var(--gi-text-secondary));
+  }
+  .gi-text-muted {
+    color: hsl(var(--gi-text-muted));
+  }
+  .gi-emerald {
+    color: hsl(var(--gi-emerald));
+  }
+  .gi-amber {
+    color: hsl(var(--gi-amber));
+  }
+  .gi-red {
+    color: hsl(var(--gi-red));
+  }
+  .bg-gi-emerald {
+    background-color: hsl(var(--gi-emerald));
+  }
+  .bg-gi-emerald-muted {
+    background-color: hsl(var(--gi-emerald-muted));
+  }
+  .bg-gi-amber-muted {
+    background-color: hsl(var(--gi-amber-muted));
+  }
+  .bg-gi-red-muted {
+    background-color: hsl(var(--gi-red-muted));
+  }
+  .bg-gi-indigo-muted {
+    background-color: hsl(var(--gi-indigo-muted));
   }
 }

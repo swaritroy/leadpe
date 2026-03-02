@@ -8,6 +8,7 @@ const navItems = [
   { label: "Marketplace", href: "/" },
   { label: "Developer", href: "/developer" },
   { label: "Business", href: "/business" },
+  { label: "Admin", href: "/admin" },
 ];
 
 const Navbar = () => {
