@@ -15,6 +15,9 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+        display: ["Space Grotesk", "sans-serif"],
+        body: ["DM Sans", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -58,6 +61,25 @@ export default {
           "surface-dark": "hsl(var(--synapse-surface-dark))",
           "surface-darker": "hsl(var(--synapse-surface-darker))",
         },
+        gi: {
+          bg: "hsl(var(--gi-bg))",
+          surface: "hsl(var(--gi-surface))",
+          "surface-hover": "hsl(var(--gi-surface-hover))",
+          border: "hsl(var(--gi-border))",
+          "border-subtle": "hsl(var(--gi-border-subtle))",
+          text: "hsl(var(--gi-text))",
+          "text-secondary": "hsl(var(--gi-text-secondary))",
+          "text-muted": "hsl(var(--gi-text-muted))",
+          emerald: "hsl(var(--gi-emerald))",
+          "emerald-muted": "hsl(var(--gi-emerald-muted))",
+          amber: "hsl(var(--gi-amber))",
+          "amber-muted": "hsl(var(--gi-amber-muted))",
+          red: "hsl(var(--gi-red))",
+          "red-muted": "hsl(var(--gi-red-muted))",
+          indigo: "hsl(var(--gi-indigo))",
+          "indigo-muted": "hsl(var(--gi-indigo-muted))",
+          cyan: "hsl(var(--gi-cyan))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -90,6 +112,10 @@ export default {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
+        },
+        "scan-line": {
+          "0%": { width: "0%" },
+          "100%": { width: "100%" },
         },
       },
       animation: {
