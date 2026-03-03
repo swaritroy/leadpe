@@ -16,6 +16,10 @@ export type Database = {
     Tables: {
       businesses: {
         Row: {
+          addon_booking: boolean
+          addon_chatbot: boolean
+          addon_sms: boolean
+          addon_whatsapp: boolean
           business_hours: string | null
           contact_info: Json | null
           created_at: string
@@ -29,6 +33,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          addon_booking?: boolean
+          addon_chatbot?: boolean
+          addon_sms?: boolean
+          addon_whatsapp?: boolean
           business_hours?: string | null
           contact_info?: Json | null
           created_at?: string
@@ -42,6 +50,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          addon_booking?: boolean
+          addon_chatbot?: boolean
+          addon_sms?: boolean
+          addon_whatsapp?: boolean
           business_hours?: string | null
           contact_info?: Json | null
           created_at?: string
