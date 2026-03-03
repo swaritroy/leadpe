@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 const SelectRole = () => {
-  const { user } = useAuth();
+  const { user, refreshRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +19,7 @@ const SelectRole = () => {
       role,
     });
     if (!error) {
+      await refreshRole();
       navigate(role === "developer" ? "/dev/dashboard" : "/client/dashboard", { replace: true });
     }
     setLoading(false);
