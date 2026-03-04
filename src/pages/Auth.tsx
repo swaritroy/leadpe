@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import LeadPeLogo from "@/components/LeadPeLogo";
 
 const Auth = () => {
   const { user, role, loading } = useAuth();
@@ -34,21 +34,21 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background noise-overlay">
+      <div className="mesh-bg" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm p-8 rounded-2xl border bg-card shadow-lg text-center"
+        className="w-full max-w-sm p-8 rounded-2xl border border-border bg-card shadow-glow text-center relative z-10"
       >
-        <div className="hexagon-clip bg-gradient-hero w-12 h-12 flex items-center justify-center mx-auto mb-4">
-          <Zap size={20} className="text-white" />
+        <div className="mb-6">
+          <LeadPeLogo size="lg" />
         </div>
-        <h1 className="text-2xl font-black tracking-tight mb-1">SYNAPSE SHIFT</h1>
         <p className="text-sm text-muted-foreground mb-8">Sign in to your account</p>
 
         <Button
           onClick={handleGoogleLogin}
-          className="w-full h-12 text-base font-semibold bg-gradient-hero text-primary-foreground border-0 hover:opacity-90"
+          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl"
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
