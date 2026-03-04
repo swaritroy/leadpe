@@ -1,253 +1,204 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, MapPin, Clock, DollarSign, Send, Star, GripVertical, MessageSquare, Mail, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import LeadPeLogo from "@/components/LeadPeLogo";
 
-interface Lead {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  status: "new" | "contacted" | "converted";
-  date: string;
-}
-
-const initialLeads: Lead[] = [
-  { id: 1, name: "Sarah Mitchell", email: "sarah@email.com", phone: "(555) 123-4567", message: "Need a root canal consultation", status: "new", date: "Today" },
-  { id: 2, name: "James Cooper", email: "james@email.com", phone: "(555) 987-6543", message: "Looking for teeth whitening options", status: "new", date: "Today" },
-  { id: 3, name: "Maria Garcia", email: "maria@email.com", phone: "(555) 456-7890", message: "Annual checkup scheduling", status: "contacted", date: "Yesterday" },
-  { id: 4, name: "Tom Wilson", email: "tom@email.com", phone: "(555) 321-0987", message: "Emergency dental visit needed", status: "contacted", date: "Yesterday" },
-  { id: 5, name: "Lisa Chen", email: "lisa@email.com", phone: "(555) 654-3210", message: "Orthodontist referral", status: "converted", date: "2 days ago" },
-];
-
-const statusColumns = [
-  { key: "new" as const, label: "New Leads", color: "bg-primary" },
-  { key: "contacted" as const, label: "Contacted", color: "bg-accent" },
-  { key: "converted" as const, label: "Converted", color: "bg-emerald-500" },
+const businessTypeOptions = [
+  "Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon / Parlour",
+  "Gym / Fitness", "Plumber / Electrician", "Restaurant", "Photographer",
+  "Real Estate", "Dance / Music Class", "Other",
 ];
 
 const Business = () => {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
-  const [businessInfo, setBusinessInfo] = useState({
-    phone: "(555) 000-1111",
-    address: "123 Main Street, Springfield",
-    hours: "Mon-Fri 9AM-6PM",
-    cleaning: "$99",
-    whitening: "$299",
-    checkup: "$149",
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    businessName: "",
+    businessType: "",
+    city: "",
+    whatsappNumber: "",
+    ownerName: "",
+    description: "",
+    timing: "",
+    startingPrice: "",
+    specialOffer: "",
+    referralCode: "",
   });
 
-  const moveLeadStatus = (leadId: number, newStatus: Lead["status"]) => {
-    setLeads(leads.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)));
+  const updateForm = (key: string, value: string) => setForm({ ...form, [key]: value });
+
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({ title: "Please sign in first", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
+    setSubmitting(true);
+    const slug = form.businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+    const { error } = await supabase.from("businesses").insert({
+      owner_id: user.id,
+      name: form.businessName,
+      slug,
+      business_type: form.businessType,
+      city: form.city,
+      whatsapp_number: form.whatsappNumber,
+      owner_name: form.ownerName,
+      description: form.description,
+      timing: form.timing,
+      starting_price: form.startingPrice,
+      special_offer: form.specialOffer,
+      referral_code: form.referralCode,
+      trial_active: true,
+      trial_start_date: new Date().toISOString(),
+    } as any);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "🎉 Trial started!", description: "Our team will WhatsApp you within 2 hours." });
+      navigate("/client/dashboard");
+    }
+    setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
-      <div className="container">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-black tracking-tight mb-2">Command Center</h1>
-          <p className="text-muted-foreground">Manage leads, update your site, and grow your business.</p>
-        </motion.div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[
-            { label: "New Leads", value: leads.filter((l) => l.status === "new").length, color: "text-primary" },
-            { label: "Contacted", value: leads.filter((l) => l.status === "contacted").length, color: "text-accent" },
-            { label: "Converted", value: leads.filter((l) => l.status === "converted").length, color: "text-emerald-500" },
-          ].map((stat) => (
-            <Card key={stat.label} className="border">
-              <CardContent className="p-4 text-center">
-                <div className={`text-3xl font-black ${stat.color}`}>{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="min-h-screen bg-background noise-overlay flex items-center justify-center py-12 px-4">
+      <div className="mesh-bg" />
+      <div className="w-full max-w-lg relative z-10">
+        <div className="text-center mb-8">
+          <LeadPeLogo size="md" />
+          <div className="flex items-center justify-center gap-2 mt-6 mb-2">
+            {[1, 2, 3].map(s => (
+              <div key={s} className={`h-2 rounded-full transition-all ${s === step ? "w-12 bg-primary" : s < step ? "w-8 bg-primary/40" : "w-8 bg-border"}`} />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Step {step} of 3</p>
         </div>
 
-        <Tabs defaultValue="leads" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="leads">
-              <MessageSquare size={14} className="mr-2" /> Lead Board
-            </TabsTrigger>
-            <TabsTrigger value="editor">
-              <Clock size={14} className="mr-2" /> Site Editor
-            </TabsTrigger>
-            <TabsTrigger value="reviews">
-              <Star size={14} className="mr-2" /> Reviews
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Kanban Board */}
-          <TabsContent value="leads">
-            <div className="grid md:grid-cols-3 gap-4">
-              {statusColumns.map((col) => (
-                <div key={col.key} className="space-y-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${col.color}`} />
-                    <h3 className="font-bold text-sm">{col.label}</h3>
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {leads.filter((l) => l.status === col.key).length}
-                    </Badge>
-                  </div>
-                  {leads
-                    .filter((l) => l.status === col.key)
-                    .map((lead) => (
-                      <motion.div
-                        key={lead.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                      >
-                        <Card className="border hover:shadow-md transition-shadow cursor-grab">
-                          <CardContent className="p-4 space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <User size={14} className="text-primary" />
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-sm">{lead.name}</div>
-                                  <div className="text-xs text-muted-foreground">{lead.date}</div>
-                                </div>
-                              </div>
-                              <GripVertical size={14} className="text-muted-foreground/40" />
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{lead.message}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Mail size={12} /> {lead.email}
-                            </div>
-                            <div className="flex gap-2">
-                              {col.key === "new" && (
-                                <Button size="sm" variant="outline" className="text-xs h-7 flex-1" onClick={() => moveLeadStatus(lead.id, "contacted")}>
-                                  Mark Contacted
-                                </Button>
-                              )}
-                              {col.key === "contacted" && (
-                                <Button size="sm" variant="outline" className="text-xs h-7 flex-1" onClick={() => moveLeadStatus(lead.id, "converted")}>
-                                  Mark Converted
-                                </Button>
-                              )}
-                              {col.key === "converted" && (
-                                <Button size="sm" variant="outline" className="text-xs h-7 flex-1 text-accent border-accent/30 hover:bg-accent/10">
-                                  <Star size={12} className="mr-1" /> Request Review
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
+        <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
+          {step === 1 && (
+            <Card className="border-border bg-card rounded-2xl">
+              <CardContent className="p-8 space-y-5">
+                <h2 className="text-2xl font-extrabold font-display">Tell us about your business</h2>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Business Name</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Apne business ka naam</span>
+                  <Input value={form.businessName} onChange={e => updateForm("businessName", e.target.value)} placeholder="e.g. Shiva Study Centre" className="rounded-xl bg-secondary border-border" />
                 </div>
-              ))}
-            </div>
-          </TabsContent>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Business Type</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Aap kya karte hain?</span>
+                  <Select value={form.businessType} onValueChange={v => updateForm("businessType", v)}>
+                    <SelectTrigger className="rounded-xl bg-secondary border-border"><SelectValue placeholder="Choose type" /></SelectTrigger>
+                    <SelectContent>
+                      {businessTypeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">City / Town</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Kaunse shehar mein?</span>
+                  <Input value={form.city} onChange={e => updateForm("city", e.target.value)} placeholder="e.g. Vaishali, Bihar" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">WhatsApp Number</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Leads isi number pe aayenge</span>
+                  <Input value={form.whatsappNumber} onChange={e => updateForm("whatsappNumber", e.target.value)} placeholder="+91 98765 43210" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Owner Name</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Aapka naam</span>
+                  <Input value={form.ownerName} onChange={e => updateForm("ownerName", e.target.value)} placeholder="e.g. Rajesh Kumar" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <Button onClick={() => setStep(2)} disabled={!form.businessName || !form.businessType || !form.whatsappNumber}
+                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                  Next Step <ArrowRight size={16} className="ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Site Editor */}
-          <TabsContent value="editor">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Phone size={18} className="text-primary" /> Contact Info
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Phone</label>
-                    <Input value={businessInfo.phone} onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Address</label>
-                    <Input value={businessInfo.address} onChange={(e) => setBusinessInfo({ ...businessInfo, address: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Business Hours</label>
-                    <Input value={businessInfo.hours} onChange={(e) => setBusinessInfo({ ...businessInfo, hours: e.target.value })} />
-                  </div>
-                  <Button className="w-full bg-gradient-hero text-primary-foreground border-0 hover:opacity-90">
-                    Save Changes
+          {step === 2 && (
+            <Card className="border-border bg-card rounded-2xl">
+              <CardContent className="p-8 space-y-5">
+                <h2 className="text-2xl font-extrabold font-display">What do you offer customers?</h2>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Short Description</label>
+                  <span className="text-xs text-muted-foreground block mb-2">e.g. Class 9-12 maths and science tuition</span>
+                  <Textarea value={form.description} onChange={e => updateForm("description", e.target.value)} placeholder="2-3 lines about your service" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Timing / Hours</label>
+                  <span className="text-xs text-muted-foreground block mb-2">Kab available ho?</span>
+                  <Input value={form.timing} onChange={e => updateForm("timing", e.target.value)} placeholder="Mon-Sat 9AM-7PM" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Starting Price (optional)</label>
+                  <span className="text-xs text-muted-foreground block mb-2">e.g. ₹1500/month</span>
+                  <Input value={form.startingPrice} onChange={e => updateForm("startingPrice", e.target.value)} placeholder="₹1500/month" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Special Offer for New Customers</label>
+                  <span className="text-xs text-muted-foreground block mb-2">e.g. First class free</span>
+                  <Input value={form.specialOffer} onChange={e => updateForm("specialOffer", e.target.value)} placeholder="First class free!" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
+                    <ArrowLeft size={16} className="mr-1" /> Back
                   </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign size={18} className="text-accent" /> Service Prices
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { key: "cleaning" as const, label: "Teeth Cleaning" },
-                    { key: "whitening" as const, label: "Whitening" },
-                    { key: "checkup" as const, label: "Regular Checkup" },
-                  ].map((service) => (
-                    <div key={service.key}>
-                      <label className="text-sm font-medium text-muted-foreground mb-1.5 block">{service.label}</label>
-                      <Input
-                        value={businessInfo[service.key]}
-                        onChange={(e) => setBusinessInfo({ ...businessInfo, [service.key]: e.target.value })}
-                      />
-                    </div>
-                  ))}
-                  <Button className="w-full bg-gradient-hero text-primary-foreground border-0 hover:opacity-90">
-                    Update Prices
+                  <Button onClick={() => setStep(3)} className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                    Next Step <ArrowRight size={16} className="ml-2" />
                   </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Reviews Tab */}
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Star size={18} className="text-amber-500" /> Review Requestor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Send a "Review us on Google" link to your converted customers.
-                </p>
-                <div className="space-y-3">
-                  {leads
-                    .filter((l) => l.status === "converted")
-                    .map((lead) => (
-                      <div key={lead.id} className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-                            <User size={14} className="text-amber-500" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">{lead.name}</div>
-                            <div className="text-xs text-muted-foreground">{lead.email}</div>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <Send size={12} className="mr-1" /> Send Request
-                        </Button>
-                      </div>
-                    ))}
-                  {leads.filter((l) => l.status === "converted").length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-8">No converted leads yet. Move leads through the pipeline first.</p>
-                  )}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+
+          {step === 3 && (
+            <Card className="border-border bg-card rounded-2xl">
+              <CardContent className="p-8 space-y-5">
+                <h2 className="text-2xl font-extrabold font-display">You're almost live! 🎉</h2>
+                <div className="rounded-xl bg-secondary p-5 space-y-2 text-sm">
+                  <div className="font-bold text-foreground text-lg">{form.businessName || "Your Business"}</div>
+                  <div className="text-muted-foreground">{form.businessType} • {form.city}</div>
+                  {form.description && <p className="text-foreground">{form.description}</p>}
+                  {form.timing && <div className="text-muted-foreground">⏰ {form.timing}</div>}
+                  {form.startingPrice && <div className="text-primary font-semibold">Starting at {form.startingPrice}</div>}
+                  {form.specialOffer && <div className="text-primary">🎁 {form.specialOffer}</div>}
+                  <div className="text-muted-foreground">📱 {form.whatsappNumber}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Have a referral code?</label>
+                  <Input value={form.referralCode} onChange={e => updateForm("referralCode", e.target.value)} placeholder="Enter code (optional)" className="rounded-xl bg-secondary border-border" />
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="rounded-xl">
+                    <ArrowLeft size={16} className="mr-1" /> Back
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={submitting}
+                    className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-glow">
+                    <Rocket size={16} className="mr-2" /> {submitting ? "Starting..." : "🚀 Start My 7-Day Free Trial"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Our team will WhatsApp you within 2 hours to complete setup.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
       </div>
     </div>
   );

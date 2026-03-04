@@ -1,239 +1,181 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, Shield, CheckCircle2, XCircle, AlertTriangle, Rocket, Code2, FileCode, BarChart3, TrendingUp, DollarSign } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const mockProjects = [
-  { id: 1, name: "Dental Pro Landing", category: "Dentist", score: 92, status: "deployed", earnings: 240 },
-  { id: 2, name: "PlumbFix Hero", category: "Plumber", score: 87, status: "vetting", earnings: 0 },
-  { id: 3, name: "CutAbove Salon", category: "Salon", score: 78, status: "needs-fix", earnings: 0 },
-];
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import LeadPeLogo from "@/components/LeadPeLogo";
 
 const vettingChecks = [
-  { label: "Semantic HTML (H1, H2, H3)", pass: true },
-  { label: "Image Optimization", pass: true },
-  { label: "Mobile Responsive (md:/lg:)", pass: true },
-  { label: "Contact Form Present", pass: false },
-  { label: "Page Speed Score > 90", pass: true },
-  { label: "Accessibility (alt tags)", pass: false },
+  "Lighthouse Score 90+",
+  "Meta title and description",
+  "Alt tags on all images",
+  "Mobile responsive",
+  "Form with lead capture",
+  "WhatsApp button present",
+  "Page speed optimized",
+  "Images compressed",
 ];
 
-const Developer = () => {
-  const [code, setCode] = useState("");
-  const [showVetting, setShowVetting] = useState(false);
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
+};
 
-  const handleScan = () => {
-    setShowVetting(true);
+const Developer = () => {
+  const { toast } = useToast();
+  const [clients, setClients] = useState([10]);
+  const [form, setForm] = useState({ name: "", whatsapp: "", email: "", sampleLink: "", tools: "", capacity: "" });
+
+  const earnings = clients[0] * 299 * 0.2;
+
+  const handleApply = () => {
+    if (!form.name || !form.whatsapp || !form.email) {
+      toast({ title: "Please fill required fields", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Application submitted! 🎉", description: "We'll review and WhatsApp you within 24 hours." });
+    setForm({ name: "", whatsapp: "", email: "", sampleLink: "", tools: "", capacity: "" });
   };
 
-  const passedChecks = vettingChecks.filter((c) => c.pass).length;
-  const score = Math.round((passedChecks / vettingChecks.length) * 100);
-
   return (
-    <div className="min-h-screen dark bg-gradient-dark text-foreground">
-      <div className="pt-24 pb-16">
-        <div className="container">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h1 className="text-3xl font-black tracking-tight mb-2">
-              Pilot Dashboard
-            </h1>
-            <p className="text-muted-foreground">Upload, vet, and deploy your AI-built templates.</p>
-          </motion.div>
+    <div className="min-h-screen bg-background noise-overlay">
+      <div className="mesh-bg" />
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      {/* Hero */}
+      <section className="pt-28 pb-16 md:pt-36 md:pb-24">
+        <div className="container relative z-10 text-center max-w-3xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">LeadPe Studio</span>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mt-3 mb-4 font-display">
+              Build Sites.<br />Deploy Fast.<br />Earn Monthly.
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Use ChatGPT or Lovable to build. LeadPe handles the rest — hosting, clients, payments, support.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16 border-t border-border/30">
+        <div className="container max-w-3xl">
+          <h2 className="text-2xl font-extrabold text-center mb-12 font-display">How It Works</h2>
+          <div className="grid md:grid-cols-2 gap-6">
             {[
-              { label: "Templates", value: "3", icon: FileCode, change: "+1 this week" },
-              { label: "Deployed", value: "1", icon: Rocket, change: "Live now" },
-              { label: "Avg Score", value: "86", icon: BarChart3, change: "+4 pts" },
-              { label: "Earnings", value: "$240", icon: DollarSign, change: "+$80 this month" },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="bg-card border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <stat.icon size={18} className="text-primary" />
-                      <TrendingUp size={14} className="text-accent" />
-                    </div>
-                    <div className="text-2xl font-black">{stat.value}</div>
-                    <div className="text-xs text-muted-foreground">{stat.label}</div>
-                    <div className="text-xs text-accent mt-1">{stat.change}</div>
-                  </CardContent>
-                </Card>
+              { step: "1", title: "Generate site using ChatGPT + Lovable", desc: "No coding degree needed. Just paste and build." },
+              { step: "2", title: "Submit to Vetting Agent", desc: "Automated audit checks performance, SEO, mobile. Score 90+ required." },
+              { step: "3", title: "Deploy to LeadPe network", desc: "One click deploy. We handle hosting." },
+              { step: "4", title: "Earn recurring commission", desc: "Every month client pays — you earn. Passive income." },
+            ].map((item, i) => (
+              <motion.div key={item.step} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+                className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-primary font-bold">{item.step}</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
               </motion.div>
             ))}
           </div>
-
-          {/* Main Content */}
-          <Tabs defaultValue="upload" className="space-y-6">
-            <TabsList className="bg-card border border-border/50">
-              <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Upload size={14} className="mr-2" /> Upload
-              </TabsTrigger>
-              <TabsTrigger value="projects" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Code2 size={14} className="mr-2" /> Projects
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Upload Tab */}
-            <TabsContent value="upload" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Code Importer */}
-                <Card className="bg-card border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Upload size={18} className="text-primary" />
-                      Project Importer
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Template Name</label>
-                      <Input placeholder="e.g., Dental Pro Landing" className="bg-secondary/50 border-border/50" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Category</label>
-                      <Select>
-                        <SelectTrigger className="bg-secondary/50 border-border/50">
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["Plumber", "Dentist", "Restaurant", "Salon", "HVAC", "Realtor", "Lawyer", "Gym"].map((cat) => (
-                            <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Paste React/Next.js Code</label>
-                      <Textarea
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        placeholder={"// Paste your component code here\nexport default function LandingPage() {\n  return <div>...</div>\n}"}
-                        className="min-h-[200px] font-mono text-sm bg-secondary/50 border-border/50"
-                      />
-                    </div>
-                    <Button onClick={handleScan} className="w-full bg-gradient-hero text-primary-foreground border-0 hover:opacity-90">
-                      <Shield size={16} className="mr-2" /> Run AI Gatekeeper
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Vetting Results */}
-                <Card className="bg-card border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Shield size={18} className="text-accent" />
-                      AI Gatekeeper Results
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {!showVetting ? (
-                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                        <Shield size={48} className="mb-4 opacity-30" />
-                        <p className="text-sm">Upload code and run the scanner to see results</p>
-                      </div>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="space-y-5"
-                      >
-                        {/* Score */}
-                        <div className="text-center mb-6">
-                          <div className="text-5xl font-black text-gradient-hero inline-block">{score}</div>
-                          <div className="text-sm text-muted-foreground mt-1">Vetting Score</div>
-                          <Progress value={score} className="mt-3 h-2" />
-                        </div>
-
-                        {/* Checks */}
-                        <div className="space-y-3">
-                          {vettingChecks.map((check) => (
-                            <div key={check.label} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                              <span className="text-sm">{check.label}</span>
-                              {check.pass ? (
-                                <CheckCircle2 size={18} className="text-accent" />
-                              ) : (
-                                <XCircle size={18} className="text-destructive" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        <Button className="w-full" variant="outline" disabled={score < 80}>
-                          <Rocket size={16} className="mr-2" /> Deploy Template
-                        </Button>
-                        {score < 80 && (
-                          <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-                            <AlertTriangle size={12} /> Score must be 80+ to deploy
-                          </p>
-                        )}
-                      </motion.div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Projects Tab */}
-            <TabsContent value="projects">
-              <Card className="bg-card border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Your Projects</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {mockProjects.map((project) => (
-                      <div
-                        key={project.id}
-                        className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border/30 hover:border-primary/30 transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-hero flex items-center justify-center">
-                            <FileCode size={18} className="text-primary-foreground" />
-                          </div>
-                          <div>
-                            <div className="font-semibold">{project.name}</div>
-                            <div className="text-xs text-muted-foreground">{project.category}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right hidden sm:block">
-                            <div className="text-sm font-bold">{project.score}/100</div>
-                            <div className="text-xs text-muted-foreground">Score</div>
-                          </div>
-                          <Badge
-                            variant={project.status === "deployed" ? "default" : project.status === "vetting" ? "secondary" : "destructive"}
-                          >
-                            {project.status === "deployed" ? "Live" : project.status === "vetting" ? "Vetting" : "Needs Fix"}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
         </div>
-      </div>
+      </section>
+
+      {/* Earnings Calculator */}
+      <section className="py-16 border-t border-border/30">
+        <div className="container max-w-lg text-center">
+          <h2 className="text-2xl font-extrabold mb-8 font-display">Earnings Calculator</h2>
+          <Card className="border-border bg-card rounded-2xl">
+            <CardContent className="p-8">
+              <p className="text-sm text-muted-foreground mb-4">Number of clients: <span className="text-foreground font-bold">{clients[0]}</span></p>
+              <Slider value={clients} onValueChange={setClients} min={1} max={50} step={1} className="mb-8" />
+              <div className="text-5xl font-extrabold text-primary font-display">₹{Math.round(earnings).toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground mt-2">per month passive earnings</p>
+              <p className="text-xs text-muted-foreground mt-4">{clients[0]} clients × ₹299 × 20% commission</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Vetting Agent */}
+      <section className="py-16 border-t border-border/30">
+        <div className="container max-w-lg">
+          <h2 className="text-2xl font-extrabold text-center mb-8 font-display">The Quality Guarantee</h2>
+          <Card className="border-border bg-card rounded-2xl">
+            <CardContent className="p-8 space-y-3">
+              {vettingChecks.map(check => (
+                <div key={check} className="flex items-center gap-3 py-2 border-b border-border/30 last:border-0">
+                  <Check size={16} className="text-primary shrink-0" />
+                  <span className="text-sm text-foreground">{check}</span>
+                </div>
+              ))}
+              <div className="pt-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-destructive" /> Below 85: Deploy blocked</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-500" /> 85-89: Warning shown</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary" /> 90+: Deploy unlocked 🟢</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Signup Form */}
+      <section className="py-16 border-t border-border/30">
+        <div className="container max-w-lg">
+          <h2 className="text-2xl font-extrabold text-center mb-8 font-display">Apply to LeadPe Studio</h2>
+          <Card className="border-border bg-card rounded-2xl">
+            <CardContent className="p-8 space-y-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">Full Name *</label>
+                <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Your name" className="rounded-xl bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">WhatsApp Number *</label>
+                <Input value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="+91 98765 43210" className="rounded-xl bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Email *</label>
+                <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@email.com" className="rounded-xl bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Sample Site Link</label>
+                <Input value={form.sampleLink} onChange={e => setForm({ ...form, sampleLink: e.target.value })} placeholder="GitHub / Lovable / live URL" className="rounded-xl bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Tools You Use</label>
+                <Select value={form.tools} onValueChange={v => setForm({ ...form, tools: v })}>
+                  <SelectTrigger className="rounded-xl bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    {["ChatGPT", "Lovable", "Cursor", "Bolt", "Other"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Sites per month capacity</label>
+                <Input value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} placeholder="e.g. 5" className="rounded-xl bg-secondary border-border" />
+              </div>
+              <Button onClick={handleApply} className="w-full h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                Apply to LeadPe Studio <ArrowRight size={16} className="ml-2" />
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">We review within 24 hours and WhatsApp you back.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/30 py-8">
+        <div className="container text-center">
+          <LeadPeLogo size="sm" />
+          <p className="text-xs text-muted-foreground mt-2">© 2026 LeadPe. Made in India 🇮🇳</p>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -21,16 +21,27 @@ export type Database = {
           addon_sms: boolean
           addon_whatsapp: boolean
           business_hours: string | null
+          business_type: string | null
+          city: string | null
           contact_info: Json | null
           created_at: string
+          description: string | null
           id: string
           name: string
           owner_id: string
+          owner_name: string | null
+          referral_code: string | null
           service_pricing: Json | null
           slug: string
+          special_offer: string | null
+          starting_price: string | null
           subscription_active: boolean
           theme_json: Json | null
+          timing: string | null
+          trial_active: boolean | null
+          trial_start_date: string | null
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           addon_booking?: boolean
@@ -38,16 +49,27 @@ export type Database = {
           addon_sms?: boolean
           addon_whatsapp?: boolean
           business_hours?: string | null
+          business_type?: string | null
+          city?: string | null
           contact_info?: Json | null
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           owner_id: string
+          owner_name?: string | null
+          referral_code?: string | null
           service_pricing?: Json | null
           slug: string
+          special_offer?: string | null
+          starting_price?: string | null
           subscription_active?: boolean
           theme_json?: Json | null
+          timing?: string | null
+          trial_active?: boolean | null
+          trial_start_date?: string | null
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           addon_booking?: boolean
@@ -55,16 +77,27 @@ export type Database = {
           addon_sms?: boolean
           addon_whatsapp?: boolean
           business_hours?: string | null
+          business_type?: string | null
+          city?: string | null
           contact_info?: Json | null
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           owner_id?: string
+          owner_name?: string | null
+          referral_code?: string | null
           service_pricing?: Json | null
           slug?: string
+          special_offer?: string | null
+          starting_price?: string | null
           subscription_active?: boolean
           theme_json?: Json | null
+          timing?: string | null
+          trial_active?: boolean | null
+          trial_start_date?: string | null
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

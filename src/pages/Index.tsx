@@ -1,223 +1,330 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Hexagon, Zap, Code2, BarChart3, Rocket, Star, Users, Building2 } from "lucide-react";
+import { ArrowRight, Check, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import SynapseLogo from "@/components/SynapseLogo";
+import LeadPeLogo from "@/components/LeadPeLogo";
+import { useState } from "react";
 
-const categories = [
-  { name: "Plumbers", count: 24, icon: "🔧", color: "from-blue-500/20 to-cyan-500/10" },
-  { name: "Dentists", count: 18, icon: "🦷", color: "from-emerald-500/20 to-green-500/10" },
-  { name: "Restaurants", count: 31, icon: "🍽️", color: "from-orange-500/20 to-amber-500/10" },
-  { name: "Salons", count: 15, icon: "💇", color: "from-pink-500/20 to-rose-500/10" },
-  { name: "HVAC", count: 12, icon: "❄️", color: "from-sky-500/20 to-blue-500/10" },
-  { name: "Realtors", count: 22, icon: "🏠", color: "from-violet-500/20 to-purple-500/10" },
-  { name: "Lawyers", count: 9, icon: "⚖️", color: "from-amber-500/20 to-yellow-500/10" },
-  { name: "Gyms", count: 14, icon: "💪", color: "from-red-500/20 to-rose-500/10" },
+const businessTypes = [
+  { icon: "🏫", name: "Coaching Centre", desc: "Naye students" },
+  { icon: "🦷", name: "Doctor / Dentist", desc: "Online appointments" },
+  { icon: "⚖️", name: "Lawyer / CA", desc: "Client inquiries" },
+  { icon: "💇", name: "Salon / Parlour", desc: "Booking fill karo" },
+  { icon: "🏋️", name: "Gym / Fitness", desc: "Members badhao" },
+  { icon: "🔧", name: "Plumber / AC Repair", desc: "Emergency calls" },
+  { icon: "📸", name: "Photographer", desc: "Bookings chahiye" },
+  { icon: "🏠", name: "Real Estate", desc: "Free leads" },
+  { icon: "🍽️", name: "Restaurant", desc: "Table bookings" },
+  { icon: "🎓", name: "Dance / Music Class", desc: "Demo bookings" },
 ];
 
 const stats = [
-  { label: "Templates", value: "200+", icon: Code2 },
-  { label: "Businesses", value: "1,400+", icon: Building2 },
-  { label: "Developers", value: "350+", icon: Users },
-  { label: "Avg Rating", value: "4.9", icon: Star },
+  { value: "63M+", label: "Indian MSMEs Waiting" },
+  { value: "48hrs", label: "Site Live Hone Mein" },
+  { value: "90+", label: "Lighthouse Score Guaranteed" },
+  { value: "₹0", label: "7 Din Trial Cost" },
+];
+
+const pricingPlans = [
+  {
+    name: "Basic",
+    price: "₹0",
+    period: "/mo",
+    desc: "7 days free. No card needed.",
+    featured: false,
+    features: [
+      { text: "Professional website live", included: true },
+      { text: "Google-ready SEO", included: true },
+      { text: "Mobile optimized", included: true },
+      { text: "5 leads per month visible", included: true },
+      { text: "Subdomain (name.leadpe.online)", included: true },
+      { text: "WhatsApp ping", included: false },
+      { text: "Full lead dashboard", included: false },
+    ],
+    cta: "Start Free",
+  },
+  {
+    name: "Growth",
+    price: "₹299",
+    period: "/mo",
+    desc: "Everything to get customers calling.",
+    featured: true,
+    badge: "Most Popular",
+    features: [
+      { text: "Everything in Basic", included: true },
+      { text: "WhatsApp lead ping 🔔", included: true },
+      { text: "Unlimited leads", included: true },
+      { text: "Full lead dashboard", included: true },
+      { text: "Custom domain", included: true },
+      { text: "Weekly WhatsApp report", included: true },
+      { text: "Priority support", included: true },
+    ],
+    cta: "Get Started — 7 Days Free",
+  },
+  {
+    name: "Pro",
+    price: "₹499",
+    period: "/mo",
+    desc: "Growth on autopilot.",
+    featured: false,
+    features: [
+      { text: "Everything in Growth", included: true },
+      { text: "AI appointment booking", included: true },
+      { text: "Google Review Automator", included: true },
+      { text: "WhatsApp auto-reply bot", included: true },
+      { text: "Advanced analytics", included: true },
+      { text: "Monthly strategy call", included: true },
+      { text: "White-glove onboarding", included: true },
+    ],
+    cta: "Try Pro",
+  },
 ];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
 const Index = () => {
+  const [whatsapp, setWhatsapp] = useState("");
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-32">
-        {/* Decorative hexagons */}
-        <div className="absolute top-20 left-10 opacity-5 animate-float">
-          <Hexagon size={120} className="text-primary" />
-        </div>
-        <div className="absolute bottom-20 right-10 opacity-5 animate-float" style={{ animationDelay: "2s" }}>
-          <Hexagon size={80} className="text-accent" />
-        </div>
-        <div className="absolute top-1/2 left-1/3 opacity-[0.03]">
-          <Hexagon size={200} className="text-primary" />
-        </div>
+    <div className="min-h-screen bg-background noise-overlay">
+      <div className="mesh-bg" />
 
+      {/* Hero — Role Selection */}
+      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24">
         <div className="container relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-medium mb-8">
-              <Zap size={14} className="animate-pulse-glow" />
-              The AI-Distribution Engine
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.05] mb-6">
-              Ship AI Websites
-              <br />
-              <span className="text-gradient-hero">To Local Businesses</span>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-4 font-display">
+              Who are you today?
             </h1>
-
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Connect AI-powered developers with local businesses that need websites.
-              Build with Lovable, Bolt, or v0 — deploy to paying clients instantly.
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              LeadPe works for two kinds of people. Pick your path.
             </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="bg-gradient-hero text-primary-foreground border-0 hover:opacity-90 h-12 px-8 text-base font-semibold" asChild>
-                <Link to="/business">
-                  Browse Templates <ArrowRight size={18} className="ml-2" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link to="/developer">
-                  I'm a Developer <Code2 size={18} className="ml-2" />
-                </Link>
-              </Button>
-            </div>
           </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
+            {/* Business Card */}
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="rounded-2xl border border-border bg-card p-8 hover:border-primary/40 hover:shadow-glow transition-all duration-300">
+              <div className="text-4xl mb-4">🏪</div>
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">For Business Owners</span>
+              <h2 className="text-2xl font-extrabold mt-2 mb-3 font-display">I Want More Customers</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Professional website 48 ghante mein live. Har naya customer seedha aapke WhatsApp pe.
+              </p>
+              <ul className="space-y-2 mb-6 text-sm">
+                {["No tech knowledge needed", "WhatsApp lead ping on every inquiry", "Google-ready from day one", "7 days completely free"].map(p => (
+                  <li key={p} className="flex items-center gap-2 text-foreground"><Check size={14} className="text-primary shrink-0" />{p}</li>
+                ))}
+              </ul>
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl h-12 text-base font-semibold" asChild>
+                <Link to="/business">Start Free Trial <ArrowRight size={16} className="ml-2" /></Link>
+              </Button>
+            </motion.div>
+
+            {/* Developer Card */}
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="rounded-2xl border border-border bg-card p-8 hover:border-primary/40 hover:shadow-glow transition-all duration-300">
+              <div className="text-4xl mb-4">⚡</div>
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">For Builders</span>
+              <h2 className="text-2xl font-extrabold mt-2 mb-3 font-display">I Want to Build & Earn</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Use ChatGPT + Lovable to build sites. Deploy on LeadPe. Earn monthly recurring commission.
+              </p>
+              <ul className="space-y-2 mb-6 text-sm">
+                {["Zero coding degree needed", "Automated quality vetting agent", "Earn commission every month", "We handle hosting and support"].map(p => (
+                  <li key={p} className="flex items-center gap-2 text-foreground"><Check size={14} className="text-primary shrink-0" />{p}</li>
+                ))}
+              </ul>
+              <Button variant="outline" className="w-full rounded-xl h-12 text-base font-semibold border-primary/30 hover:bg-primary/10" asChild>
+                <Link to="/developer">Join LeadPe Studio <ArrowRight size={16} className="ml-2" /></Link>
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* Trust Row */}
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+            {["No credit card required", "Setup in 48 hours", "Hindi and English support", "Cancel anytime"].map(t => (
+              <span key={t} className="flex items-center gap-1.5"><Check size={14} className="text-primary" />{t}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 border-t border-border/30">
+        <div className="container">
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-3xl md:text-4xl font-extrabold text-center mb-16 font-display">
+            How It Works
+          </motion.h2>
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto items-center">
+            <div className="space-y-8">
+              {[
+                { step: "1", title: "Your site goes live on Google", desc: "Every local search shows your business first." },
+                { step: "2", title: "Customer finds you and fills form", desc: "Name, number, what they need — captured automatically." },
+                { step: "3", title: "Your WhatsApp pings instantly", desc: "Their number on your phone. You call. You close." },
+                { step: "4", title: "Every Monday report arrives", desc: "Visitors, leads, growth — plain English on WhatsApp." },
+              ].map((item, i) => (
+                <motion.div key={item.step} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-primary font-bold text-sm">{item.step}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* WhatsApp Mockup */}
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="flex justify-center">
+              <div className="relative animate-float">
+                <div className="w-72 rounded-3xl border-2 border-border bg-card p-4 shadow-glow-lg">
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Phone size={14} className="text-primary" />
+                    </div>
+                    <span className="font-bold text-sm">LeadPe Alerts</span>
+                    <div className="ml-auto relative">
+                      <div className="w-5 h-5 rounded-full bg-destructive text-[10px] font-bold flex items-center justify-center text-white animate-pulse">1</div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-secondary p-4 space-y-2 text-sm">
+                    <div className="font-bold text-primary">🔔 NEW INQUIRY!</div>
+                    <div className="space-y-1 text-foreground">
+                      <div><span className="text-muted-foreground">Name:</span> Priya Sharma</div>
+                      <div><span className="text-muted-foreground">Interest:</span> Class 10 Maths</div>
+                      <div><span className="text-muted-foreground">Number:</span> 98XXXXXX ← Call Now</div>
+                      <div><span className="text-muted-foreground">Found via:</span> Google Search ✅</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground pt-2">Today 9:14 PM</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* For Who */}
+      <section className="py-20 border-t border-border/30">
+        <div className="container">
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-3xl md:text-4xl font-extrabold text-center mb-4 font-display">
+            Every Local Business. Every City.
+          </motion.h2>
+          <p className="text-center text-muted-foreground mb-12">LeadPe works for all types of local businesses across India.</p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+            {businessTypes.map((bt, i) => (
+              <motion.div key={bt.name} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+                className="rounded-2xl border border-border bg-card p-5 text-center hover:border-primary/40 hover:shadow-glow hover:-translate-y-1 transition-all duration-300 cursor-default">
+                <div className="text-3xl mb-2">{bt.icon}</div>
+                <div className="text-sm font-semibold text-foreground">{bt.name}</div>
+                <div className="text-xs text-muted-foreground mt-1">{bt.desc}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="border-y bg-muted/30">
-        <div className="container py-12">
+      <section className="py-12 border-y border-border/30">
+        <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className="text-center"
-              >
-                <stat.icon size={24} className="mx-auto mb-2 text-primary" />
-                <div className="text-3xl font-black text-foreground">{stat.value}</div>
-                <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+            {stats.map((s, i) => (
+              <motion.div key={s.label} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center">
+                <div className="text-3xl md:text-4xl font-extrabold text-primary font-display">{s.value}</div>
+                <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Browse Industry Sets */}
-      <section className="py-20 md:py-28">
+      {/* Pricing */}
+      <section id="pricing" className="py-20">
         <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">
-              Browse Industry Sets
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Pre-vetted, AI-built website templates organized by industry. Ready to deploy.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.name}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className={`group relative rounded-xl border bg-gradient-to-br ${cat.color} p-6 cursor-pointer hover:shadow-glow hover:border-primary/30 transition-all duration-300 hover:-translate-y-1`}
-              >
-                <div className="text-3xl mb-3">{cat.icon}</div>
-                <h3 className="text-lg font-bold text-foreground">{cat.name}</h3>
-                <p className="text-sm text-muted-foreground">{cat.count} templates</p>
-                <ArrowRight size={16} className="absolute top-6 right-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-20 bg-muted/30 border-y">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">
-              How It Works
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { step: "01", title: "Devs Build", desc: "Create stunning sites with AI builders like Lovable, Bolt, or v0.", icon: Code2 },
-              { step: "02", title: "We Vet", desc: "Our AI Gatekeeper scans for SEO, performance, and mobile responsiveness.", icon: BarChart3 },
-              { step: "03", title: "Businesses Launch", desc: "Businesses pick a template, customize branding, and go live.", icon: Rocket },
-            ].map((item, i) => (
-              <motion.div
-                key={item.step}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className="text-center"
-              >
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-hero flex items-center justify-center mb-5">
-                  <item.icon size={24} className="text-primary-foreground" />
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-3xl md:text-4xl font-extrabold text-center mb-4 font-display">
+            Simple, Transparent Pricing
+          </motion.h2>
+          <p className="text-center text-muted-foreground mb-12">Start free. Upgrade when you're ready.</p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {pricingPlans.map((plan, i) => (
+              <motion.div key={plan.name} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+                className={`relative rounded-2xl border p-8 ${plan.featured ? "border-primary shadow-glow bg-card" : "border-border bg-card"}`}>
+                {plan.badge && (
+                  <span className="absolute -top-3 right-6 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">{plan.badge}</span>
+                )}
+                <h3 className="text-lg font-bold font-display">{plan.name}</h3>
+                <div className="mt-2 mb-1">
+                  <span className="text-4xl font-extrabold font-display">{plan.price}</span>
+                  <span className="text-muted-foreground text-sm">{plan.period}</span>
                 </div>
-                <div className="text-xs font-bold text-primary tracking-widest mb-2">{item.step}</div>
-                <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+                <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
+                <ul className="space-y-2 mb-8">
+                  {plan.features.map(f => (
+                    <li key={f.text} className="flex items-center gap-2 text-sm">
+                      {f.included ? <Check size={14} className="text-primary shrink-0" /> : <X size={14} className="text-muted-foreground/50 shrink-0" />}
+                      <span className={f.included ? "text-foreground" : "text-muted-foreground/50 line-through"}>{f.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button className={`w-full rounded-xl h-11 font-semibold ${plan.featured ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow" : "bg-secondary text-foreground hover:bg-secondary/80"}`} asChild>
+                  <Link to="/business">{plan.cta}</Link>
+                </Button>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 md:py-28">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative rounded-2xl bg-gradient-hero p-12 md:p-16 text-center overflow-hidden"
-          >
-            <div className="absolute top-4 right-8 opacity-10">
-              <Hexagon size={100} className="text-primary-foreground" />
+      {/* Free Trial CTA */}
+      <section className="py-20 border-t border-border/30">
+        <div className="container max-w-lg text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-3xl font-extrabold mb-3 font-display">Apna Free Trial Aaj Shuru Karo</h2>
+            <p className="text-muted-foreground mb-8">Koi credit card nahi. Koi commitment nahi.</p>
+            <div className="flex gap-2">
+              <Input
+                value={whatsapp}
+                onChange={e => setWhatsapp(e.target.value)}
+                placeholder="WhatsApp number"
+                className="h-12 rounded-xl bg-card border-border"
+              />
+              <Button className="h-12 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold whitespace-nowrap">
+                🚀 Free Start
+              </Button>
             </div>
-            <h2 className="text-3xl md:text-4xl font-black text-primary-foreground mb-4 relative z-10">
-              Ready to Scale Your Reach?
-            </h2>
-            <p className="text-primary-foreground/80 text-lg mb-8 max-w-lg mx-auto relative z-10">
-              Join hundreds of developers already earning from AI-built websites.
-            </p>
-            <Button size="lg" variant="secondary" className="h-12 px-8 text-base font-bold relative z-10" asChild>
-              <Link to="/developer">
-                Start Building <ArrowRight size={18} className="ml-2" />
-              </Link>
-            </Button>
+            <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm text-muted-foreground">
+              <span>✅ 7 din free</span>
+              <span>✅ Koi card nahi</span>
+              <span>✅ Hindi support</span>
+            </div>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-10">
-        <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-          <SynapseLogo size="sm" />
-          <p className="text-sm text-muted-foreground">
-            © 2026 Synapse Shift. The AI-Distribution Engine.
-          </p>
+      <footer className="border-t border-border/30 py-10">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <LeadPeLogo size="sm" />
+              <p className="text-sm text-muted-foreground mt-1">Naya Customer, Seedha Aapke Phone Pe 🔔</p>
+            </div>
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <Link to="/" className="hover:text-foreground">Home</Link>
+              <a href="/#how-it-works" className="hover:text-foreground">How it Works</a>
+              <a href="/#pricing" className="hover:text-foreground">Pricing</a>
+              <Link to="/developer" className="hover:text-foreground">For Developers</Link>
+            </div>
+          </div>
+          <div className="text-center mt-8 text-xs text-muted-foreground">
+            © 2026 LeadPe. Made in India 🇮🇳
+          </div>
         </div>
       </footer>
     </div>
