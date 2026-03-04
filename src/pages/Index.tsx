@@ -1,10 +1,11 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const businessTypes = [
   { icon: "🏫", name: "Coaching Centre", desc: "Naye students" },
@@ -88,6 +89,117 @@ const fadeUp = {
 
 const Index = () => {
   const [whatsapp, setWhatsapp] = useState("");
+  const [bizStep, setBizStep] = useState(1);
+  const [bizForm, setBizForm] = useState({
+    businessName: "",
+    businessType: "",
+    city: "",
+    whatsappNumber: "",
+    ownerName: "",
+    description: "",
+    workingHours: "",
+    startingPrice: "",
+    specialOffer: "",
+  });
+  const [bizErrors, setBizErrors] = useState<{ [key: string]: string }>({});
+  const [trialCode, setTrialCode] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const updateBizForm = (key: keyof typeof bizForm, value: string) => {
+    setBizForm(prev => ({ ...prev, [key]: value }));
+    setBizErrors(prev => ({ ...prev, [key]: "" }));
+  };
+
+  const validateStep1 = () => {
+    const errors: { [key: string]: string } = {};
+    if (!bizForm.businessName.trim()) errors.businessName = "Yeh field zaroori hai";
+    if (!bizForm.businessType.trim()) errors.businessType = "Yeh field zaroori hai";
+    if (!bizForm.city.trim()) errors.city = "Yeh field zaroori hai";
+    if (!bizForm.ownerName.trim()) errors.ownerName = "Yeh field zaroori hai";
+
+    const digitsOnly = bizForm.whatsappNumber.replace(/\D/g, "");
+    if (!digitsOnly) {
+      errors.whatsappNumber = "Yeh field zaroori hai";
+    } else if (!/^\d{10}$/.test(digitsOnly)) {
+      errors.whatsappNumber = "Valid WhatsApp number daalo";
+    }
+
+    setBizErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const errors: { [key: string]: string } = {};
+    if (!bizForm.description.trim()) {
+      errors.description = "This field is required";
+    }
+    setBizErrors(prev => ({ ...prev, ...errors }));
+    return Object.keys(errors).length === 0;
+  };
+
+  const saveSignupToSupabase = async (code: string, attempt = 1) => {
+    const createdAt = new Date();
+    const whatsappDigits = bizForm.whatsappNumber.replace(/\D/g, "");
+
+    try {
+      const { error } = await supabase.from("signups").insert({
+        owner_name: bizForm.ownerName,
+        business_name: bizForm.businessName,
+        business_type: bizForm.businessType,
+        city: bizForm.city,
+        whatsapp_number: whatsappDigits,
+        description: bizForm.description,
+        working_hours: bizForm.workingHours,
+        price: bizForm.startingPrice,
+        special_offer: bizForm.specialOffer,
+        trial_code: code,
+        status: "trial",
+        created_at: createdAt.toISOString(),
+      } as any);
+
+      if (error) {
+        throw error;
+      }
+
+      const ts = createdAt.toLocaleString();
+      const message = [
+        "🔔 NEW SIGNUP — LeadPe",
+        "━━━━━━━━━━━━━━",
+        `Owner: ${bizForm.ownerName}`,
+        `Business: ${bizForm.businessName}`,
+        `Type: ${bizForm.businessType}`,
+        `City: ${bizForm.city}`,
+        `WhatsApp: ${whatsappDigits}`,
+        `Code: ${code}`,
+        `Time: ${ts}`,
+        "━━━━━━━━━━━━━━",
+        "LeadPe ⚡ leadpe.online",
+      ].join("%0A");
+
+      window.open(
+        `https://wa.me/919973383902?text=${message}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    } catch (err) {
+      // Log only, never show technical errors
+      // eslint-disable-next-line no-console
+      console.error("Supabase signup save failed", err);
+      if (attempt < 2) {
+        setTimeout(() => {
+          void saveSignupToSupabase(code, attempt + 1);
+        }, 3000);
+      }
+    }
+  };
+
+  const handleStartTrial = () => {
+    const code =
+      trialCode || "LP-" + Math.floor(100000 + Math.random() * 900000).toString();
+    setTrialCode(code);
+    void saveSignupToSupabase(code);
+    setShowSuccess(true);
+  };
 
   return (
     <div className="min-h-screen bg-background noise-overlay">
@@ -121,7 +233,7 @@ const Index = () => {
                 ))}
               </ul>
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl h-12 text-base font-semibold" asChild>
-                <Link to="/business">Start Free Trial <ArrowRight size={16} className="ml-2" /></Link>
+                <a href="#business-signup">Start Free Trial <ArrowRight size={16} className="ml-2" /></a>
               </Button>
             </motion.div>
 
@@ -140,7 +252,7 @@ const Index = () => {
                 ))}
               </ul>
               <Button variant="outline" className="w-full rounded-xl h-12 text-base font-semibold border-primary/30 hover:bg-primary/10" asChild>
-                <Link to="/developer">Join LeadPe Studio <ArrowRight size={16} className="ml-2" /></Link>
+                <a href="#dev-signup">Join LeadPe Studio <ArrowRight size={16} className="ml-2" /></a>
               </Button>
             </motion.div>
           </div>
@@ -278,6 +390,477 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Business Signup Wizard */}
+      <section
+        id="business-signup"
+        className="py-20 border-t border-border/30"
+        style={{ backgroundColor: "#080C09" }}
+      >
+        <div className="container max-w-lg mx-auto">
+          {/* Progress bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2 text-xs font-medium text-muted-foreground">
+              <span>Step {bizStep} of 3</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-[#101810] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#00E676] transition-all duration-300"
+                style={{ width: `${(bizStep / 3) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl border border-border"
+            style={{ backgroundColor: "#101810" }}
+          >
+            <div className="p-6 sm:p-8">
+              <AnimatePresence mode="wait">
+                {!showSuccess && (
+                  <motion.div
+                    key={bizStep}
+                    initial={{ x: 40, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -40, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {bizStep === 1 && (
+                      <div className="space-y-5">
+                        <h2 className="text-2xl font-extrabold font-display text-foreground">
+                          Pehle apne business ke baare mein batao
+                        </h2>
+
+                        {/* Business Name */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Business Name
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Apni dukaan ya centre ka naam
+                          </span>
+                          <Input
+                            value={bizForm.businessName}
+                            onChange={e =>
+                              updateBizForm("businessName", e.target.value)
+                            }
+                            className={`rounded-xl bg-secondary border ${
+                              bizErrors.businessName
+                                ? "border-red-500"
+                                : "border-border"
+                            }`}
+                            placeholder="e.g. Shiva Study Centre"
+                          />
+                          {bizErrors.businessName && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.businessName}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Business Type */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Business Type
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Aap kya karte hain?
+                          </span>
+                          <select
+                            value={bizForm.businessType}
+                            onChange={e =>
+                              updateBizForm("businessType", e.target.value)
+                            }
+                            className={`w-full rounded-xl bg-secondary text-sm px-3 py-2 border outline-none ${
+                              bizErrors.businessType
+                                ? "border-red-500"
+                                : "border-border"
+                            }`}
+                          >
+                            <option value="">Select type</option>
+                            <option value="Coaching Centre">
+                              Coaching Centre
+                            </option>
+                            <option value="Doctor/Clinic">Doctor/Clinic</option>
+                            <option value="Lawyer/CA">Lawyer/CA</option>
+                            <option value="Salon/Parlour">
+                              Salon/Parlour
+                            </option>
+                            <option value="Gym/Fitness">Gym/Fitness</option>
+                            <option value="Plumber/Electrician">
+                              Plumber/Electrician
+                            </option>
+                            <option value="Restaurant/Dhaba">
+                              Restaurant/Dhaba
+                            </option>
+                            <option value="Photographer">Photographer</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          {bizErrors.businessType && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.businessType}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* City */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            City or Town
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Aap kahan hain?
+                          </span>
+                          <Input
+                            value={bizForm.city}
+                            onChange={e => updateBizForm("city", e.target.value)}
+                            className={`rounded-xl bg-secondary border ${
+                              bizErrors.city ? "border-red-500" : "border-border"
+                            }`}
+                            placeholder="e.g. Vaishali, Bihar"
+                          />
+                          {bizErrors.city && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.city}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* WhatsApp */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            WhatsApp Number (10 digits)
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Jahan leads aayenge
+                          </span>
+                          <Input
+                            value={bizForm.whatsappNumber}
+                            onChange={e =>
+                              updateBizForm("whatsappNumber", e.target.value)
+                            }
+                            className={`rounded-xl bg-secondary border ${
+                              bizErrors.whatsappNumber
+                                ? "border-red-500"
+                                : "border-border"
+                            }`}
+                            placeholder="e.g. 9876543210"
+                          />
+                          {bizErrors.whatsappNumber && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.whatsappNumber}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Owner Name */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Owner Name
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Aapka naam
+                          </span>
+                          <Input
+                            value={bizForm.ownerName}
+                            onChange={e =>
+                              updateBizForm("ownerName", e.target.value)
+                            }
+                            className={`rounded-xl bg-secondary border ${
+                              bizErrors.ownerName
+                                ? "border-red-500"
+                                : "border-border"
+                            }`}
+                            placeholder="e.g. Rajesh Kumar"
+                          />
+                          {bizErrors.ownerName && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.ownerName}
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          className="w-full h-12 mt-2 rounded-xl text-black font-semibold"
+                          style={{ backgroundColor: "#00E676" }}
+                          onClick={() => {
+                            if (validateStep1()) setBizStep(2);
+                          }}
+                        >
+                          Next Step &#8594;
+                        </Button>
+                      </div>
+                    )}
+
+                    {bizStep === 2 && (
+                      <div className="space-y-5">
+                        <h2 className="text-2xl font-extrabold font-display text-foreground">
+                          Ab batao customers ko kya milega
+                        </h2>
+
+                        {/* Description */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Short Description
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            2-3 lines mein batao aap kya offer karte ho
+                          </span>
+                          <textarea
+                            value={bizForm.description}
+                            onChange={e =>
+                              updateBizForm("description", e.target.value)
+                            }
+                            className={`w-full min-h-[96px] rounded-xl bg-secondary text-sm px-3 py-2 border outline-none resize-none ${
+                              bizErrors.description
+                                ? "border-red-500"
+                                : "border-border"
+                            }`}
+                            placeholder={
+                              "e.g. Class 9-12 ke liye maths aur science tuition.\nExpert teacher, small batches."
+                            }
+                          />
+                          {bizErrors.description && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {bizErrors.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Working Hours */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Working Hours
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Aap kab available hote ho?
+                          </span>
+                          <Input
+                            value={bizForm.workingHours}
+                            onChange={e =>
+                              updateBizForm("workingHours", e.target.value)
+                            }
+                            className="rounded-xl bg-secondary border border-border"
+                            placeholder="e.g. Mon-Sat, 8am to 6pm"
+                          />
+                        </div>
+
+                        {/* Starting Price */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Starting Price
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Approximately kitna charge karte ho? (optional)
+                          </span>
+                          <Input
+                            value={bizForm.startingPrice}
+                            onChange={e =>
+                              updateBizForm("startingPrice", e.target.value)
+                            }
+                            className="rounded-xl bg-secondary border border-border"
+                            placeholder="e.g. ₹1500/month"
+                          />
+                        </div>
+
+                        {/* Special Offer */}
+                        <div>
+                          <label className="text-sm font-medium block mb-1">
+                            Special Offer for New Customers
+                          </label>
+                          <span className="text-xs text-muted-foreground block mb-2">
+                            Koi offer hai naye customers ke liye? (optional)
+                          </span>
+                          <Input
+                            value={bizForm.specialOffer}
+                            onChange={e =>
+                              updateBizForm("specialOffer", e.target.value)
+                            }
+                            className="rounded-xl bg-secondary border border-border"
+                            placeholder="e.g. Pehli class bilkul free"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 pt-2">
+                          <button
+                            type="button"
+                            className="text-sm text-muted-foreground"
+                            onClick={() => setBizStep(1)}
+                          >
+                            &#8592; Back
+                          </button>
+                          <Button
+                            className="flex-1 h-12 rounded-xl text-black font-semibold"
+                            style={{ backgroundColor: "#00E676" }}
+                            onClick={() => {
+                              if (validateStep2()) setBizStep(3);
+                            }}
+                          >
+                            Next Step &#8594;
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {bizStep === 3 && (
+                      <div className="space-y-5">
+                        <h2 className="text-2xl font-extrabold font-display text-foreground">
+                          Final check, phir trial start
+                        </h2>
+
+                        {/* Summary Card */}
+                        <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-2 text-sm">
+                          <div className="text-lg font-extrabold font-display text-[#00E676]">
+                            {bizForm.businessName || "Your Business"}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {bizForm.businessType || "Business type"} •{" "}
+                            {bizForm.city || "City"}
+                          </div>
+                          <div className="text-muted-foreground">
+                            WhatsApp:{" "}
+                            {bizForm.whatsappNumber || "WhatsApp number"}
+                          </div>
+                          {bizForm.description && (
+                            <p className="text-foreground mt-2 line-clamp-3">
+                              {bizForm.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-bold text-foreground">
+                            You&apos;re ready to go live! 🎉
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Your 7-day free trial starts the moment you click
+                            below. No credit card needed.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 pt-2">
+                          <button
+                            type="button"
+                            className="text-sm text-muted-foreground"
+                            onClick={() => setBizStep(2)}
+                          >
+                            &#8592; Back
+                          </button>
+                          <Button
+                            className="flex-1 h-12 rounded-xl text-black font-semibold"
+                            style={{ backgroundColor: "#00E676" }}
+                            onClick={handleStartTrial}
+                          >
+                            🚀 Start My 7-Day Free Trial
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {showSuccess && (
+                  <motion.div
+                    key="success"
+                    initial={{ x: 40, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -40, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6 text-center"
+                  >
+                    <div className="flex justify-center mb-2">
+                      <div className="w-16 h-16 rounded-full border-4 border-[#00E676]/30 flex items-center justify-center animate-pulse">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: "#00E676" }}
+                        >
+                          <span className="text-black text-2xl">✓</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-extrabold font-display text-foreground">
+                        Welcome to LeadPe! 🎉
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Your business is going online.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Naya Customer, Seedha Aapke Phone Pe 🔔
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-secondary/40 p-4 text-left space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Your Trial Code
+                          </div>
+                          <div className="text-xl font-mono font-semibold text-[#00E676] mt-1">
+                            {trialCode}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg border-[#00E676]/40 text-xs text-foreground"
+                          onClick={() => {
+                            if (!trialCode) return;
+                            void navigator.clipboard.writeText(trialCode);
+                            // Simple inline feedback
+                            const el = document.getElementById("trial-copy-feedback");
+                            if (el) {
+                              el.textContent = "Copied! ✓";
+                            }
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <p
+                        id="trial-copy-feedback"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Save this code. Our team will WhatsApp you within 2 hours
+                        to complete your website setup.
+                      </p>
+                    </div>
+
+                    <Button
+                      className="w-full h-12 rounded-xl text-black font-semibold"
+                      style={{ backgroundColor: "#00E676" }}
+                      asChild
+                    >
+                      <a
+                        href={
+                          "https://wa.me/?text=" +
+                          encodeURIComponent(
+                            "I just joined LeadPe and getting my business online! 🚀 Check it out: leadpe.online\nNaya Customer, Seedha Aapke Phone Pe 🔔"
+                          )
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Share on WhatsApp &#8594;
+                      </a>
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Developer Signup Placeholder */}
+      <section id="dev-signup" className="py-20 border-t border-border/30">
+        <div className="container max-w-lg text-center">
+          <h2 className="text-2xl font-extrabold mb-3 font-display">Developer Signup Coming Soon</h2>
+          <p className="text-muted-foreground">Soon you&apos;ll be able to apply to LeadPe Studio right here.</p>
         </div>
       </section>
 

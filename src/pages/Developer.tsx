@@ -126,7 +126,7 @@ const Developer = () => {
       </section>
 
       {/* Signup Form */}
-      <section className="py-16 border-t border-border/30">
+      <section id="developer-signup" className="py-16 border-t border-border/30 scroll-mt-24 md:scroll-mt-32">
         <div className="container max-w-lg">
           <h2 className="text-2xl font-extrabold text-center mb-8 font-display">Apply to LeadPe Studio</h2>
           <Card className="border-border bg-card rounded-2xl">

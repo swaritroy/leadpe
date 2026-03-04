@@ -76,7 +76,7 @@ const Business = () => {
   return (
     <div className="min-h-screen bg-background noise-overlay flex items-center justify-center py-12 px-4">
       <div className="mesh-bg" />
-      <div className="w-full max-w-lg relative z-10">
+      <div id="business-signup" className="w-full max-w-lg relative z-10 scroll-mt-24 md:scroll-mt-32">
         <div className="text-center mb-8">
           <LeadPeLogo size="md" />
           <div className="flex items-center justify-center gap-2 mt-6 mb-2">
