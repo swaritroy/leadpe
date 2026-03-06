@@ -162,7 +162,7 @@ export default function Studio() {
     const whatsappDigits = form.whatsappNumber.replace(/\D/g, "");
 
     try {
-      const { error } = await (supabase.from("studio_applications") as any).insert({
+      const { error } = await (supabase as any).from("studio_applications").insert({
         name: form.fullName,
         whatsapp: whatsappDigits,
         email: form.email,

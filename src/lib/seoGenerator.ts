@@ -43,12 +43,11 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
   if (offer) descParts.push(offer);
   descParts.push("Contact now on WhatsApp");
   
-  let description = descParts.join(". ");
-  if (description.length > 155) {
-    // Smart truncate - keep essential parts
+  let metaDesc = descParts.join(". ");
+  if (metaDesc.length > 155) {
     const essential = `${name} in ${city}. ${description.slice(0, 80)}. Contact now`;
-    description = essential.slice(0, 155).trim();
-    if (!description.endsWith(".")) description += ".";
+    metaDesc = essential.slice(0, 155).trim();
+    if (!metaDesc.endsWith(".")) metaDesc += ".";
   }
 
   // URL SLUG: lowercase, spaces to hyphens, remove special chars (max 30 chars)
@@ -76,7 +75,7 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: name,
-    description: description,
+    description: metaDesc,
     telephone: phone,
     priceRange: price || "₹₹",
     address: {
@@ -95,14 +94,14 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
   // OPEN GRAPH TAGS
   const ogTags = {
     title: title,
-    description: description,
+    description: metaDesc,
     type: "business.business",
     url: `https://${slug}.leadpe.online`,
   };
 
   return {
     title,
-    description,
+    description: metaDesc,
     slug,
     keywords,
     schema,

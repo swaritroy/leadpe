@@ -85,7 +85,7 @@ export async function logMessage(
   message: string,
   language: Language = "hinglish"
 ): Promise<void> {
-  await (supabase.from("message_log") as any).insert({
+  await (supabase as any).from("message_log").insert({
     business_id: businessId,
     day_number: dayNumber,
     message_type: messageType,
@@ -102,7 +102,7 @@ export async function updateTrialStatus(
   day: number,
   field: string
 ): Promise<void> {
-  await (supabase.from("deployments") as any)
+  await (supabase as any).from("deployments")
     .update({
       [field]: true,
       trial_day: day,
@@ -116,7 +116,7 @@ export async function updateLanguagePreference(
   deploymentId: string,
   language: Language
 ): Promise<void> {
-  await (supabase.from("deployments") as any)
+  await (supabase as any).from("deployments")
     .update({
       preferred_language: language,
       updated_at: new Date().toISOString(),
@@ -593,7 +593,7 @@ export async function triggerDay7(deployment: DeploymentWithTrial): Promise<void
 // ============================================
 export async function checkAndTriggerSequence(businessId: string): Promise<void> {
   // Fetch deployment with trial data
-  const { data: deployment } = await (supabase.from("deployments") as any)
+  const { data: deployment } = await (supabase as any).from("deployments")
     .select("*")
     .eq("id", businessId)
     .single();

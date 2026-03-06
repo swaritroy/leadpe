@@ -131,7 +131,7 @@ export default function ClientDashboard() {
       });
 
       // Fetch deployment for trial data (matching by owner whatsapp)
-      const { data: deploymentData } = await (supabase.from("deployments") as any)
+      const { data: deploymentData } = await (supabase as any).from("deployments")
         .select("*")
         .eq("owner_whatsapp", profileData.whatsapp_number.replace(/\D/g, ""))
         .order("created_at", { ascending: false })
