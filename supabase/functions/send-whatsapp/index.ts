@@ -86,7 +86,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to send WhatsApp' 
+        error: (error as Error).message || 'Failed to send WhatsApp'
       }),
       { 
         status: 500,

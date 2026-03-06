@@ -19,8 +19,8 @@ export const sendWhatsApp = async (
     
     if (error) throw error
     
-    await supabase
-      .from('message_log')
+    await (supabase
+      .from('message_log' as any) as any)
       .insert({
         to_number: to,
         message,
@@ -37,8 +37,8 @@ export const sendWhatsApp = async (
     console.error('WhatsApp failed:', err)
     
     // Log the failure
-    await supabase
-      .from('message_log')
+    await (supabase
+      .from('message_log' as any) as any)
       .insert({
         to_number: to,
         message,
