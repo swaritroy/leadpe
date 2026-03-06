@@ -243,10 +243,10 @@ export default function Auth() {
                   type="tel"
                   value={signInPhone}
                   onChange={(e) => setSignInPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
-                  style={{ backgroundColor: "#F8F8F8" }}
-                  placeholder="9876543210"
-                />
+                   className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                   style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                   placeholder="9876543210"
+                 />
               </div>
 
               <div>
@@ -256,9 +256,9 @@ export default function Auth() {
                     type={showPassword ? "text" : "password"}
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
-                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
-                    style={{ backgroundColor: "#F8F8F8" }}
-                    placeholder="Enter password"
+                     className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                     style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                     placeholder="Enter password"
                   />
                   <button
                     type="button"
@@ -298,9 +298,9 @@ export default function Auth() {
                 <Input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
-                  style={{ backgroundColor: "#F8F8F8" }}
-                  placeholder="Your full name"
+                   className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                   style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                   placeholder="Your full name"
                 />
               </div>
 
@@ -310,22 +310,22 @@ export default function Auth() {
                   type="tel"
                   value={signUpPhone}
                   onChange={(e) => setSignUpPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
-                  style={{ backgroundColor: "#F8F8F8" }}
-                  placeholder="9876543210"
-                />
-              </div>
+                   className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                   style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                   placeholder="9876543210"
+                 />
+               </div>
 
-              <div>
-                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Password</label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={signUpPassword}
-                    onChange={(e) => setSignUpPassword(e.target.value)}
-                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
-                    style={{ backgroundColor: "#F8F8F8" }}
-                    placeholder="At least 6 characters"
+               <div>
+                 <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Password</label>
+                 <div className="relative">
+                   <Input
+                     type={showPassword ? "text" : "password"}
+                     value={signUpPassword}
+                     onChange={(e) => setSignUpPassword(e.target.value)}
+                     className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                     style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                     placeholder="At least 6 characters"
                   />
                   <button
                     type="button"
@@ -344,9 +344,9 @@ export default function Auth() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
-                    style={{ backgroundColor: "#F8F8F8" }}
-                    placeholder="Re-enter password"
+                     className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853] text-[#111111] placeholder:text-[#9ca3af]"
+                     style={{ backgroundColor: "#F8F8F8", color: "#111111" }}
+                     placeholder="Re-enter password"
                   />
                   <button
                     type="button"
