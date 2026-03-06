@@ -35,7 +35,7 @@ const SelectRole = () => {
         className="w-full max-w-lg p-8 text-center relative z-10"
       >
         <div className="mb-6">
-          <LeadPeLogo size="lg" />
+          <LeadPeLogo theme="light" size="lg" />
         </div>
         <h1 className="text-2xl font-extrabold mb-2 font-display">Choose Your Role</h1>
         <p className="text-sm text-muted-foreground mb-8">This determines your dashboard experience</p>

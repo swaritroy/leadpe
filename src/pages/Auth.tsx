@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -175,35 +176,36 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#080C09" }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        <div className="text-center mb-8">
-          <LeadPeLogo size="lg" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-bold font-display mb-2">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your LeadPe dashboard</p>
-        </div>
+        <div className="bg-white rounded-3xl p-8 shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
+          <div className="text-center mb-8">
+            <LeadPeLogo theme="light" size="lg" />
+            <h1 className="text-2xl font-bold mb-2 text-[#1A1A1A] mt-4">Welcome Back</h1>
+            <p className="text-sm text-[#666666]">Sign in to your LeadPe dashboard</p>
+          </div>
 
         {/* Tab Switcher */}
-        <div className="flex rounded-xl p-1 mb-6 border border-border" style={{ backgroundColor: "#101810" }}>
+        <div className="flex rounded-xl p-1 mb-6 border border-[#E0E0E0]" style={{ backgroundColor: "#F8F8F8" }}>
           <button
             onClick={() => { setActiveTab("signin"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === "signin" ? "text-black" : "text-muted-foreground hover:text-foreground"
+              activeTab === "signin" ? "text-white" : "text-[#666666] hover:text-[#1A1A1A]"
             }`}
-            style={activeTab === "signin" ? { backgroundColor: "#00E676" } : {}}
+            style={activeTab === "signin" ? { backgroundColor: "#00C853" } : {}}
           >
             Sign In
           </button>
           <button
             onClick={() => { setActiveTab("signup"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === "signup" ? "text-black" : "text-muted-foreground hover:text-foreground"
+              activeTab === "signup" ? "text-white" : "text-[#666666] hover:text-[#1A1A1A]"
             }`}
-            style={activeTab === "signup" ? { backgroundColor: "#00E676" } : {}}
+            style={activeTab === "signup" ? { backgroundColor: "#00C853" } : {}}
           >
             Sign Up
           </button>
@@ -236,32 +238,32 @@ export default function Auth() {
               className="space-y-4"
             >
               <div>
-                <label className="text-sm font-medium block mb-1.5">WhatsApp Number (10 digits)</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">WhatsApp Number (10 digits)</label>
                 <Input
                   type="tel"
                   value={signInPhone}
                   onChange={(e) => setSignInPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className="rounded-xl border-border h-12"
-                  style={{ backgroundColor: "#080C09" }}
+                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
+                  style={{ backgroundColor: "#F8F8F8" }}
                   placeholder="9876543210"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">Password</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Password</label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
-                    className="rounded-xl border-border h-12 pr-10"
-                    style={{ backgroundColor: "#080C09" }}
+                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
+                    style={{ backgroundColor: "#F8F8F8" }}
                     placeholder="Enter password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#1A1A1A]"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -269,7 +271,7 @@ export default function Auth() {
               </div>
 
               <div className="text-right">
-                <button type="button" className="text-xs text-muted-foreground hover:text-foreground">
+                <button type="button" className="text-xs text-[#00C853] hover:text-[#00A843] font-medium">
                   Forgot password?
                 </button>
               </div>
@@ -277,8 +279,7 @@ export default function Auth() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-xl text-black font-semibold"
-                style={{ backgroundColor: "#00E676" }}
+                className="w-full h-12 rounded-xl text-white font-semibold bg-[#00C853] hover:bg-[#00A843]"
               >
                 {loading ? "Please wait..." : "Sign In"}
               </Button>
@@ -293,43 +294,43 @@ export default function Auth() {
               className="space-y-4"
             >
               <div>
-                <label className="text-sm font-medium block mb-1.5">Full Name</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Full Name</label>
                 <Input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="rounded-xl border-border h-12"
-                  style={{ backgroundColor: "#080C09" }}
+                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
+                  style={{ backgroundColor: "#F8F8F8" }}
                   placeholder="Your full name"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">WhatsApp Number (10 digits)</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">WhatsApp Number (10 digits)</label>
                 <Input
                   type="tel"
                   value={signUpPhone}
                   onChange={(e) => setSignUpPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className="rounded-xl border-border h-12"
-                  style={{ backgroundColor: "#080C09" }}
+                  className="rounded-xl border-[#E0E0E0] h-12 focus:border-[#00C853] focus:ring-[#00C853]"
+                  style={{ backgroundColor: "#F8F8F8" }}
                   placeholder="9876543210"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">Password</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Password</label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
                     value={signUpPassword}
                     onChange={(e) => setSignUpPassword(e.target.value)}
-                    className="rounded-xl border-border h-12 pr-10"
-                    style={{ backgroundColor: "#080C09" }}
+                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
+                    style={{ backgroundColor: "#F8F8F8" }}
                     placeholder="At least 6 characters"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#1A1A1A]"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -337,20 +338,20 @@ export default function Auth() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1.5">Confirm Password</label>
+                <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Confirm Password</label>
                 <div className="relative">
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="rounded-xl border-border h-12 pr-10"
-                    style={{ backgroundColor: "#080C09" }}
+                    className="rounded-xl border-[#E0E0E0] h-12 pr-10 focus:border-[#00C853] focus:ring-[#00C853]"
+                    style={{ backgroundColor: "#F8F8F8" }}
                     placeholder="Re-enter password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#1A1A1A]"
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -360,14 +361,14 @@ export default function Auth() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-xl text-black font-semibold"
-                style={{ backgroundColor: "#00E676" }}
+                className="w-full h-12 rounded-xl text-white font-semibold bg-[#00C853] hover:bg-[#00A843]"
               >
                 {loading ? "Please wait..." : "Create Account"}
               </Button>
             </motion.form>
           )}
         </AnimatePresence>
+        </div>
       </motion.div>
 
       {/* Language Selector Modal */}

@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO } from "@/lib/seoGenerator";
+import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 
 interface Deployment {
   id: string;
@@ -297,39 +298,49 @@ export default function DevDashboard() {
       created_at: new Date().toISOString(),
     });
 
-    // Send WhatsApp to LeadPe
-    const leadpeMessage = [
-      "🚀 NEW DEPLOYMENT",
-      "━━━━━━━━━━━━",
-      `Builder: ${profile?.full_name || "Unknown"}`,
-      `Business: ${businessName}`,
-      `Type: ${businessType}`,
-      `City: ${city}`,
-      `Owner WA: ${ownerWhatsapp}`,
-      `Fee charged: ₹${fee}`,
-      `LeadPe cut: ₹${commission}`,
-      `Builder gets: ₹${earning}`,
-      `Site: ${fullDomain}`,
-      `GitHub: ${githubUrl}`,
-      "━━━━━━━━━━━━",
-      "LeadPe ⚡",
-    ].join("%0A");
+    // Send WhatsApp messages using the new service
+    const deployData = {
+      businessName,
+      businessType,
+      city,
+      whatsapp: ownerWhatsapp,
+      ownerName,
+      siteUrl: fullDomain,
+      fee,
+      commission,
+      earning,
+      githubUrl,
+      builderName: profile?.full_name || "Unknown"
+    };
 
-    window.open(`https://wa.me/919973383902?text=${leadpeMessage}`, "_blank", "noopener,noreferrer");
+    // Send to admin
+    await sendWhatsApp(
+      "919973383902",
+      getMessage('newSignup', 'english', deployData), // Use newSignup for admin notifications
+      data.id,
+      'siteDeployed',
+      'english'
+    );
 
-    // Send WhatsApp to owner
-    const ownerMessage = [
-      "🎉 Aapki website live ho gayi!",
-      "━━━━━━━━━━━━",
-      fullDomain,
-      "━━━━━━━━━━━━",
-      "Ab Google pe customers aapko dhundhenge aur seedha aapke WhatsApp pe message aayega! 🔔",
-      "Koi help chahiye?",
-      "Reply karein is message pe.",
-      "LeadPe ⚡",
-    ].join("%0A");
+    // Send to business owner
+    await sendWhatsApp(
+      ownerWhatsapp.replace(/\D/g, ""),
+      getMessage('siteDeployed', 'hinglish', deployData),
+      data.id,
+      'siteDeployed',
+      'hinglish'
+    );
 
-    window.open(`https://wa.me/91${ownerWhatsapp.replace(/\D/g, "")}?text=${ownerMessage}`, "_blank", "noopener,noreferrer");
+    // Send day1 message to owner
+    setTimeout(async () => {
+      await sendWhatsApp(
+        ownerWhatsapp.replace(/\D/g, ""),
+        getMessage('day1', 'hinglish', deployData),
+        data.id,
+        'day1',
+        'hinglish'
+      );
+    }, 5000); // Send after 5 seconds
 
     setDeployedSubdomain(fullDomain);
     setDeployedBusinessName(businessName);
@@ -378,7 +389,7 @@ export default function DevDashboard() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-xl">LeadPe</span>
+            <LeadPeLogo theme="dark" size="sm" />
             <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
           </div>
           <div className="flex items-center gap-4">

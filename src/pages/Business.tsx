@@ -78,7 +78,7 @@ const Business = () => {
       <div className="mesh-bg" />
       <div id="business-signup" className="w-full max-w-lg relative z-10 scroll-mt-24 md:scroll-mt-32">
         <div className="text-center mb-8">
-          <LeadPeLogo size="md" />
+          <LeadPeLogo theme="light" size="md" />
           <div className="flex items-center justify-center gap-2 mt-6 mb-2">
             {[1, 2, 3].map(s => (
               <div key={s} className={`h-2 rounded-full transition-all ${s === step ? "w-12 bg-primary" : s < step ? "w-8 bg-primary/40" : "w-8 bg-border"}`} />

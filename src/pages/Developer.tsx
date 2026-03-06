@@ -172,7 +172,7 @@ const Developer = () => {
       {/* Footer */}
       <footer className="border-t border-border/30 py-8">
         <div className="container text-center">
-          <LeadPeLogo size="sm" />
+          <LeadPeLogo theme="dark" size="sm" />
           <p className="text-xs text-muted-foreground mt-2">© 2026 LeadPe. Made in India 🇮🇳</p>
         </div>
       </footer>

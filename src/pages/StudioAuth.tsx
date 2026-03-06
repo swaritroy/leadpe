@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
+import LeadPeLogo from "@/components/LeadPeLogo";
 
 export default function StudioAuth() {
   const navigate = useNavigate();
@@ -177,11 +178,8 @@ export default function StudioAuth() {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="font-bold text-2xl">LeadPe</span>
-            <span className="font-bold text-2xl" style={{ color: "#00E676" }}>Studio</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Sign in to start building and earning</p>
+          <LeadPeLogo theme="dark" size="lg" />
+          <p className="text-sm text-muted-foreground mt-4">Sign in to start building and earning</p>
         </div>
 
         {/* Tab Switcher */}

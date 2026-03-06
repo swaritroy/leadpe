@@ -16,7 +16,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 backdrop-blur-xl bg-background/80">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/">
-          <LeadPeLogo size="sm" />
+          <LeadPeLogo theme="light" size="sm" />
         </Link>
 
         {/* Desktop */}

@@ -4,6 +4,7 @@ import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 
 interface LeadCaptureFormProps {
   businessId: string;
@@ -83,24 +84,20 @@ export default function LeadCaptureForm({ businessId, businessName, ownerWhatsap
 
       if (dbError) throw dbError;
 
-      // Send WhatsApp to business owner
-      const whatsappMessage = [
-        `🔔 NEW INQUIRY — ${businessName}`,
-        "━━━━━━━━━━━━━━",
-        `Naam: ${formData.name}`,
-        `Number: ${phoneDigits}`,
-        `Interest: ${formData.interest}`,
-        formData.message ? `Message: ${formData.message}` : "",
-        `Time: ${timestamp}`,
-        "━━━━━━━━━━━━━━",
-        "Reply karein aur customer se baat karein! 🎯",
-        "LeadPe ⚡ leadpe.online",
-      ].filter(Boolean).join("%0A");
+      // Send WhatsApp to business owner using new service
+      const leadData = {
+        customerName: formData.name,
+        customerPhone: phoneDigits,
+        interest: formData.interest,
+        time: timestamp
+      };
 
-      window.open(
-        `https://wa.me/91${ownerWhatsapp}?text=${whatsappMessage}`,
-        "_blank",
-        "noopener,noreferrer"
+      await sendWhatsApp(
+        ownerWhatsapp,
+        getMessage('newLead', 'hinglish', leadData),
+        businessId,
+        'newLead',
+        'hinglish'
       );
 
       setSuccess(true);

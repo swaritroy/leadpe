@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import LeadPeLogo from "@/components/LeadPeLogo";
 
 const aiTools = ["ChatGPT", "Lovable", "Cursor", "GitHub Copilot", "Other"];
 const capacityOptions = ["1-2", "3-5", "6-10", "10+"];
@@ -213,7 +214,7 @@ export default function Studio() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-xl">LeadPe</span>
+            <LeadPeLogo theme="dark" size="sm" />
             <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
           </div>
           <div className="flex items-center gap-6">
@@ -684,7 +685,7 @@ export default function Studio() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xl">LeadPe</span>
+                <LeadPeLogo theme="dark" size="sm" />
                 <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">Build. Deploy. Earn.</p>

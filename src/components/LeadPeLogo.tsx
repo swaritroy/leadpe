@@ -1,15 +1,31 @@
 interface LeadPeLogoProps {
-  size?: "sm" | "md" | "lg";
+  theme?: "light" | "dark";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
-const textSizes = { sm: "text-xl", md: "text-2xl", lg: "text-3xl" };
+const sizeMap = {
+  sm: "18px",
+  md: "26px",
+  lg: "34px",
+  xl: "48px",
+};
 
-const LeadPeLogo = ({ size = "md", className = "" }: LeadPeLogoProps) => {
+const LeadPeLogo = ({ theme = "light", size = "md", className = "" }: LeadPeLogoProps) => {
+  const isLight = theme === "light";
+  
   return (
-    <span className={`${textSizes[size]} font-extrabold tracking-tight ${className}`} style={{ fontFamily: 'Syne, sans-serif' }}>
-      <span className="text-foreground">Lead</span>
-      <span className="text-primary">Pe</span>
+    <span 
+      className={`font-bold ${className}`} 
+      style={{ 
+        fontFamily: "Syne, sans-serif",
+        fontSize: sizeMap[size],
+        letterSpacing: "-0.5px",
+        fontWeight: 700,
+      }}
+    >
+      <span style={{ color: isLight ? "#1A1A1A" : "#FFFFFF" }}>Lead</span>
+      <span style={{ color: "#00C853" }}>Pe</span>
     </span>
   );
 };
