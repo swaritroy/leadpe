@@ -115,7 +115,7 @@ export async function generateWeeklyReport(businessId: string): Promise<WeeklyRe
     if (!profile) return null;
     
     // Get deployment data
-    const { data: deployment } = await (supabase.from("deployments") as any)
+    const { data: deployment } = await (supabase as any).from("deployments")
       .select("*")
       .eq("owner_whatsapp", profile.whatsapp_number.replace(/\D/g, ""))
       .order("created_at", { ascending: false })
@@ -265,7 +265,7 @@ export async function sendWeeklyReportWhatsApp(report: WeeklyReportData): Promis
     window.open(`https://wa.me/${fullPhone}?text=${encodedMessage}`, "_blank", "noopener,noreferrer");
     
     // Log the message
-    await (supabase.from("message_log") as any).insert({
+    await (supabase as any).from("message_log").insert({
       business_id: report.phone,
       day: null,
       recipient: "owner",
@@ -285,7 +285,7 @@ export async function sendWeeklyReportWhatsApp(report: WeeklyReportData): Promis
 // Save report to Supabase
 export async function saveWeeklyReport(report: WeeklyReportData, businessId: string): Promise<boolean> {
   try {
-    const { error } = await (supabase.from("weekly_reports") as any).insert({
+    const { error } = await (supabase as any).from("weekly_reports").insert({
       business_id: businessId,
       week_start: report.weekStart,
       visitors: report.visitors,
@@ -307,7 +307,7 @@ export async function saveWeeklyReport(report: WeeklyReportData, businessId: str
 // Get past reports for a business
 export async function getPastWeeklyReports(businessId: string, limit: number = 4): Promise<any[]> {
   try {
-    const { data } = await (supabase.from("weekly_reports") as any)
+    const { data } = await (supabase as any).from("weekly_reports")
       .select("*")
       .eq("business_id", businessId)
       .order("week_start", { ascending: false })

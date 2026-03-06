@@ -160,7 +160,7 @@ export default function Index() {
     const whatsappDigits = bizForm.whatsappNumber.replace(/\D/g, "");
 
     try {
-      const { error } = await supabase.from("signups").insert({
+      const { error } = await (supabase as any).from("signups").insert({
         owner_name: bizForm.ownerName,
         business_name: bizForm.businessName,
         business_type: bizForm.businessType,
@@ -169,7 +169,7 @@ export default function Index() {
         trial_code: code,
         status: "trial",
         created_at: createdAt.toISOString(),
-      } as any);
+      });
 
       if (error) throw error;
 

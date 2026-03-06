@@ -223,7 +223,7 @@ LeadPe ⚡`,
 
       } catch (err) {
         results.failed++;
-        results.errors.push(`${business.business_name || business.full_name}: ${err.message}`);
+        results.errors.push(`${business.business_name || business.full_name}: ${(err as Error).message}`);
       }
     }
 
@@ -241,7 +241,7 @@ LeadPe ⚡`,
 
   } catch (error) {
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error as Error).message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

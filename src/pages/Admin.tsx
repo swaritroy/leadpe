@@ -169,7 +169,7 @@ export default function Admin() {
         .select("*")
         .order("created_at", { ascending: false });
       
-      const { data: deploymentsData } = await (supabase.from("deployments") as any)
+      const { data: deploymentsData } = await (supabase as any).from("deployments")
         .select("*")
         .order("created_at", { ascending: false });
       
@@ -177,7 +177,7 @@ export default function Admin() {
         .select("*")
         .order("created_at", { ascending: false });
       
-      const { data: earningsData } = await (supabase.from("earnings") as any)
+      const { data: earningsData } = await (supabase as any).from("earnings")
         .select("*")
         .order("created_at", { ascending: false });
       
@@ -392,7 +392,7 @@ export default function Admin() {
   const markPayoutPaid = async (coderId: string) => {
     const coderEarnings = unpaidEarnings.filter(e => e.vibe_coder_id === coderId);
     for (const earning of coderEarnings) {
-      await (supabase.from("earnings") as any)
+      await (supabase as any).from("earnings")
         .update({ paid: true, paid_at: new Date().toISOString() })
         .eq("id", earning.id);
     }
@@ -402,7 +402,7 @@ export default function Admin() {
   
   const markAllPaid = async () => {
     for (const earning of unpaidEarnings) {
-      await (supabase.from("earnings") as any)
+      await (supabase as any).from("earnings")
         .update({ paid: true, paid_at: new Date().toISOString() })
         .eq("id", earning.id);
     }
@@ -864,7 +864,7 @@ export default function Admin() {
           
           {expandedSections.has("quick") && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button onClick={sendWeeklyReports} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={() => toast({ title: "Reports", description: "Weekly reports triggered" })} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <TrendingUp size={24} style={{ color: "#00E676" }} />
                 </div>

@@ -109,13 +109,13 @@ export default function DevDashboard() {
       .single();
     setProfile(profileData);
 
-    const { data: deployData } = await (supabase.from("deployments") as any)
+    const { data: deployData } = await (supabase as any).from("deployments")
       .select("*")
       .eq("vibe_coder_id", user.id)
       .order("created_at", { ascending: false });
     setDeployments(deployData || []);
 
-    const { data: earnData } = await (supabase.from("earnings") as any)
+    const { data: earnData } = await (supabase as any).from("earnings")
       .select("*")
       .eq("vibe_coder_id", user.id);
     setEarnings(earnData || []);
@@ -247,7 +247,7 @@ export default function DevDashboard() {
       phone: ownerWhatsapp,
     });
 
-    const { data, error } = await (supabase.from("deployments") as any).insert({
+    const { data, error } = await (supabase as any).from("deployments").insert({
       vibe_coder_id: user?.id,
       business_name: businessName,
       business_type: businessType,
@@ -287,7 +287,7 @@ export default function DevDashboard() {
     }
 
     // Create earnings record for building fee
-    await (supabase.from("earnings") as any).insert({
+    await (supabase as any).from("earnings").insert({
       vibe_coder_id: user?.id,
       deployment_id: data.id,
       amount: earning,
