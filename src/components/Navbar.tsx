@@ -10,7 +10,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
 
-  const dashboardLink = role === "developer" ? "/dev/dashboard" : role === "business" ? "/client/dashboard" : role === "admin" ? "/admin" : "/auth";
+  const dashboardLink = role === "developer" || role === "vibe_coder" ? "/dev/dashboard" : role === "business" ? "/client/dashboard" : role === "admin" ? "/admin" : "/auth";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 backdrop-blur-xl bg-background/80">
@@ -31,16 +31,23 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-3">
           {user ? (
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl" asChild>
-              <Link to={dashboardLink}>Dashboard</Link>
-            </Button>
+            <div className="flex items-center gap-3">
+              <Link to={dashboardLink} className="hidden md:flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
+                  {user.email?.[0].toUpperCase() || "U"}
+                </div>
+              </Link>
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl" asChild>
+                <Link to={dashboardLink}>Dashboard</Link>
+              </Button>
+            </div>
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/auth">Sign In</Link>
               </Button>
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl" asChild>
-                <Link to="/auth">Get Started Free</Link>
+              <Button size="sm" className="text-black font-semibold hover:opacity-90 rounded-xl" style={{ backgroundColor: "#00E676" }} asChild>
+                <a href="/#business-signup">Get Started Free</a>
               </Button>
             </>
           )}
@@ -62,13 +69,16 @@ const Navbar = () => {
             Pricing
           </a>
           {user ? (
-            <Link to={dashboardLink} onClick={() => setMobileOpen(false)} className="block px-4 py-2 rounded-lg text-sm font-medium text-primary">
+            <Link to={dashboardLink} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-primary">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
+                {user.email?.[0].toUpperCase() || "U"}
+              </div>
               Dashboard
             </Link>
           ) : (
-            <Link to="/auth" onClick={() => setMobileOpen(false)} className="block px-4 py-2 rounded-lg text-sm font-medium text-primary">
+            <a href="/#business-signup" onClick={() => setMobileOpen(false)} className="block px-4 py-2 rounded-lg text-sm font-medium text-primary">
               Get Started Free
-            </Link>
+            </a>
           )}
         </div>
       )}

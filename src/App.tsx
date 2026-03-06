@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import Developer from "./pages/Developer";
 import Business from "./pages/Business";
@@ -16,6 +17,8 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientSettings from "./pages/ClientSettings";
 import DevDashboard from "./pages/DevDashboard";
 import ViewSite from "./pages/ViewSite";
+import Studio from "./pages/Studio";
+import StudioAuth from "./pages/StudioAuth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +35,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/select-role" element={<SelectRole />} />
 
-            {/* Dynamic site rendering */}
+            {/* Studio auth route */}
+            <Route path="/studio/auth" element={<StudioAuth />} />
             <Route path="/view/:slug" element={<ViewSite />} />
 
             {/* Admin has its own nav */}
@@ -54,9 +58,9 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Protected dev routes */}
+            {/* Protected dev routes — includes vibe_coders */}
             <Route path="/dev/dashboard" element={
-              <ProtectedRoute allowedRoles={["developer"]}>
+              <ProtectedRoute allowedRoles={["developer", "vibe_coder"]} redirectTo="/studio/auth">
                 <DevDashboard />
               </ProtectedRoute>
             } />
@@ -67,7 +71,7 @@ const App = () => (
                 <Navbar />
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/developer" element={<Developer />} />
+                  <Route path="/studio" element={<Studio />} />
                   <Route path="/business" element={<Business />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
@@ -75,6 +79,7 @@ const App = () => (
             } />
           </Routes>
         </BrowserRouter>
+        <WhatsAppButton />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

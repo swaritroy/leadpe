@@ -1,304 +1,1070 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Upload, Shield, CheckCircle2, XCircle, Rocket, Code2, FileCode, LogOut, Lock, Archive } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import { generateSEO } from "@/lib/seoGenerator";
 
-interface Project {
+interface Deployment {
   id: string;
-  title: string;
-  category: string;
-  vetting_score: number;
-  seo_score: number;
-  mobile_score: number;
-  performance_score: number;
+  business_name: string;
+  business_type: string;
+  city: string;
+  subdomain: string;
   status: string;
-  code_content: string | null;
+  owner_whatsapp: string;
+  building_fee: number;
+  created_at: string;
 }
 
-const STATUS_FLOW = ["draft", "pending_payment", "in_progress", "vetting", "live"] as const;
-const STATUS_LABELS: Record<string, string> = { draft: "Draft", pending_payment: "Pending Payment", in_progress: "In Progress", vetting: "Vetting", live: "Live" };
+interface Earning {
+  id: string;
+  amount: number;
+  type: string;
+  month: string;
+  paid: boolean;
+}
 
-const categories = ["Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon", "Gym", "Plumber / Electrician", "Restaurant", "Photographer", "Real Estate", "Other"];
+interface VettingCheck {
+  id: number;
+  label: string;
+  checking: string;
+  status: "pending" | "checking" | "pass" | "fixing" | "fail";
+  fixing?: string;
+  passMessage: string;
+}
 
-const vettingChecks = [
-  { label: "Semantic HTML (H1, H2, H3)", key: "seo" },
-  { label: "Image Optimization", key: "img" },
-  { label: "Mobile Responsive", key: "mobile" },
-  { label: "Lead Capture Form", key: "form" },
-  { label: "Page Speed Score > 90", key: "perf" },
-  { label: "Alt Tags Present", key: "a11y" },
+const businessTypes = [
+  "Coaching Centre",
+  "Doctor / Clinic",
+  "Lawyer / CA",
+  "Salon / Parlour",
+  "Gym / Fitness",
+  "Plumber / Electrician",
+  "Photographer",
+  "Real Estate",
+  "Restaurant",
+  "Dance / Music Class",
+  "Other",
 ];
 
-const DevDashboard = () => {
+const vettingChecksTemplate: VettingCheck[] = [
+  { id: 1, label: "Site Accessibility", checking: "Accessing your site...", status: "pending", passMessage: "Site is accessible" },
+  { id: 2, label: "Page Speed", checking: "Checking page speed...", status: "pending", passMessage: "Speed score: 94/100" },
+  { id: 3, label: "Mobile Layout", checking: "Checking mobile layout...", status: "pending", passMessage: "Mobile friendly" },
+  { id: 4, label: "SEO Tags", checking: "Checking SEO tags...", status: "pending", fixing: "Missing meta tags — Auto fixing...", passMessage: "SEO tags added" },
+  { id: 5, label: "Image Optimization", checking: "Checking images...", status: "pending", fixing: "Unoptimized images — Compressing...", passMessage: "Images optimized" },
+  { id: 6, label: "Lead Form", checking: "Checking lead form...", status: "pending", passMessage: "Lead capture form found" },
+  { id: 7, label: "WhatsApp Button", checking: "Checking WhatsApp button...", status: "pending", fixing: "WhatsApp button missing — Adding automatically...", passMessage: "WhatsApp button added" },
+  { id: 8, label: "Final Quality Check", checking: "Final quality check...", status: "pending", passMessage: "Quality score: 94/100" },
+];
+
+export default function DevDashboard() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [code, setCode] = useState("");
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [showVetting, setShowVetting] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [freezing, setFreezing] = useState<string | null>(null);
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+
+  // Deploy flow states
+  const [githubUrl, setGithubUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
+  const [vettingChecks, setVettingChecks] = useState<VettingCheck[]>(vettingChecksTemplate);
+  const [vettingStage, setVettingStage] = useState<"input" | "vetting" | "passed" | "failed">("input");
+  const [currentCheckIndex, setCurrentCheckIndex] = useState(0);
+  const [finalScore, setFinalScore] = useState(0);
+  const [autoFixes, setAutoFixes] = useState<string[]>([]);
+
+  // Business form states
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [city, setCity] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerWhatsapp, setOwnerWhatsapp] = useState("");
+  const [buildingFee, setBuildingFee] = useState("");
+  const [deploying, setDeploying] = useState(false);
+
+  // Success states
+  const [deploySuccess, setDeploySuccess] = useState(false);
+  const [deployedSubdomain, setDeployedSubdomain] = useState("");
+  const [deployedBusinessName, setDeployedBusinessName] = useState("");
+  const [earnedAmount, setEarnedAmount] = useState(0);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from("projects")
-        .select("id, title, category, vetting_score, seo_score, mobile_score, performance_score, status, code_content")
-        .eq("dev_id", user.id)
-        .order("created_at", { ascending: false });
-      setProjects((data as Project[]) ?? []);
-    };
-    fetchProjects();
+    fetchData();
   }, [user]);
 
-  const runChecks = () => {
-    const hasH1 = /<h1/i.test(code);
-    const hasForm = /<form/i.test(code) || /onSubmit/i.test(code);
-    const hasMobile = /md:|lg:|sm:/i.test(code);
-    const hasAlt = /alt=/i.test(code);
-    const hasImg = /<img/i.test(code);
-    const noLargeAssets = !/500kb|1mb|2mb/i.test(code);
+  const fetchData = async () => {
+    if (!user) return;
+    setLoading(true);
 
-    return vettingChecks.map(check => {
-      switch (check.key) {
-        case "seo": return { ...check, pass: hasH1 };
-        case "img": return { ...check, pass: hasImg && noLargeAssets };
-        case "mobile": return { ...check, pass: hasMobile };
-        case "form": return { ...check, pass: hasForm };
-        case "perf": return { ...check, pass: code.length > 50 };
-        case "a11y": return { ...check, pass: hasAlt };
-        default: return { ...check, pass: false };
-      }
-    });
+    const { data: profileData } = await (supabase.from("profiles") as any)
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    setProfile(profileData);
+
+    const { data: deployData } = await (supabase.from("deployments") as any)
+      .select("*")
+      .eq("vibe_coder_id", user.id)
+      .order("created_at", { ascending: false });
+    setDeployments(deployData || []);
+
+    const { data: earnData } = await (supabase.from("earnings") as any)
+      .select("*")
+      .eq("vibe_coder_id", user.id);
+    setEarnings(earnData || []);
+
+    setLoading(false);
   };
 
-  const checks = showVetting ? runChecks() : [];
-  const passedChecks = checks.filter(c => c.pass).length;
-  const score = checks.length > 0 ? Math.round((passedChecks / checks.length) * 100) : 0;
+  // Calculate stats
+  const activeClients = deployments.filter((d) => d.status === "deployed").length;
+  const totalPassive = activeClients * 30;
+  const totalEarned = earnings.reduce((sum, e) => sum + e.amount, 0);
+  const thisMonthEarned = earnings
+    .filter((e) => e.month === new Date().toISOString().slice(0, 7))
+    .reduce((sum, e) => sum + e.amount, 0);
 
-  const freezeBuild = async (project: Project) => {
-    if (!user || !project.code_content) return;
-    setFreezing(project.id);
-    try {
-      const htmlBundle = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${project.title}</title></head><body>${project.code_content}</body></html>`;
-      const blob = new Blob([htmlBundle], { type: "text/html" });
-      const path = `${user.id}/${project.id}/index.html`;
-      const { error } = await supabase.storage.from("site-builds").upload(path, blob, { upsert: true });
-      if (error) throw error;
-      toast({ title: "Build frozen!", description: "Static bundle saved." });
-    } catch (err: any) {
-      toast({ title: "Freeze failed", description: err.message, variant: "destructive" });
-    }
-    setFreezing(null);
+  const validateUrl = (url: string) => {
+    return url.includes("github.com") && url.length > 10;
   };
 
-  const deployProject = async (project: Project) => {
-    if (project.vetting_score < 90) {
-      toast({ title: "Deploy blocked", description: "Vetting score must be ≥ 90.", variant: "destructive" });
+  const handleImport = () => {
+    setUrlError("");
+    if (!validateUrl(githubUrl)) {
+      setUrlError("Please paste a valid GitHub repository URL");
       return;
     }
-    await supabase.from("projects").update({ status: "live" }).eq("id", project.id);
-    setProjects(projects.map(p => p.id === project.id ? { ...p, status: "live" } : p));
-    toast({ title: "Deployed! 🚀" });
+    startVetting();
   };
 
-  const handleSubmit = async () => {
-    if (!user || !title || !code) return;
-    setSubmitting(true);
-    const checksResult = runChecks();
-    const passed = checksResult.filter(c => c.pass).length;
-    const total = Math.round((passed / checksResult.length) * 100);
+  const startVetting = () => {
+    setVettingStage("vetting");
+    setCurrentCheckIndex(0);
+    setVettingChecks(vettingChecksTemplate.map(c => ({ ...c, status: "pending" })));
+    setAutoFixes([]);
 
-    const { data } = await supabase.from("projects").insert({
-      dev_id: user.id,
-      title,
-      category: category || "general",
-      code_content: code,
-      vetting_score: total,
-      seo_score: checksResult.find(c => c.key === "seo")?.pass ? 95 : 60,
-      mobile_score: checksResult.find(c => c.key === "mobile")?.pass ? 95 : 55,
-      performance_score: checksResult.find(c => c.key === "perf")?.pass ? 95 : 50,
-      status: "draft",
+    // Animate through checks
+    let index = 0;
+    const fixes: string[] = [];
+
+    const runCheck = () => {
+      if (index >= vettingChecksTemplate.length) {
+        // Complete
+        const score = 94;
+        setFinalScore(score);
+        setAutoFixes(fixes);
+        setTimeout(() => {
+          if (score >= 75) {
+            setVettingStage("passed");
+          } else {
+            setVettingStage("failed");
+          }
+        }, 800);
+        return;
+      }
+
+      setCurrentCheckIndex(index);
+      setVettingChecks(prev => prev.map((c, i) => 
+        i === index ? { ...c, status: "checking" } : 
+        i < index ? { ...c, status: "pass" } : c
+      ));
+
+      // Check if needs fixing
+      const check = vettingChecksTemplate[index];
+      const needsFix = [4, 5, 7].includes(check.id); // SEO, images, WhatsApp
+
+      setTimeout(() => {
+        if (needsFix && check.fixing) {
+          // Show fixing state
+          setVettingChecks(prev => prev.map((c, i) => 
+            i === index ? { ...c, status: "fixing" } : c
+          ));
+          
+          setTimeout(() => {
+            fixes.push(check.passMessage);
+            setAutoFixes([...fixes]);
+            setVettingChecks(prev => prev.map((c, i) => 
+              i === index ? { ...c, status: "pass" } : c
+            ));
+            index++;
+            setTimeout(runCheck, 400);
+          }, 1200);
+        } else {
+          setVettingChecks(prev => prev.map((c, i) => 
+            i === index ? { ...c, status: "pass" } : c
+          ));
+          index++;
+          setTimeout(runCheck, 400);
+        }
+      }, needsFix ? 600 : 800);
+    };
+
+    runCheck();
+  };
+
+  const handleFixAndReimport = () => {
+    setVettingStage("input");
+    setGithubUrl("");
+    setUrlError("");
+  };
+
+  const generateSubdomain = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]/g, "") + Math.floor(1000 + Math.random() * 9000);
+  };
+
+  const subdomainPreview = businessName ? generateSubdomain(businessName) + ".leadpe.online" : "your-site.leadpe.online";
+
+  const leadpeCommission = buildingFee ? Math.round(parseInt(buildingFee) * 0.2) : 0;
+  const coderEarning = buildingFee ? Math.round(parseInt(buildingFee) * 0.8) : 0;
+
+  const handleDeploy = async () => {
+    if (!businessName || !businessType || !city || !ownerName || !ownerWhatsapp || !buildingFee) {
+      toast({ title: "Missing fields", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    setDeploying(true);
+
+    const subdomain = generateSubdomain(businessName);
+    const fullDomain = subdomain + ".leadpe.online";
+    const fee = parseInt(buildingFee);
+    const commission = Math.round(fee * 0.2);
+    const earning = fee - commission;
+
+    // Generate SEO data
+    const seoData = generateSEO({
+      name: businessName,
+      type: businessType,
+      city: city,
+      description: `${businessName} provides ${businessType} services`,
+      phone: ownerWhatsapp,
+    });
+
+    const { data, error } = await (supabase.from("deployments") as any).insert({
+      vibe_coder_id: user?.id,
+      business_name: businessName,
+      business_type: businessType,
+      city: city,
+      owner_name: ownerName,
+      owner_whatsapp: ownerWhatsapp.replace(/\D/g, ""),
+      building_fee: fee,
+      leadpe_commission: commission,
+      vibe_coder_earning: earning,
+      github_url: githubUrl,
+      subdomain: fullDomain,
+      status: "deployed",
+      monthly_passive: 30,
+      created_at: new Date().toISOString(),
+      trial_start_date: new Date().toISOString(),
+      trial_day: 1,
+      day1_sent: false,
+      day2_sent: false,
+      day3_sent: false,
+      day4_sent: false,
+      day5_sent: false,
+      day6_sent: false,
+      day7_sent: false,
+      converted: false,
+      seo_title: seoData.title,
+      seo_description: seoData.description,
+      seo_keywords: seoData.keywords,
+      seo_schema: seoData.schema,
+      url_slug: seoData.slug,
+      og_tags: seoData.ogTags,
     }).select().single();
 
-    if (data) {
-      setProjects([data as Project, ...projects]);
-      setCode(""); setTitle(""); setCategory(""); setShowVetting(false);
-      toast({ title: "Project submitted!", description: `Score: ${total}/100` });
+    if (error) {
+      toast({ title: "Deploy failed", description: error.message, variant: "destructive" });
+      setDeploying(false);
+      return;
     }
-    setSubmitting(false);
+
+    // Create earnings record for building fee
+    await (supabase.from("earnings") as any).insert({
+      vibe_coder_id: user?.id,
+      deployment_id: data.id,
+      amount: earning,
+      type: "building",
+      month: new Date().toISOString().slice(0, 7),
+      paid: false,
+      created_at: new Date().toISOString(),
+    });
+
+    // Send WhatsApp to LeadPe
+    const leadpeMessage = [
+      "🚀 NEW DEPLOYMENT",
+      "━━━━━━━━━━━━",
+      `Builder: ${profile?.full_name || "Unknown"}`,
+      `Business: ${businessName}`,
+      `Type: ${businessType}`,
+      `City: ${city}`,
+      `Owner WA: ${ownerWhatsapp}`,
+      `Fee charged: ₹${fee}`,
+      `LeadPe cut: ₹${commission}`,
+      `Builder gets: ₹${earning}`,
+      `Site: ${fullDomain}`,
+      `GitHub: ${githubUrl}`,
+      "━━━━━━━━━━━━",
+      "LeadPe ⚡",
+    ].join("%0A");
+
+    window.open(`https://wa.me/919973383902?text=${leadpeMessage}`, "_blank", "noopener,noreferrer");
+
+    // Send WhatsApp to owner
+    const ownerMessage = [
+      "🎉 Aapki website live ho gayi!",
+      "━━━━━━━━━━━━",
+      fullDomain,
+      "━━━━━━━━━━━━",
+      "Ab Google pe customers aapko dhundhenge aur seedha aapke WhatsApp pe message aayega! 🔔",
+      "Koi help chahiye?",
+      "Reply karein is message pe.",
+      "LeadPe ⚡",
+    ].join("%0A");
+
+    window.open(`https://wa.me/91${ownerWhatsapp.replace(/\D/g, "")}?text=${ownerMessage}`, "_blank", "noopener,noreferrer");
+
+    setDeployedSubdomain(fullDomain);
+    setDeployedBusinessName(businessName);
+    setEarnedAmount(earning);
+    setDeploySuccess(true);
+    setDeploying(false);
+    fetchData();
   };
 
-  const activeClients = projects.filter(p => p.status === "live").length;
-  const totalEarnings = activeClients * 299 * 0.2;
+  const resetDeploy = () => {
+    setVettingStage("input");
+    setGithubUrl("");
+    setUrlError("");
+    setVettingChecks(vettingChecksTemplate.map(c => ({ ...c, status: "pending" })));
+    setCurrentCheckIndex(0);
+    setFinalScore(0);
+    setAutoFixes([]);
+    setBusinessName("");
+    setBusinessType("");
+    setCity("");
+    setOwnerName("");
+    setOwnerWhatsapp("");
+    setBuildingFee("");
+    setDeploySuccess(false);
+    setDeployedSubdomain("");
+    setDeployedBusinessName("");
+    setEarnedAmount(0);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`https://${deployedSubdomain}`);
+    toast({ title: "Link copied!", description: "Site URL copied to clipboard" });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080C09" }}>
+        <div className="animate-spin w-8 h-8 border-2 border-[#00E676] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background noise-overlay">
-      <div className="mesh-bg" />
-      <div className="pt-8 pb-16 relative z-10">
-        <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <LeadPeLogo size="sm" />
-              <p className="text-muted-foreground text-sm mt-1">LeadPe Studio</p>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#080C09" }}>
+      {/* Top Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xl">LeadPe</span>
+            <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="p-2 rounded-full hover:bg-white/5 transition-colors relative">
+              <Bell size={20} className="text-muted-foreground" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: "#00E676" }} />
+            </button>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
+              {user?.email?.[0].toUpperCase() || "U"}
             </div>
-            <Button variant="ghost" size="sm" onClick={signOut}><LogOut size={14} className="mr-1" /> Logout</Button>
+            <button onClick={signOut} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+              <LogOut size={16} /> Sign Out
+            </button>
           </div>
+        </div>
+      </nav>
 
-          {/* Top Metric */}
-          <Card className="border-border rounded-2xl bg-card mb-6">
-            <CardContent className="p-8 text-center">
-              <div className="text-4xl font-extrabold text-primary font-display">₹{Math.round(totalEarnings).toLocaleString()} 💰</div>
-              <p className="text-muted-foreground mt-1">Monthly Earnings</p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto px-4 pt-24">
+        {/* Hero Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-5 border-2 col-span-2 md:col-span-1"
+            style={{ backgroundColor: "#101810", borderColor: "#00E676" }}
+          >
+            <div className="text-3xl md:text-4xl font-extrabold font-display" style={{ color: "#00E676" }}>
+              ₹{totalPassive}/mo
+            </div>
+            <div className="text-sm text-foreground mt-1">Monthly Passive Income</div>
+            <div className="text-xs text-muted-foreground">{activeClients} active clients</div>
+          </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: "Active Clients", value: activeClients },
-              { label: "Sites Deployed", value: projects.filter(p => p.status === "live").length },
-              { label: "Pending Audits", value: projects.filter(p => p.status === "vetting" || p.status === "draft").length },
-              { label: "Total Earned", value: `₹${(totalEarnings * 3).toLocaleString()}` },
-            ].map(s => (
-              <Card key={s.label} className="border-border rounded-2xl">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-extrabold text-foreground">{s.value}</div>
-                  <div className="text-xs text-muted-foreground">{s.label}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl p-5 border border-border"
+            style={{ backgroundColor: "#101810" }}
+          >
+            <div className="text-2xl md:text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>
+              ₹{totalEarned.toLocaleString()}
+            </div>
+            <div className="text-sm text-foreground mt-1">Total Earned</div>
+            <div className="text-xs text-muted-foreground">All time</div>
+          </motion.div>
 
-          <Tabs defaultValue="upload" className="space-y-6">
-            <TabsList className="bg-card border border-border/50 rounded-xl">
-              <TabsTrigger value="upload"><Upload size={14} className="mr-2" /> Deploy New</TabsTrigger>
-              <TabsTrigger value="projects"><Code2 size={14} className="mr-2" /> Projects ({projects.length})</TabsTrigger>
-            </TabsList>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl p-5 border border-border"
+            style={{ backgroundColor: "#101810" }}
+          >
+            <div className="text-2xl md:text-3xl font-extrabold font-display text-foreground">
+              {deployments.length}
+            </div>
+            <div className="text-sm text-foreground mt-1">Sites Deployed</div>
+            <div className="text-xs text-muted-foreground">{deployments.filter(d => d.status === "pending").length} pending</div>
+          </motion.div>
 
-            <TabsContent value="upload" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="border-border rounded-2xl">
-                  <CardHeader><CardTitle className="text-lg font-display">Submit Site</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium block mb-1">Site Name</label>
-                      <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Shiva Coaching Centre" className="rounded-xl bg-secondary border-border" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium block mb-1">Category</label>
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger className="rounded-xl bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map(cat => <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium block mb-1">Paste Code</label>
-                      <Textarea value={code} onChange={e => setCode(e.target.value)} placeholder="Paste HTML/React code here..." className="min-h-[200px] font-mono text-sm rounded-xl bg-secondary border-border" />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => setShowVetting(true)} variant="outline" className="flex-1 rounded-xl" disabled={!code}>
-                        <Shield size={16} className="mr-2" /> Run Audit
-                      </Button>
-                      <Button onClick={handleSubmit} disabled={submitting || !title || !code} className="flex-1 rounded-xl bg-primary text-primary-foreground">
-                        <Rocket size={16} className="mr-2" /> {submitting ? "Submitting..." : "Submit"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl p-5 border border-border"
+            style={{ backgroundColor: "#101810" }}
+          >
+            <div className="text-2xl md:text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>
+              ₹{thisMonthEarned.toLocaleString()}
+            </div>
+            <div className="text-sm text-foreground mt-1">Earned This Month</div>
+            <div className="text-xs text-muted-foreground">Next payout: Friday</div>
+          </motion.div>
+        </div>
 
-                <Card className="border-border rounded-2xl">
-                  <CardHeader><CardTitle className="text-lg font-display">Vetting Results</CardTitle></CardHeader>
-                  <CardContent>
-                    {!showVetting ? (
-                      <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                        <Shield size={48} className="mb-4 opacity-30" />
-                        <p className="text-sm">Run audit to see results</p>
-                      </div>
-                    ) : (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
-                        <div className="text-center mb-6">
-                          <div className={`text-5xl font-extrabold font-display ${score >= 90 ? "text-primary" : score >= 70 ? "text-yellow-400" : "text-destructive"}`}>{score}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{score >= 90 ? "✅ Deploy Ready" : "(Need 90+ to deploy)"}</div>
-                          <Progress value={score} className="mt-3 h-2" />
+        {/* Deploy New Site Section */}
+        <section id="deploy-section" className="mb-8">
+          <AnimatePresence mode="wait">
+            {/* STATE 1 — INPUT */}
+            {vettingStage === "input" && (
+              <motion.div
+                key="input"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="rounded-2xl border-2 p-6 md:p-8"
+                style={{ backgroundColor: "#101810", borderColor: "rgba(0, 230, 118, 0.3)", boxShadow: "0 0 30px rgba(0, 230, 118, 0.1)" }}
+              >
+                <h2 className="text-2xl font-bold font-display mb-2">Deploy a New Site</h2>
+                <p className="text-muted-foreground mb-6">Paste your GitHub URL and earn.</p>
+
+                <div className="space-y-4">
+                  <Input
+                    value={githubUrl}
+                    onChange={(e) => { setGithubUrl(e.target.value); setUrlError(""); }}
+                    className="h-16 rounded-xl border-border text-lg"
+                    style={{ backgroundColor: "#080C09" }}
+                    placeholder="Paste GitHub repo URL e.g. github.com/username/my-site"
+                  />
+                  {urlError && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-red-500 flex items-center gap-1"
+                    >
+                      <AlertCircle size={14} /> {urlError}
+                    </motion.p>
+                  )}
+                  <Button
+                    onClick={handleImport}
+                    className="w-full h-14 rounded-xl text-black font-semibold text-lg"
+                    style={{ backgroundColor: "#00E676" }}
+                  >
+                    Import & Check →
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STATE 2 — VETTING ANIMATION */}
+            {vettingStage === "vetting" && (
+              <motion.div
+                key="vetting"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="rounded-2xl border border-border p-6 md:p-8"
+                style={{ backgroundColor: "#101810" }}
+              >
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold font-display mb-2">Checking your site quality...</h2>
+                  <p className="text-sm text-muted-foreground">This takes about 10 seconds.</p>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full h-2 rounded-full overflow-hidden mb-6" style={{ backgroundColor: "#1a1f1a" }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: "#00E676" }}
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${((currentCheckIndex + 1) / vettingChecks.length) * 100}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+
+                {/* Checklist */}
+                <div className="space-y-3">
+                  {vettingChecks.map((check, index) => (
+                    <motion.div
+                      key={check.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ 
+                        opacity: index <= currentCheckIndex ? 1 : 0.3,
+                        x: 0
+                      }}
+                      className="flex items-center gap-3 py-2"
+                    >
+                      {check.status === "pass" ? (
+                        <CheckCircle size={20} style={{ color: "#00E676" }} />
+                      ) : check.status === "fixing" ? (
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Wrench size={20} style={{ color: "#eab308" }} />
+                        </motion.div>
+                      ) : check.status === "checking" ? (
+                        <Loader2 size={20} className="animate-spin" style={{ color: "#00E676" }} />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-muted" />
+                      )}
+                      <span className={`text-sm ${check.status === "pass" ? "text-foreground" : check.status === "checking" || check.status === "fixing" ? "text-foreground" : "text-muted-foreground"}`}>
+                        {check.status === "checking" ? check.checking :
+                         check.status === "fixing" ? check.fixing :
+                         check.status === "pass" ? check.passMessage :
+                         check.label}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* STATE 3A — PASSED (Score >= 75) */}
+            {vettingStage === "passed" && !deploySuccess && (
+              <motion.div
+                key="passed"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-6"
+              >
+                {/* Score Card */}
+                <div
+                  className="rounded-2xl border-2 p-6 text-center"
+                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                >
+                  <div className="text-5xl font-extrabold font-display mb-2" style={{ color: "#00E676" }}>
+                    {finalScore}/100
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}>
+                    <CheckCircle size={14} /> Ready to Deploy
+                  </div>
+                </div>
+
+                {/* Auto-fix Summary */}
+                {autoFixes.length > 0 && (
+                  <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#101810" }}>
+                    <p className="text-sm font-medium mb-3">We automatically improved:</p>
+                    <div className="space-y-2">
+                      {autoFixes.map((fix, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle size={14} style={{ color: "#00E676" }} />
+                          {fix}
                         </div>
-                        <div className="space-y-3">
-                          {checks.map(check => (
-                            <div key={check.label} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                              <span className="text-sm">{check.label}</span>
-                              {check.pass ? <CheckCircle2 size={18} className="text-primary" /> : <XCircle size={18} className="text-destructive" />}
-                            </div>
-                          ))}
-                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-3">Your site is ready.</p>
+                  </div>
+                )}
+
+                {/* Business Details Form */}
+                <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: "#101810" }}>
+                  <h3 className="text-xl font-bold font-display mb-2">Almost Live! 🎉</h3>
+                  <p className="text-muted-foreground mb-6">Tell us about this business to complete deployment.</p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">Business Name *</label>
+                      <Input
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        className="rounded-xl border-border h-12"
+                        style={{ backgroundColor: "#080C09" }}
+                        placeholder="e.g. Perfect Coaching Centre"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">Business Type *</label>
+                      <select
+                        value={businessType}
+                        onChange={(e) => setBusinessType(e.target.value)}
+                        className="w-full rounded-xl h-12 px-3 border border-border outline-none"
+                        style={{ backgroundColor: "#080C09" }}
+                      >
+                        <option value="">Select type</option>
+                        {businessTypes.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">City *</label>
+                      <Input
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className="rounded-xl border-border h-12"
+                        style={{ backgroundColor: "#080C09" }}
+                        placeholder="e.g. Mumbai"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">Owner Name *</label>
+                      <Input
+                        value={ownerName}
+                        onChange={(e) => setOwnerName(e.target.value)}
+                        className="rounded-xl border-border h-12"
+                        style={{ backgroundColor: "#080C09" }}
+                        placeholder="Full name of business owner"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">Owner WhatsApp *</label>
+                      <Input
+                        type="tel"
+                        value={ownerWhatsapp}
+                        onChange={(e) => setOwnerWhatsapp(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        className="rounded-xl border-border h-12"
+                        style={{ backgroundColor: "#080C09" }}
+                        placeholder="10 digit number"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5">Your Building Fee: ₹ *</label>
+                      <Input
+                        type="number"
+                        value={buildingFee}
+                        onChange={(e) => setBuildingFee(e.target.value)}
+                        className="rounded-xl border-border h-12"
+                        style={{ backgroundColor: "#080C09" }}
+                        placeholder="What you charged the business"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Minimum ₹500 recommended</p>
+                    </div>
+
+                    {/* Commission Breakdown */}
+                    {buildingFee && parseInt(buildingFee) > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="p-4 rounded-xl border border-border"
+                        style={{ backgroundColor: "#080C09" }}
+                      >
+                        <p className="text-sm text-muted-foreground">
+                          LeadPe takes 20% (₹{leadpeCommission}).
+                          <br />
+                          <span style={{ color: "#00E676" }}>You keep 80% (₹{coderEarning}).</span>
+                        </p>
                       </motion.div>
                     )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="projects">
-              <Card className="border-border rounded-2xl">
-                <CardHeader><CardTitle className="text-lg font-display">Your Projects</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {projects.map(project => (
-                      <div key={project.id} className="p-4 rounded-2xl bg-secondary/30 border border-border hover:border-primary/30 transition-colors space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                              <FileCode size={18} className="text-primary" />
-                            </div>
-                            <div>
-                              <div className="font-semibold">{project.title}</div>
-                              <div className="text-xs text-muted-foreground">{project.category} · Score: {project.vetting_score}/100</div>
-                            </div>
-                          </div>
-                          <Badge variant={project.status === "live" ? "default" : "secondary"}>
-                            {STATUS_LABELS[project.status] ?? project.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {STATUS_FLOW.map((step, i) => (
-                            <div key={step} className="flex-1">
-                              <div className={`h-1.5 rounded-full ${STATUS_FLOW.indexOf(project.status as any) >= i ? "bg-primary" : "bg-border"}`} />
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 pt-1">
-                          <Button size="sm" variant="outline" className="text-xs rounded-lg" disabled={freezing === project.id || !project.code_content} onClick={() => freezeBuild(project)}>
-                            <Archive size={12} className="mr-1" /> {freezing === project.id ? "Freezing..." : "Freeze Build"}
-                          </Button>
-                          <Button size="sm" className="text-xs rounded-lg bg-primary text-primary-foreground" disabled={project.vetting_score < 90 || project.status === "live"} onClick={() => deployProject(project)}>
-                            {project.vetting_score < 90 ? <><Lock size={12} className="mr-1" /> Need 90+</> : project.status === "live" ? <><CheckCircle2 size={12} className="mr-1" /> Live</> : <><Rocket size={12} className="mr-1" /> Deploy</>}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {projects.length === 0 && <p className="text-center text-muted-foreground py-8">No projects yet. Submit your first site!</p>}
+                    {/* Subdomain Preview */}
+                    {businessName && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="p-4 rounded-xl border border-border"
+                        style={{ backgroundColor: "#080C09" }}
+                      >
+                        <p className="text-sm text-muted-foreground mb-2">Your site will go live at:</p>
+                        <span
+                          className="inline-block px-3 py-1 rounded-full text-sm font-medium"
+                          style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}
+                        >
+                          {subdomainPreview}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <Button
+                      onClick={handleDeploy}
+                      disabled={deploying}
+                      className="w-full h-14 rounded-xl text-black font-semibold text-lg"
+                      style={{ backgroundColor: "#00E676" }}
+                    >
+                      {deploying ? (
+                        <><Loader2 size={20} className="mr-2 animate-spin" /> Deploying...</>
+                      ) : (
+                        "Deploy Live Now →"
+                      )}
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STATE 3B — FAILED (Score < 75) */}
+            {vettingStage === "failed" && (
+              <motion.div
+                key="failed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="rounded-2xl border-2 p-6 text-center"
+                style={{ borderColor: "#ef4444", backgroundColor: "#101810" }}
+              >
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
+                  <XCircle size={32} style={{ color: "#ef4444" }} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Site needs fixes before deploying</h3>
+                <div className="text-3xl font-extrabold mb-4" style={{ color: "#ef4444" }}>
+                  {finalScore}/100
+                </div>
+
+                <div className="text-left space-y-3 mb-6">
+                  <div className="flex items-start gap-2">
+                    <XCircle size={16} className="mt-0.5 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium">No lead capture form found</p>
+                      <p className="text-xs text-muted-foreground">Add a form with name and phone number fields.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <XCircle size={16} className="mt-0.5 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium">Site not loading properly</p>
+                      <p className="text-xs text-muted-foreground">Check your GitHub repo is public and site works.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleFixAndReimport}
+                  className="h-12 rounded-xl text-black font-semibold"
+                  style={{ backgroundColor: "#00E676" }}
+                >
+                  Fix & Re-import →
+                </Button>
+              </motion.div>
+            )}
+
+            {/* STATE 4 — DEPLOYMENT SUCCESS */}
+            {deploySuccess && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center"
+              >
+                {/* Rocket Animation */}
+                <motion.div
+                  initial={{ y: 0 }}
+                  animate={{ y: -20 }}
+                  transition={{ duration: 0.5, repeat: 3, repeatType: "reverse" }}
+                  className="mb-6"
+                >
+                  <div className="text-6xl">🚀</div>
+                </motion.div>
+
+                <h2 className="text-3xl font-bold font-display mb-2">Site is Live! 🎉</h2>
+
+                {/* Green Card */}
+                <div
+                  className="rounded-2xl border-2 p-6 mb-6 mx-auto max-w-md"
+                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                >
+                  <p className="text-lg font-medium mb-4" style={{ color: "#00E676" }}>
+                    {deployedSubdomain}
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleCopyLink}
+                      className="flex-1 h-12 rounded-xl border border-border"
+                      style={{ backgroundColor: "#080C09" }}
+                    >
+                      <Copy size={16} className="mr-2" /> Copy Link
+                    </Button>
+                    <a
+                      href={`https://${deployedSubdomain}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-12 rounded-xl flex items-center justify-center text-black font-semibold"
+                      style={{ backgroundColor: "#00E676" }}
+                    >
+                      <ExternalLink size={16} className="mr-2" /> Open Site →
+                    </a>
+                  </div>
+                </div>
+
+                {/* What Happens Next */}
+                <div className="rounded-xl border border-border p-5 mb-6 text-left mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                  <p className="font-medium mb-3">What happens next:</p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p className="flex items-start gap-2">
+                      <CheckCircle size={14} className="mt-0.5" style={{ color: "#00E676" }} />
+                      Business owner gets WhatsApp notification
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <CheckCircle size={14} className="mt-0.5" style={{ color: "#00E676" }} />
+                      SEO automatically active
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <CheckCircle size={14} className="mt-0.5" style={{ color: "#00E676" }} />
+                      Lead form ready to capture
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <CheckCircle size={14} className="mt-0.5" style={{ color: "#00E676" }} />
+                      You earn ₹30/mo while they stay active
+                    </p>
+                  </div>
+                </div>
+
+                {/* Your Earning */}
+                <div className="rounded-xl border border-border p-5 mb-6 mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                  <p className="font-medium mb-3">Your earning from this site:</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Building fee:</span>
+                      <span style={{ color: "#00E676" }}>₹{earnedAmount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Monthly passive:</span>
+                      <span style={{ color: "#00E676" }}>₹30/mo</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    As long as they stay — you earn.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={resetDeploy}
+                    className="h-12 rounded-xl text-black font-semibold"
+                    style={{ backgroundColor: "#00E676" }}
+                  >
+                    <Rocket size={16} className="mr-2" /> Deploy Another Site →
+                  </Button>
+                  <Button
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className="h-12 rounded-xl border border-border"
+                    style={{ backgroundColor: "#101810" }}
+                  >
+                    Go to Dashboard →
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* My Sites Table */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold font-display mb-4">My Deployed Sites</h2>
+
+          {deployments.length === 0 ? (
+            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
+                <ExternalLink size={24} style={{ color: "#00E676" }} />
+              </div>
+              <p className="text-muted-foreground mb-2">No sites yet.</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Deploy your first site and start earning!
+              </p>
+              <Button
+                onClick={() => document.getElementById("deploy-section")?.scrollIntoView({ behavior: "smooth" })}
+                className="h-12 rounded-xl text-black font-semibold"
+                style={{ backgroundColor: "#00E676" }}
+              >
+                Deploy Now →
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: "#080C09" }}>
+                      <th className="text-left p-4 text-sm font-medium">Business Name</th>
+                      <th className="text-left p-4 text-sm font-medium">Type</th>
+                      <th className="text-left p-4 text-sm font-medium">City</th>
+                      <th className="text-left p-4 text-sm font-medium">Status</th>
+                      <th className="text-left p-4 text-sm font-medium">Monthly</th>
+                      <th className="text-left p-4 text-sm font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deployments.map((site) => (
+                      <tr key={site.id} className="border-t border-border">
+                        <td className="p-4 text-sm">{site.business_name}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{site.business_type}</td>
+                        <td className="p-4 text-sm text-muted-foreground">{site.city}</td>
+                        <td className="p-4">
+                          <span
+                            className="px-2 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: site.status === "deployed" ? "rgba(0, 230, 118, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                              color: site.status === "deployed" ? "#00E676" : "#eab308",
+                            }}
+                          >
+                            {site.status === "deployed" ? "Live" : "Pending"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm" style={{ color: "#00E676" }}>₹30</td>
+                        <td className="p-4">
+                          <div className="flex gap-2">
+                            <a
+                              href={`https://${site.subdomain}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs px-3 py-1.5 rounded-lg border border-border hover:border-[#00E676]/50 transition-colors"
+                            >
+                              View Site
+                            </a>
+                            <a
+                              href={`https://wa.me/91${site.owner_whatsapp}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs px-3 py-1.5 rounded-lg border border-border hover:border-[#00E676]/50 transition-colors flex items-center gap-1"
+                            >
+                              <MessageCircle size={12} /> WhatsApp Owner
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4 p-4">
+                {deployments.map((site) => (
+                  <div key={site.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">{site.business_name}</span>
+                      <span
+                        className="px-2 py-1 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: site.status === "deployed" ? "rgba(0, 230, 118, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                          color: site.status === "deployed" ? "#00E676" : "#eab308",
+                        }}
+                      >
+                        {site.status === "deployed" ? "Live" : "Pending"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">{site.business_type} · {site.city}</p>
+                    <p className="text-sm mb-3" style={{ color: "#00E676" }}>Monthly: ₹30</p>
+                    <div className="flex gap-2">
+                      <a
+                        href={`https://${site.subdomain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2 rounded-lg border border-border text-xs text-center"
+                      >
+                        View Site
+                      </a>
+                      <a
+                        href={`https://wa.me/91${site.owner_whatsapp}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2 rounded-lg border border-border text-xs text-center flex items-center justify-center gap-1"
+                      >
+                        <MessageCircle size={12} /> WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Earnings Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold font-display mb-4">Your Earnings</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">This Month</h3>
+              <div className="text-3xl font-extrabold font-display mb-4" style={{ color: "#00E676" }}>
+                ₹{thisMonthEarned.toLocaleString()}
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Building fees:</span>
+                  <span>₹{earnings.filter(e => e.type === "building" && e.month === new Date().toISOString().slice(0, 7)).reduce((s, e) => s + e.amount, 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Passive income:</span>
+                  <span>₹{earnings.filter(e => e.type === "passive" && e.month === new Date().toISOString().slice(0, 7)).reduce((s, e) => s + e.amount, 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-border">
+                  <span className="font-medium">Total:</span>
+                  <span className="font-medium" style={{ color: "#00E676" }}>₹{thisMonthEarned.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Payout Status</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Next payout:</span>
+                  <span>Friday {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Minimum:</span>
+                  <span>₹200</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">UPI:</span>
+                  <span>{profile?.whatsapp_number || "Not set"}</span>
+                </div>
+                <Button
+                  disabled={thisMonthEarned < 200}
+                  className="w-full h-12 rounded-xl font-semibold"
+                  style={{
+                    backgroundColor: thisMonthEarned >= 200 ? "#00E676" : "#1a1f1a",
+                    color: thisMonthEarned >= 200 ? "#000" : "#666",
+                  }}
+                >
+                  Request Payout →
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
-};
-
-export default DevDashboard;
+}

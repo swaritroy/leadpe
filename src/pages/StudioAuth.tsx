@@ -3,13 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import LeadPeLogo from "@/components/LeadPeLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
-import { LanguageSelector } from "@/components/LanguageSelector";
-import { Language } from "@/lib/trialSequence";
 
-export default function Auth() {
+export default function StudioAuth() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
@@ -18,25 +15,18 @@ export default function Auth() {
   const [error, setError] = useState("");
 
   // Sign In fields
-  const [signInPhone, setSignInPhone] = useState("");
+  const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
 
   // Sign Up fields
   const [fullName, setFullName] = useState("");
+  const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPhone, setSignUpPhone] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Language selector state
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [newUserId, setNewUserId] = useState<string | null>(null);
-
-  const formatPhone = (phone: string) => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length === 10) {
-      return `+91${digits}`;
-    }
-    return digits;
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const validatePhone = (phone: string) => {
@@ -48,8 +38,8 @@ export default function Auth() {
     e.preventDefault();
     setError("");
 
-    if (!validatePhone(signInPhone)) {
-      setError("Please enter a valid WhatsApp number.");
+    if (!validateEmail(signInEmail)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -60,9 +50,8 @@ export default function Auth() {
 
     setLoading(true);
 
-    const email = `${signInPhone.replace(/\D/g, "")}@leadpe.business`;
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      email: signInEmail,
       password: signInPassword,
     });
 
@@ -77,7 +66,25 @@ export default function Auth() {
       return;
     }
 
-    navigate("/client/dashboard", { replace: true });
+    navigate("/dev/dashboard", { replace: true });
+  };
+
+  const sendWhatsAppNotification = (name: string, email: string, phone: string) => {
+    const message = [
+      "⚡ NEW VIBE CODER SIGNUP",
+      "━━━━━━━━━━━━",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `WhatsApp: ${phone}`,
+      "━━━━━━━━━━━━",
+      "LeadPe Studio ⚡",
+    ].join("%0A");
+
+    window.open(
+      `https://wa.me/919973383902?text=${message}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -86,6 +93,11 @@ export default function Auth() {
 
     if (!fullName.trim()) {
       setError("Please enter your full name.");
+      return;
+    }
+
+    if (!validateEmail(signUpEmail)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -107,17 +119,15 @@ export default function Auth() {
     setLoading(true);
 
     const phoneDigits = signUpPhone.replace(/\D/g, "");
-    const email = `${phoneDigits}@leadpe.business`;
-    const trialCode = "LP-" + Math.floor(100000 + Math.random() * 900000).toString();
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
+      email: signUpEmail,
       password: signUpPassword,
       options: {
         data: {
           full_name: fullName,
           whatsapp_number: phoneDigits,
-          role: "business",
+          role: "vibe_coder",
         },
       },
     });
@@ -125,7 +135,7 @@ export default function Auth() {
     if (authError) {
       setLoading(false);
       if (authError.message.includes("already registered")) {
-        setError("This number is already registered. Please sign in.");
+        setError("This email is already registered. Please sign in.");
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -137,41 +147,26 @@ export default function Auth() {
       await (supabase.from("profiles") as any).insert({
         id: authData.user.id,
         full_name: fullName,
+        email: signUpEmail,
         whatsapp_number: phoneDigits,
-        email: email,
-        role: "business",
-        status: "trial",
-        trial_code: trialCode,
+        role: "vibe_coder",
+        status: "active",
         created_at: new Date().toISOString(),
         subscription_plan: "basic",
-        preferred_language: "hinglish", // Default to Hinglish
       });
 
       // Create user_roles entry
       await (supabase.from("user_roles") as any).insert({
         user_id: authData.user.id,
-        role: "business",
+        role: "vibe_coder",
       });
 
-      // Store user ID for language selection
-      setNewUserId(authData.user.id);
+      // Send WhatsApp notification
+      sendWhatsAppNotification(fullName, signUpEmail, phoneDigits);
     }
 
     setLoading(false);
-    // Show language selector instead of navigating immediately
-    setShowLanguageSelector(true);
-  };
-
-  const handleLanguageSelect = async (language: Language) => {
-    if (newUserId) {
-      // Update profile with selected language
-      await (supabase.from("profiles") as any)
-        .update({ preferred_language: language })
-        .eq("id", newUserId);
-    }
-    
-    setShowLanguageSelector(false);
-    navigate("/client/dashboard", { replace: true });
+    navigate("/dev/dashboard", { replace: true });
   };
 
   return (
@@ -182,9 +177,11 @@ export default function Auth() {
         className="w-full max-w-sm"
       >
         <div className="text-center mb-8">
-          <LeadPeLogo size="lg" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-bold font-display mb-2">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your LeadPe dashboard</p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="font-bold text-2xl">LeadPe</span>
+            <span className="font-bold text-2xl" style={{ color: "#00E676" }}>Studio</span>
+          </div>
+          <p className="text-sm text-muted-foreground">Sign in to start building and earning</p>
         </div>
 
         {/* Tab Switcher */}
@@ -236,14 +233,14 @@ export default function Auth() {
               className="space-y-4"
             >
               <div>
-                <label className="text-sm font-medium block mb-1.5">WhatsApp Number (10 digits)</label>
+                <label className="text-sm font-medium block mb-1.5">Email</label>
                 <Input
-                  type="tel"
-                  value={signInPhone}
-                  onChange={(e) => setSignInPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  type="email"
+                  value={signInEmail}
+                  onChange={(e) => setSignInEmail(e.target.value)}
                   className="rounded-xl border-border h-12"
                   style={{ backgroundColor: "#080C09" }}
-                  placeholder="9876543210"
+                  placeholder="you@email.com"
                 />
               </div>
 
@@ -266,12 +263,6 @@ export default function Auth() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-              </div>
-
-              <div className="text-right">
-                <button type="button" className="text-xs text-muted-foreground hover:text-foreground">
-                  Forgot password?
-                </button>
               </div>
 
               <Button
@@ -300,6 +291,18 @@ export default function Auth() {
                   className="rounded-xl border-border h-12"
                   style={{ backgroundColor: "#080C09" }}
                   placeholder="Your full name"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1.5">Email</label>
+                <Input
+                  type="email"
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  className="rounded-xl border-border h-12"
+                  style={{ backgroundColor: "#080C09" }}
+                  placeholder="you@email.com"
                 />
               </div>
 
@@ -363,25 +366,12 @@ export default function Auth() {
                 className="w-full h-12 rounded-xl text-black font-semibold"
                 style={{ backgroundColor: "#00E676" }}
               >
-                {loading ? "Please wait..." : "Create Account"}
+                {loading ? "Please wait..." : "Join Studio"}
               </Button>
             </motion.form>
           )}
         </AnimatePresence>
       </motion.div>
-
-      {/* Language Selector Modal */}
-      <LanguageSelector
-        isOpen={showLanguageSelector}
-        onClose={() => {
-          setShowLanguageSelector(false);
-          navigate("/client/dashboard", { replace: true });
-        }}
-        onSelect={handleLanguageSelect}
-        currentLanguage="hinglish"
-        title="Choose your preferred language"
-        subtitle="Apni pasandeeda bhasha chunein"
-      />
     </div>
   );
 }

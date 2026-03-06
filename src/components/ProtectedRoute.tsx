@@ -1,13 +1,15 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("admin" | "business" | "developer")[];
+  allowedRoles?: ("admin" | "business" | "developer" | "vibe_coder")[];
+  redirectTo?: string;
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/auth" }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -17,7 +19,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to={redirectTo} replace />;
   if (!role) return <Navigate to="/select-role" replace />;
   if (allowedRoles && !allowedRoles.includes(role)) return <Navigate to="/" replace />;
 
