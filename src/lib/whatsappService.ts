@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../integrations/supabase/client'
 
 const ADMIN = import.meta.env
   .VITE_ADMIN_WHATSAPP
