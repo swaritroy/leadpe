@@ -598,4 +598,4 @@ export default function Business() {
   );
 };
 
-export default Business;
+
