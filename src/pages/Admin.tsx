@@ -438,20 +438,20 @@ export default function Admin() {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080C09" }}>
-        <div className="animate-spin w-8 h-8 border-2 border-[#00E676] border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
+        <div className="animate-spin w-8 h-8 border-2 border-[#00C853] border-t-transparent rounded-full" />
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#080C09" }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
       {/* Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LeadPeLogo theme="dark" size="sm" />
-            <span className="font-bold text-xl" style={{ color: "#00E676" }}>Admin ⚡</span>
+            <LeadPeLogo theme="light" size="sm" />
+            <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={fetchData} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">

@@ -385,30 +385,30 @@ export default function DevDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080C09" }}>
-        <div className="animate-spin w-8 h-8 border-2 border-[#00E676] border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
+        <div className="animate-spin w-8 h-8 border-2 border-[#00C853] border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#080C09" }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
       {/* Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LeadPeLogo theme="dark" size="sm" />
-            <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
+            <LeadPeLogo theme="light" size="sm" />
+            <span className="font-bold text-xl text-[#00C853]">Studio</span>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-2 rounded-full hover:bg-white/5 transition-colors relative">
-              <Bell size={20} className="text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: "#00E676" }} />
+            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative">
+              <Bell size={20} className="text-[#666]" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#00C853]" />
             </button>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-[#00C853] text-white">
               {user?.email?.[0].toUpperCase() || "U"}
             </div>
-            <button onClick={signOut} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+            <button onClick={signOut} className="text-sm text-[#666] hover:text-[#1A1A1A] flex items-center gap-1">
               <LogOut size={16} /> Sign Out
             </button>
           </div>
@@ -418,59 +418,29 @@ export default function DevDashboard() {
       <div className="container mx-auto px-4 pt-24">
         {/* Hero Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl p-5 border-2 col-span-2 md:col-span-1"
-            style={{ backgroundColor: "#101810", borderColor: "#00E676" }}
-          >
-            <div className="text-3xl md:text-4xl font-extrabold font-display" style={{ color: "#00E676" }}>
-              ₹{totalPassive}/mo
-            </div>
-            <div className="text-sm text-foreground mt-1">Monthly Passive Income</div>
-            <div className="text-xs text-muted-foreground">{activeClients} active clients</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-5 border-2 border-[#00C853] col-span-2 md:col-span-1 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+            <div className="text-3xl md:text-4xl font-extrabold font-display text-[#00C853]">₹{totalPassive}/mo</div>
+            <div className="text-sm text-[#1A1A1A] mt-1">Monthly Passive Income</div>
+            <div className="text-xs text-[#666]">{activeClients} active clients</div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl p-5 border border-border"
-            style={{ backgroundColor: "#101810" }}
-          >
-            <div className="text-2xl md:text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>
-              ₹{totalEarned.toLocaleString()}
-            </div>
-            <div className="text-sm text-foreground mt-1">Total Earned</div>
-            <div className="text-xs text-muted-foreground">All time</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="rounded-2xl p-5 border border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+            <div className="text-2xl md:text-3xl font-extrabold font-display text-[#00C853]">₹{totalEarned.toLocaleString()}</div>
+            <div className="text-sm text-[#1A1A1A] mt-1">Total Earned</div>
+            <div className="text-xs text-[#666]">All time</div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl p-5 border border-border"
-            style={{ backgroundColor: "#101810" }}
-          >
-            <div className="text-2xl md:text-3xl font-extrabold font-display text-foreground">
-              {deployments.length}
-            </div>
-            <div className="text-sm text-foreground mt-1">Sites Deployed</div>
-            <div className="text-xs text-muted-foreground">{deployments.filter(d => d.status === "pending").length} pending</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="rounded-2xl p-5 border border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+            <div className="text-2xl md:text-3xl font-extrabold font-display text-[#1A1A1A]">{deployments.length}</div>
+            <div className="text-sm text-[#1A1A1A] mt-1">Sites Deployed</div>
+            <div className="text-xs text-[#666]">{deployments.filter(d => d.status === "pending").length} pending</div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-2xl p-5 border border-border"
-            style={{ backgroundColor: "#101810" }}
-          >
-            <div className="text-2xl md:text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>
-              ₹{thisMonthEarned.toLocaleString()}
-            </div>
-            <div className="text-sm text-foreground mt-1">Earned This Month</div>
-            <div className="text-xs text-muted-foreground">Next payout: Friday</div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="rounded-2xl p-5 border border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+            <div className="text-2xl md:text-3xl font-extrabold font-display text-[#00C853]">₹{thisMonthEarned.toLocaleString()}</div>
+            <div className="text-sm text-[#1A1A1A] mt-1">Earned This Month</div>
+            <div className="text-xs text-[#666]">Next payout: Friday</div>
           </motion.div>
         </div>
 
