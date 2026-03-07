@@ -629,7 +629,7 @@ export default function DevDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className="rounded-2xl border-2 p-6 md:p-8"
-                style={{ backgroundColor: "#101810", borderColor: "rgba(0, 230, 118, 0.3)", boxShadow: "0 0 30px rgba(0, 230, 118, 0.1)" }}
+                style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(0, 200, 83, 0.3)", boxShadow: "0 0 30px rgba(0, 200, 83, 0.1)" }}
               >
                 <h2 className="text-2xl font-bold font-display mb-2">Deploy a New Site</h2>
                 <p className="text-muted-foreground mb-6">Paste your GitHub URL and earn.</p>
@@ -639,7 +639,7 @@ export default function DevDashboard() {
                     value={githubUrl}
                     onChange={(e) => { setGithubUrl(e.target.value); setUrlError(""); }}
                     className="h-16 rounded-xl border-border text-lg"
-                    style={{ backgroundColor: "#080C09" }}
+                    style={{ backgroundColor: "#FAFAFA" }}
                     placeholder="Paste GitHub repo URL e.g. github.com/username/my-site"
                   />
                   {urlError && (
@@ -654,7 +654,7 @@ export default function DevDashboard() {
                   <Button
                     onClick={handleImport}
                     className="w-full h-14 rounded-xl text-black font-semibold text-lg"
-                    style={{ backgroundColor: "#00E676" }}
+                    style={{ backgroundColor: "#00C853" }}
                   >
                     Import & Check →
                   </Button>
@@ -670,7 +670,7 @@ export default function DevDashboard() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="rounded-2xl border border-border p-6 md:p-8"
-                style={{ backgroundColor: "#101810" }}
+                style={{ backgroundColor: "#FFFFFF" }}
               >
                 <div className="text-center mb-6">
                   <h2 className="text-xl font-bold font-display mb-2">Checking your site quality...</h2>
@@ -678,10 +678,10 @@ export default function DevDashboard() {
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full h-2 rounded-full overflow-hidden mb-6" style={{ backgroundColor: "#1a1f1a" }}>
+                <div className="w-full h-2 rounded-full overflow-hidden mb-6" style={{ backgroundColor: "#E5E7EB" }}>
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ backgroundColor: "#00E676" }}
+                    style={{ backgroundColor: "#00C853" }}
                     initial={{ width: "0%" }}
                     animate={{ width: `${((currentCheckIndex + 1) / vettingChecks.length) * 100}%` }}
                     transition={{ duration: 0.5 }}
@@ -776,7 +776,7 @@ export default function DevDashboard() {
                         value={businessName}
                         onChange={(e) => setBusinessName(e.target.value)}
                         className="rounded-xl border-border h-12"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                         placeholder="e.g. Perfect Coaching Centre"
                       />
                     </div>
@@ -787,7 +787,7 @@ export default function DevDashboard() {
                         value={businessType}
                         onChange={(e) => setBusinessType(e.target.value)}
                         className="w-full rounded-xl h-12 px-3 border border-border outline-none"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                       >
                         <option value="">Select type</option>
                         {businessTypes.map((t) => (
@@ -802,7 +802,7 @@ export default function DevDashboard() {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         className="rounded-xl border-border h-12"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                         placeholder="e.g. Mumbai"
                       />
                     </div>
@@ -813,7 +813,7 @@ export default function DevDashboard() {
                         value={ownerName}
                         onChange={(e) => setOwnerName(e.target.value)}
                         className="rounded-xl border-border h-12"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                         placeholder="Full name of business owner"
                       />
                     </div>
@@ -825,7 +825,7 @@ export default function DevDashboard() {
                         value={ownerWhatsapp}
                         onChange={(e) => setOwnerWhatsapp(e.target.value.replace(/\D/g, "").slice(0, 10))}
                         className="rounded-xl border-border h-12"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                         placeholder="10 digit number"
                       />
                     </div>
@@ -837,7 +837,7 @@ export default function DevDashboard() {
                         value={buildingFee}
                         onChange={(e) => setBuildingFee(e.target.value)}
                         className="rounded-xl border-border h-12"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                         placeholder="What you charged the business"
                       />
                       <p className="text-xs text-muted-foreground mt-1">Minimum ₹500 recommended</p>
@@ -849,7 +849,7 @@ export default function DevDashboard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="p-4 rounded-xl border border-border"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                       >
                         <p className="text-sm text-muted-foreground">
                           LeadPe takes 20% (₹{leadpeCommission}).
@@ -865,12 +865,12 @@ export default function DevDashboard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="p-4 rounded-xl border border-border"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                       >
                         <p className="text-sm text-muted-foreground mb-2">Your site will go live at:</p>
                         <span
                           className="inline-block px-3 py-1 rounded-full text-sm font-medium"
-                          style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}
+                          style={{ backgroundColor: "rgba(0, 200, 83, 0.1)", color: "#00C853" }}
                         >
                           {subdomainPreview}
                         </span>
@@ -881,7 +881,7 @@ export default function DevDashboard() {
                       onClick={handleDeploy}
                       disabled={deploying}
                       className="w-full h-14 rounded-xl text-black font-semibold text-lg"
-                      style={{ backgroundColor: "#00E676" }}
+                      style={{ backgroundColor: "#00C853" }}
                     >
                       {deploying ? (
                         <><Loader2 size={20} className="mr-2 animate-spin" /> Deploying...</>
@@ -971,7 +971,7 @@ export default function DevDashboard() {
                     <Button
                       onClick={handleCopyLink}
                       className="flex-1 h-12 rounded-xl border border-border"
-                      style={{ backgroundColor: "#080C09" }}
+                      style={{ backgroundColor: "#FAFAFA" }}
                     >
                       <Copy size={16} className="mr-2" /> Copy Link
                     </Button>
@@ -980,7 +980,7 @@ export default function DevDashboard() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 h-12 rounded-xl flex items-center justify-center text-black font-semibold"
-                      style={{ backgroundColor: "#00E676" }}
+                      style={{ backgroundColor: "#00C853" }}
                     >
                       <ExternalLink size={16} className="mr-2" /> Open Site →
                     </a>
@@ -1033,14 +1033,14 @@ export default function DevDashboard() {
                   <Button
                     onClick={resetDeploy}
                     className="h-12 rounded-xl text-black font-semibold"
-                    style={{ backgroundColor: "#00E676" }}
+                    style={{ backgroundColor: "#00C853" }}
                   >
                     <Rocket size={16} className="mr-2" /> Deploy Another Site →
                   </Button>
                   <Button
                     onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                     className="h-12 rounded-xl border border-border"
-                    style={{ backgroundColor: "#101810" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     Go to Dashboard →
                   </Button>
@@ -1084,7 +1084,7 @@ export default function DevDashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-2xl border border-border p-6"
-                    style={{ backgroundColor: "#101810" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     <div className="flex items-center gap-3 mb-4">
                       <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
@@ -1122,7 +1122,7 @@ export default function DevDashboard() {
                         variant="outline"
                         size="sm"
                         className="flex-1 h-10 rounded-xl border-border"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                       >
                         <Eye size={14} className="mr-1" /> View Brief
                       </Button>
@@ -1130,7 +1130,7 @@ export default function DevDashboard() {
                         onClick={() => handleAcceptRequest(request)}
                         size="sm"
                         className="flex-1 h-10 rounded-xl text-black font-semibold"
-                        style={{ backgroundColor: "#00E676" }}
+                        style={{ backgroundColor: "#00C853" }}
                       >
                         Accept Request
                       </Button>
@@ -1164,7 +1164,7 @@ export default function DevDashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-2xl border border-border p-6"
-                    style={{ backgroundColor: "#101810" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -1203,7 +1203,7 @@ export default function DevDashboard() {
                         variant="outline"
                         size="sm"
                         className="flex-1 h-10 rounded-xl border-border"
-                        style={{ backgroundColor: "#080C09" }}
+                        style={{ backgroundColor: "#FAFAFA" }}
                       >
                         <Eye size={14} className="mr-1" /> View Brief
                       </Button>
@@ -1215,7 +1215,7 @@ export default function DevDashboard() {
                           }}
                           size="sm"
                           className="flex-1 h-10 rounded-xl text-black font-semibold"
-                          style={{ backgroundColor: "#00E676" }}
+                          style={{ backgroundColor: "#00C853" }}
                         >
                           <Code size={14} className="mr-1" /> Submit GitHub
                         </Button>

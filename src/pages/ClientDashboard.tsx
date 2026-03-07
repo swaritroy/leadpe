@@ -528,8 +528,8 @@ export default function ClientDashboard() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
-            className="rounded-2xl border border-border p-6 mb-6" 
-            style={{ backgroundColor: "#101810" }}
+            className="rounded-2xl border border-[#E0F2E9] p-6 mb-6" 
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="text-2xl">{getBusinessIcon(buildRequest.business_type)}</div>
@@ -590,11 +590,11 @@ export default function ClientDashboard() {
             </div>
             
             {/* Progress Bar */}
-            <div className="w-full h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: "#1a1f1a" }}>
+            <div className="w-full h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: "#E5E7EB" }}>
               <div 
                 className="h-full rounded-full transition-all duration-500" 
                 style={{ 
-                  backgroundColor: "#00E676",
+                  backgroundColor: "#00C853",
                   width: buildRequest.status === "pending" && !buildRequest.assigned_coder_id ? "0%" :
                          buildRequest.status === "pending" && buildRequest.assigned_coder_id ? "25%" :
                          buildRequest.status === "building" ? "50%" :
@@ -628,7 +628,7 @@ export default function ClientDashboard() {
                     variant="outline"
                     size="sm"
                     className="h-8 px-3 rounded-lg border-border text-xs"
-                    style={{ backgroundColor: "#080C09" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     View GitHub
                   </Button>
@@ -637,7 +637,7 @@ export default function ClientDashboard() {
             </div>
             
             {/* Status Messages */}
-            <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+            <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: "#F8F9FA" }}>
               <p className="text-sm text-muted-foreground">
                 {buildRequest.status === "pending" && !buildRequest.assigned_coder_id && 
                   "🔍 Finding the perfect builder for your website..."}
@@ -661,8 +661,8 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             className="rounded-2xl border border-border p-4 mb-6" 
             style={{ 
-              backgroundColor: trialProgress.isEnding ? "rgba(234, 179, 8, 0.1)" : "#101810",
-              borderColor: trialProgress.isEnding ? "#eab308" : undefined 
+              backgroundColor: trialProgress.isEnding ? "rgba(234, 179, 8, 0.1)" : "#FFFFFF",
+              borderColor: trialProgress.isEnding ? "#eab308" : "#E0F2E9" 
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -675,12 +675,12 @@ export default function ClientDashboard() {
             </div>
             
             {/* Progress Bar */}
-            <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#1a1f1a" }}>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#E5E7EB" }}>
               <div 
                 className="h-full rounded-full transition-all duration-500" 
                 style={{ 
                   width: `${trialProgress.percentComplete}%`, 
-                  backgroundColor: trialProgress.isEnding ? "#eab308" : "#00E676" 
+                  backgroundColor: trialProgress.isEnding ? "#eab308" : "#00C853" 
                 }} 
               />
             </div>
@@ -693,7 +693,7 @@ export default function ClientDashboard() {
                 </p>
                 <Button 
                   className="w-full h-10 rounded-lg text-black font-medium" 
-                  style={{ backgroundColor: "#00E676" }}
+                  style={{ backgroundColor: "#00C853" }}
                 >
                   Continue — ₹299/mo →
                 </Button>
@@ -708,10 +708,10 @@ export default function ClientDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="rounded-2xl border p-5 mb-6"
-          style={{ backgroundColor: "#101810", borderColor: isActive ? "#00E676" : isPaused ? "#ef4444" : "#eab308" }}
+          style={{ backgroundColor: "#FFFFFF", borderColor: isActive ? "#00C853" : isPaused ? "#ef4444" : "#eab308" }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? "#00E676" : isPaused ? "#ef4444" : "#eab308" }} />
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? "#00C853" : isPaused ? "#ef4444" : "#eab308" }} />
             <span className="font-semibold">{isActive ? "● Live" : isPaused ? "⚠️ Paused" : "⏳ Building"}</span>
           </div>
 
@@ -736,7 +736,7 @@ export default function ClientDashboard() {
           {isTrial && (
             <>
               <p className="text-sm text-muted-foreground mb-3">Our team is building your website. Ready in 48 hours.</p>
-              <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#1a1f1a" }}>
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#E5E7EB" }}>
                 <div className="h-full rounded-full" style={{ width: "60%", backgroundColor: "#eab308" }} />
               </div>
               <p className="text-xs text-muted-foreground mt-2">60% complete</p>
@@ -760,7 +760,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.15 }}
             className="rounded-2xl border-t-2 border-x border-b border-border p-5 mb-6"
-            style={{ backgroundColor: "#101810", borderTopColor: "#00E676" }}
+            style={{ backgroundColor: "#FFFFFF", borderTopColor: "#00C853" }}
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold font-display">📊 This Week's Report</h2>
@@ -834,7 +834,7 @@ export default function ClientDashboard() {
                   <div 
                     key={report.id || index}
                     className="p-4 rounded-xl border border-border"
-                    style={{ backgroundColor: "#080C09" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium">Week of {new Date(report.week_start).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
@@ -1006,7 +1006,7 @@ export default function ClientDashboard() {
                               value={lead.status}
                               onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
                               className="text-xs px-2 py-1 rounded-lg border border-border outline-none"
-                              style={{ backgroundColor: "#080C09" }}
+                              style={{ backgroundColor: "#FFFFFF" }}
                             >
                               {statusOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1022,7 +1022,7 @@ export default function ClientDashboard() {
                               <a
                                 href={`tel:${lead.customer_phone}`}
                                 className="px-3 py-1.5 rounded-lg text-xs font-medium text-black"
-                                style={{ backgroundColor: "#00E676" }}
+                                style={{ backgroundColor: "#00C853" }}
                               >
                                 Call Now
                               </a>
@@ -1058,7 +1058,7 @@ export default function ClientDashboard() {
                           value={lead.status}
                           onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
                           className="text-xs px-2 py-1 rounded-lg border border-border outline-none"
-                          style={{ backgroundColor: "#080C09" }}
+                          style={{ backgroundColor: "#FFFFFF" }}
                         >
                           {statusOptions.map((opt) => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1080,7 +1080,7 @@ export default function ClientDashboard() {
                           <a
                             href={`tel:${lead.customer_phone}`}
                             className="flex-1 py-2 rounded-lg text-xs font-medium text-black text-center"
-                            style={{ backgroundColor: "#00E676" }}
+                            style={{ backgroundColor: "#00C853" }}
                           >
                             Call Now
                           </a>
@@ -1343,7 +1343,7 @@ export default function ClientDashboard() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full h-12 rounded-xl flex items-center justify-center text-black font-medium"
-                    style={{ backgroundColor: "#00E676" }}
+                    style={{ backgroundColor: "#00C853" }}
                   >
                     <MessageCircle size={18} className="mr-2" /> Send Photos on WhatsApp
                   </a>
@@ -1354,7 +1354,7 @@ export default function ClientDashboard() {
                     value={modalValue}
                     onChange={(e) => setModalValue(e.target.value)}
                     className="h-12 rounded-xl border-border mb-4"
-                    style={{ backgroundColor: "#080C09" }}
+                    style={{ backgroundColor: "#FFFFFF" }}
                     placeholder={
                       activeModal === "phone" ? "Enter new phone number" :
                       activeModal === "hours" ? "e.g. 9 AM - 7 PM" :
@@ -1365,7 +1365,7 @@ export default function ClientDashboard() {
                     onClick={handleSaveModal}
                     disabled={saving || !modalValue.trim()}
                     className="w-full h-12 rounded-xl text-black font-medium"
-                    style={{ backgroundColor: "#00E676" }}
+                    style={{ backgroundColor: "#00C853" }}
                   >
                     {saving ? "Saving..." : "Save Changes"}
                   </Button>

@@ -563,40 +563,40 @@ export default function Admin() {
           
           {expandedSections.has("metrics") && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="rounded-2xl border-2 p-5 text-center col-span-2 md:col-span-1" style={{ backgroundColor: "#101810", borderColor: "#00E676" }}>
-                <div className="text-3xl md:text-4xl font-extrabold font-display mb-1" style={{ color: "#00E676" }}>
+              <div className="rounded-2xl border-2 p-5 text-center col-span-2 md:col-span-1" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853" }}>
+                <div className="text-3xl md:text-4xl font-extrabold font-display mb-1" style={{ color: "#00C853" }}>
                   ₹{totalMRR.toLocaleString()}/mo
                 </div>
                 <div className="text-xs text-muted-foreground mb-2">Monthly Recurring Revenue</div>
-                <div className="text-xs" style={{ color: "#00E676" }}>+₹{thisWeekRevenue.toLocaleString()} this week</div>
+                <div className="text-xs" style={{ color: "#00C853" }}>+₹{thisWeekRevenue.toLocaleString()} this week</div>
               </div>
               
-              <div className="rounded-2xl border border-border p-5 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="rounded-2xl border border-[#E0F2E9] p-5 text-center" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-2xl md:text-3xl font-bold font-display mb-1">{businesses.length}</div>
                 <div className="text-xs text-muted-foreground mb-2">Total Businesses</div>
                 <div className="text-xs text-muted-foreground">{activeBusinesses} active, {trialBusinesses} trial</div>
               </div>
               
-              <div className="rounded-2xl border border-border p-5 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="rounded-2xl border border-[#E0F2E9] p-5 text-center" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-2xl md:text-3xl font-bold font-display mb-1">{vibeCoders.length}</div>
                 <div className="text-xs text-muted-foreground mb-2">Vibe Coders</div>
                 <div className="text-xs text-muted-foreground">{activeCoders} active builders</div>
               </div>
               
-              <div className="rounded-2xl border border-border p-5 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="rounded-2xl border border-[#E0F2E9] p-5 text-center" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-2xl md:text-3xl font-bold font-display mb-1">{deployments.length}</div>
                 <div className="text-xs text-muted-foreground mb-2">Sites Deployed</div>
                 <div className="text-xs text-muted-foreground">{thisMonthDeployments} this month</div>
               </div>
               
-              <div className="rounded-2xl border border-border p-5 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="rounded-2xl border border-[#E0F2E9] p-5 text-center" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-2xl md:text-3xl font-bold font-display mb-1">{leads.length}</div>
                 <div className="text-xs text-muted-foreground mb-2">Leads Generated</div>
                 <div className="text-xs text-muted-foreground">All time</div>
               </div>
               
-              <div className="rounded-2xl border border-border p-5 text-center" style={{ backgroundColor: "#101810" }}>
-                <div className={`text-2xl md:text-3xl font-bold font-display mb-1 ${churnRate > 10 ? "text-red-500" : ""}`} style={churnRate <= 10 ? { color: "#00E676" } : {}}>
+              <div className="rounded-2xl border border-[#E0F2E9] p-5 text-center" style={{ backgroundColor: "#FFFFFF" }}>
+                <div className={`text-2xl md:text-3xl font-bold font-display mb-1 ${churnRate > 10 ? "text-red-500" : ""}`} style={churnRate <= 10 ? { color: "#00C853" } : {}}>
                   {churnRate}%
                 </div>
                 <div className="text-xs text-muted-foreground mb-2">Churn Rate</div>
@@ -623,14 +623,14 @@ export default function Admin() {
           {expandedSections.has("actions") && (
             <div className="space-y-3">
               {actionItems.length === 0 ? (
-                <div className="rounded-2xl border border-border p-6 text-center" style={{ backgroundColor: "#101810" }}>
-                  <CheckCircle size={32} style={{ color: "#00E676" }} className="mx-auto mb-2" />
+                <div className="rounded-2xl border border-[#E0F2E9] p-6 text-center" style={{ backgroundColor: "#FFFFFF" }}>
+                  <CheckCircle size={32} style={{ color: "#00C853" }} className="mx-auto mb-2" />
                   <p className="text-muted-foreground">All caught up! No urgent actions needed.</p>
                 </div>
               ) : (
                 actionItems.slice(0, 10).map((item) => (
                   <div key={item.id} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ 
-                    backgroundColor: "#101810",
+                    backgroundColor: "#FFFFFF",
                     borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
                   }}>
                     <div className="flex-1">
@@ -641,7 +641,7 @@ export default function Admin() {
                       <p className="text-sm text-muted-foreground">{item.businessName}</p>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
                     </div>
-                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00E676" }}>
+                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00C853" }}>
                       <MessageCircle size={16} className="mr-2" /> WhatsApp
                     </Button>
                   </div>
@@ -661,13 +661,13 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("businesses") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
-              <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
+              <div className="p-4 border-b border-[#E0F2E9] flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={businessSearch} onChange={(e) => setBusinessSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#080C09" }} placeholder="Search businesses..." />
+                  <Input value={businessSearch} onChange={(e) => setBusinessSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#FAFAFA" }} placeholder="Search businesses..." />
                 </div>
-                <select value={businessFilter} onChange={(e) => setBusinessFilter(e.target.value as any)} className="h-10 px-3 rounded-lg border border-border outline-none text-sm" style={{ backgroundColor: "#080C09" }}>
+                <select value={businessFilter} onChange={(e) => setBusinessFilter(e.target.value as any)} className="h-10 px-3 rounded-lg border border-border outline-none text-sm" style={{ backgroundColor: "#FAFAFA" }}>
                   <option value="all">All Status</option>
                   <option value="trial">Trial</option>
                   <option value="active">Active</option>

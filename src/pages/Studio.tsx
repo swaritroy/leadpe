@@ -310,8 +310,8 @@ export default function Studio() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
-                className="rounded-2xl border border-border p-6 text-center hover:border-[#00E676]/40 transition-all duration-300"
-                style={{ backgroundColor: "#101810" }}
+                className="rounded-2xl border border-[#E0F2E9] p-6 text-center hover:border-[#00E676]/40 transition-all duration-300"
+                style={{ backgroundColor: "#FFFFFF" }}
               >
                 <div className="text-4xl mb-4">{item.icon}</div>
                 <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
@@ -339,8 +339,8 @@ export default function Studio() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-2xl border border-border p-8"
-            style={{ backgroundColor: "#101810" }}
+            className="rounded-2xl border border-[#E0F2E9] p-8"
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <div className="mb-8">
               <label className="text-sm font-medium mb-3 block">Active Clients: <span className="font-bold" style={{ color: "#00E676" }}>{clientCount}</span></label>
@@ -360,11 +360,11 @@ export default function Studio() {
             </div>
 
             <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="text-center p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+              <div className="text-center p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>₹{monthlyPassive.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Monthly Passive</div>
               </div>
-              <div className="text-center p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+              <div className="text-center p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="text-3xl font-extrabold font-display" style={{ color: "#00E676" }}>₹{annualPassive.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Annual Passive</div>
               </div>
@@ -400,8 +400,8 @@ export default function Studio() {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              className="rounded-2xl border border-[#E0F2E9] p-6"
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               <h3 className="font-bold text-lg mb-4" style={{ color: "#00E676" }}>YOU DO:</h3>
               <ul className="space-y-3">
@@ -418,8 +418,8 @@ export default function Studio() {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              className="rounded-2xl border border-[#E0F2E9] p-6"
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               <h3 className="font-bold text-lg mb-4" style={{ color: "#00E676" }}>WE HANDLE:</h3>
               <ul className="space-y-3">
@@ -459,8 +459,8 @@ export default function Studio() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              className="rounded-2xl border border-[#E0F2E9] p-6"
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               <h3 className="font-bold mb-4">🔧 We Fix Automatically:</h3>
               <ul className="space-y-2">
@@ -478,8 +478,8 @@ export default function Studio() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              className="rounded-2xl border border-[#E0F2E9] p-6"
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               <h3 className="font-bold mb-4">🚫 Only Blocked If:</h3>
               <ul className="space-y-2">
@@ -580,8 +580,8 @@ export default function Studio() {
                     <Input
                       value={form.whatsappNumber}
                       onChange={(e) => updateForm("whatsappNumber", e.target.value)}
-                      className={`rounded-xl border ${errors.whatsappNumber ? "border-red-500" : "border-border"}`}
-                      style={{ backgroundColor: "#080C09" }}
+                      className={`rounded-xl border ${errors.whatsappNumber ? "border-red-500" : "border-[#E0E0E0]"}`}
+                      style={{ backgroundColor: "#FAFAFA" }}
                       placeholder="10 digit number"
                     />
                     {errors.whatsappNumber && <p className="text-xs text-red-500 mt-1">{errors.whatsappNumber}</p>}
@@ -593,8 +593,8 @@ export default function Studio() {
                       type="email"
                       value={form.email}
                       onChange={(e) => updateForm("email", e.target.value)}
-                      className={`rounded-xl border ${errors.email ? "border-red-500" : "border-border"}`}
-                      style={{ backgroundColor: "#080C09" }}
+                      className={`rounded-xl border ${errors.email ? "border-red-500" : "border-[#E0E0E0]"}`}
+                      style={{ backgroundColor: "#FAFAFA" }}
                       placeholder="your@email.com"
                     />
                     {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
@@ -626,8 +626,8 @@ export default function Studio() {
                     <Input
                       value={form.sampleUrl}
                       onChange={(e) => updateForm("sampleUrl", e.target.value)}
-                      className="rounded-xl border border-border"
-                      style={{ backgroundColor: "#080C09" }}
+                      className="rounded-xl border border-[#E0E0E0]"
+                      style={{ backgroundColor: "#FAFAFA" }}
                       placeholder="Share a site you have built before"
                     />
                   </div>
@@ -637,8 +637,8 @@ export default function Studio() {
                     <select
                       value={form.capacity}
                       onChange={(e) => updateForm("capacity", e.target.value)}
-                      className={`w-full rounded-xl text-sm px-3 py-2 border outline-none bg-transparent ${errors.capacity ? "border-red-500" : "border-border"}`}
-                      style={{ backgroundColor: "#080C09" }}
+                      className={`w-full rounded-xl text-sm px-3 py-2 border outline-none bg-transparent ${errors.capacity ? "border-red-500" : "border-[#E0E0E0]"}`}
+                      style={{ backgroundColor: "#FAFAFA" }}
                     >
                       <option value="">Select</option>
                       {capacityOptions.map((opt) => (
