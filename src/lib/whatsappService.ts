@@ -291,6 +291,105 @@ export const getMessage = (
         `LeadPe ⚡` 
     },
 
+    buildRequestCreated: {
+      english:
+        `🔨 NEW BUILD REQUEST\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Business: ${data.businessName}\n` +
+        `Type: ${data.businessType}\n` +
+        `City: ${data.city}\n` +
+        `Owner: ${data.ownerName}\n` +
+        `WhatsApp: ${data.whatsapp}\n` +
+        `Plan: ${data.plan}\n` +
+        `Deadline: 48 hours\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Assign a vibe coder now!\n` +
+        `LeadPe ⚡`,
+
+      hindi:
+        `🔨 नया बिल्ड रिक्वेस्ट\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `व्यवसाय: ${data.businessName}\n` +
+        `प्रकार: ${data.businessType}\n` +
+        `शहर: ${data.city}\n` +
+        `मालिक: ${data.ownerName}\n` +
+        `WhatsApp: ${data.whatsapp}\n` +
+        `प्लान: ${data.plan}\n` +
+        `डेडलाइन: 48 घंटे\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `अभी coder assign करें!\n` +
+        `LeadPe ⚡`,
+
+      hinglish:
+        `🔨 NAYA BUILD REQUEST\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Business: ${data.businessName}\n` +
+        `Type: ${data.businessType}\n` +
+        `City: ${data.city}\n` +
+        `Owner: ${data.ownerName}\n` +
+        `WhatsApp: ${data.whatsapp}\n` +
+        `Plan: ${data.plan}\n` +
+        `Deadline: 48 hours\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Abhi coder assign karein!\n` +
+        `LeadPe ⚡`
+    },
+
+    requestAccepted: {
+      english:
+        `✅ REQUEST ACCEPTED\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Coder: ${data.coderName}\n` +
+        `Business: ${data.businessName}\n` +
+        `City: ${data.city}\n` +
+        `ETA: 48 hours\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `LeadPe ⚡`,
+
+      hindi:
+        `✅ रिक्वेस्ट अक्सेप्टेड\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Coder: ${data.coderName}\n` +
+        `Business: ${data.businessName}\n` +
+        `City: ${data.city}\n` +
+        `ETA: 48 घंटे\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `LeadPe ⚡`,
+
+      hinglish:
+        `✅ REQUEST ACCEPTED\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `Coder: ${data.coderName}\n` +
+        `Business: ${data.businessName}\n` +
+        `City: ${data.city}\n` +
+        `ETA: 48 hours\n` +
+        `━━━━━━━━━━━━━━\n` +
+        `LeadPe ⚡`
+    },
+
+    buildStarted: {
+      english:
+        `🎉 Great news ${data.ownerName}!\n` +
+        `Your website building has started.\n` +
+        `Builder: ${data.coderName}\n` +
+        `Ready in: 48 hours 🚀\n` +
+        `LeadPe ⚡`,
+
+      hindi:
+        `🎉 बढ़िया खबर ${data.ownerName} जी!\n` +
+        `आपकी website बनाना शुरू हो गया।\n` +
+        `Builder: ${data.coderName}\n` +
+        `तैयार: 48 घंटे में 🚀\n` +
+        `LeadPe ⚡`,
+
+      hinglish:
+        `🎉 Badiya khabar ${data.ownerName} ji!\n` +
+        `Aapki website banana shuru ho gaya.\n` +
+        `Builder: ${data.coderName}\n` +
+        `Ready in: 48 hours 🚀\n` +
+        `LeadPe ⚡`
+    },
+
     weeklyReport: {
       english:
         `📊 WEEKLY REPORT\n` +

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench } from "lucide-react";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO } from "@/lib/seoGenerator";
 import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
+import { generateBrief, copyToClipboard, getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBrief";
 
 interface Deployment {
   id: string;
@@ -21,6 +22,24 @@ interface Deployment {
   owner_whatsapp: string;
   building_fee: number;
   created_at: string;
+}
+
+interface BuildRequest {
+  id: string;
+  business_id: string;
+  business_name: string;
+  business_type: string;
+  city: string;
+  owner_name: string;
+  owner_whatsapp: string;
+  plan_selected: string;
+  preferred_language: string;
+  status: string;
+  assigned_coder_id: string;
+  created_at: string;
+  deadline: string;
+  github_url: string;
+  submitted_at: string;
 }
 
 interface Earning {
@@ -73,6 +92,14 @@ export default function DevDashboard() {
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  
+  // Build requests states
+  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
+  const [activeBuilds, setActiveBuilds] = useState<BuildRequest[]>([]);
+  const [showBriefModal, setShowBriefModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<BuildRequest | null>(null);
+  const [githubSubmitUrl, setGithubSubmitUrl] = useState("");
+  const [submittingGithub, setSubmittingGithub] = useState(false);
 
   // Deploy flow states
   const [githubUrl, setGithubUrl] = useState("");
@@ -128,6 +155,22 @@ export default function DevDashboard() {
       .select("*")
       .eq("vibe_coder_id", user.id);
     setEarnings(earnData || []);
+    
+    // Fetch pending build requests
+    const { data: pendingData } = await (supabase as any).from("build_requests")
+      .select("*")
+      .eq("status", "pending")
+      .is("assigned_coder_id", null)
+      .order("created_at", { ascending: false });
+    setBuildRequests(pendingData || []);
+    
+    // Fetch active builds for this coder
+    const { data: activeData } = await (supabase as any).from("build_requests")
+      .select("*")
+      .eq("assigned_coder_id", user.id)
+      .in("status", ["building", "review"])
+      .order("created_at", { ascending: false });
+    setActiveBuilds(activeData || []);
 
     setLoading(false);
   };
@@ -362,16 +405,147 @@ export default function DevDashboard() {
     setVettingStage("input");
     setGithubUrl("");
     setUrlError("");
-    setVettingChecks(vettingChecksTemplate.map(c => ({ ...c, status: "pending" })));
+    setVettingChecks(vettingChecksTemplate);
     setCurrentCheckIndex(0);
     setFinalScore(0);
     setAutoFixes([]);
-    setBusinessName("");
-    setBusinessType("");
-    setCity("");
-    setOwnerName("");
-    setOwnerWhatsapp("");
-    setBuildingFee("");
+  };
+  
+  // Build request handlers
+  const handleAcceptRequest = async (request: BuildRequest) => {
+    if (!user) return;
+    
+    try {
+      // Update build request
+      const { error } = await (supabase as any).from("build_requests")
+        .update({
+          status: "building",
+          assigned_coder_id: user.id
+        })
+        .eq("id", request.id);
+      
+      if (error) throw error;
+      
+      // Send WhatsApp to admin
+      await sendWhatsApp(
+        "919973383902",
+        getMessage('requestAccepted', 'hinglish', {
+          coderName: profile?.full_name || "Unknown",
+          businessName: request.business_name,
+          city: request.city
+        }),
+        request.id,
+        'requestAccepted',
+        'hinglish'
+      );
+      
+      // Send WhatsApp to business owner
+      await sendWhatsApp(
+        request.owner_whatsapp,
+        getMessage('buildStarted', request.preferred_language as any, {
+          ownerName: request.owner_name,
+          coderName: profile?.full_name || "Unknown"
+        }),
+        request.id,
+        'buildStarted',
+        request.preferred_language
+      );
+      
+      toast({
+        title: "✅ Request Accepted!",
+        description: `You're now building ${request.business_name}`,
+      });
+      
+      // Show brief modal
+      setSelectedRequest(request);
+      setShowBriefModal(true);
+      
+      // Refresh data
+      fetchData();
+      
+    } catch (error) {
+      console.error("Error accepting request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleViewBrief = (request: BuildRequest) => {
+    setSelectedRequest(request);
+    setShowBriefModal(true);
+  };
+  
+  const handleCopyPrompt = async (prompt: string) => {
+    try {
+      await copyToClipboard(prompt);
+      toast({
+        title: "✅ Copied!",
+        description: "ChatGPT prompt copied to clipboard"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy prompt",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleSubmitGithub = async () => {
+    if (!selectedRequest || !githubSubmitUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid GitHub URL",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSubmittingGithub(true);
+    
+    try {
+      const { error } = await (supabase as any).from("build_requests")
+        .update({
+          status: "review",
+          github_url: githubSubmitUrl,
+          submitted_at: new Date().toISOString()
+        })
+        .eq("id", selectedRequest.id);
+      
+      if (error) throw error;
+      
+      // Send WhatsApp to admin
+      await sendWhatsApp(
+        "919973383902",
+        `📋 GITHUB SUBMITTED\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\n━━━━━━━━━━━━━━\nLeadPe ⚡`,
+        selectedRequest.id,
+        'githubSubmitted',
+        'hinglish'
+      );
+      
+      toast({
+        title: "✅ Submitted for Review!",
+        description: "Your build has been submitted for quality check."
+      });
+      
+      setGithubSubmitUrl("");
+      setShowBriefModal(false);
+      fetchData();
+      
+    } catch (error) {
+      console.error("Error submitting GitHub:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit GitHub URL",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmittingGithub(false);
+    }
+  };
     setDeploySuccess(false);
     setDeployedSubdomain("");
     setDeployedBusinessName("");
@@ -876,6 +1050,184 @@ export default function DevDashboard() {
           </AnimatePresence>
         </section>
 
+        {/* Available Build Requests */}
+        <section className="mb-8">
+          <h2 className="text-xl font-bold font-display mb-2">Available Build Requests 🔨</h2>
+          <p className="text-sm text-muted-foreground mb-4">Accept a request and start earning.</p>
+          
+          {buildRequests.length === 0 ? (
+            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+              <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
+                <Wrench size={24} style={{ color: "#00E676" }} />
+              </div>
+              <p className="text-muted-foreground mb-2">No pending requests.</p>
+              <p className="text-sm text-muted-foreground">
+                Check back later for new build requests.
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {buildRequests.map((request) => {
+                const brief = generateBrief({
+                  business_name: request.business_name,
+                  business_type: request.business_type,
+                  city: request.city,
+                  owner_name: request.owner_name,
+                  owner_whatsapp: request.owner_whatsapp,
+                  plan_selected: request.plan_selected,
+                  preferred_language: request.preferred_language
+                });
+                
+                return (
+                  <motion.div
+                    key={request.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl border border-border p-6"
+                    style={{ backgroundColor: "#101810" }}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{request.business_name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {request.business_type} | {request.city}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Plan:</span>
+                        <span className="font-medium" style={{ color: "#00E676" }}>
+                          {request.plan_selected.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Fee:</span>
+                        <span className="font-medium">₹{getBuildingFee(request.plan_selected)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Deadline:</span>
+                        <span className="font-medium flex items-center gap-1">
+                          <Clock size={12} />
+                          {formatDeadline(request.deadline)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleViewBrief(request)}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 h-10 rounded-xl border-border"
+                        style={{ backgroundColor: "#080C09" }}
+                      >
+                        <Eye size={14} className="mr-1" /> View Brief
+                      </Button>
+                      <Button
+                        onClick={() => handleAcceptRequest(request)}
+                        size="sm"
+                        className="flex-1 h-10 rounded-xl text-black font-semibold"
+                        style={{ backgroundColor: "#00E676" }}
+                      >
+                        Accept Request
+                      </Button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* My Active Builds */}
+        {activeBuilds.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xl font-bold font-display mb-4">My Active Builds</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {activeBuilds.map((request) => {
+                const brief = generateBrief({
+                  business_name: request.business_name,
+                  business_type: request.business_type,
+                  city: request.city,
+                  owner_name: request.owner_name,
+                  owner_whatsapp: request.owner_whatsapp,
+                  plan_selected: request.plan_selected,
+                  preferred_language: request.preferred_language
+                });
+                
+                return (
+                  <motion.div
+                    key={request.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl border border-border p-6"
+                    style={{ backgroundColor: "#101810" }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">{request.business_name}</h3>
+                          <p className="text-sm text-muted-foreground">{request.city}</p>
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        request.status === "building" 
+                          ? "bg-yellow-500/20 text-yellow-500" 
+                          : "bg-blue-500/20 text-blue-500"
+                      }`}>
+                        {request.status === "building" ? "Building" : "In Review"}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Time remaining:</span>
+                        <span className="font-medium flex items-center gap-1">
+                          <Clock size={12} />
+                          {formatDeadline(request.deadline)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Status:</span>
+                        <span className="font-medium">{request.status}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleViewBrief(request)}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 h-10 rounded-xl border-border"
+                        style={{ backgroundColor: "#080C09" }}
+                      >
+                        <Eye size={14} className="mr-1" /> View Brief
+                      </Button>
+                      {request.status === "building" && (
+                        <Button
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowBriefModal(true);
+                          }}
+                          size="sm"
+                          className="flex-1 h-10 rounded-xl text-black font-semibold"
+                          style={{ backgroundColor: "#00E676" }}
+                        >
+                          <Code size={14} className="mr-1" /> Submit GitHub
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* My Sites Table */}
         <section className="mb-8">
           <h2 className="text-xl font-bold font-display mb-4">My Deployed Sites</h2>
@@ -1054,6 +1406,189 @@ export default function DevDashboard() {
           </div>
         </section>
       </div>
+      
+      {/* Brief Modal */}
+      <AnimatePresence>
+        {showBriefModal && selectedRequest && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowBriefModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              style={{ backgroundColor: "#FFFFFF" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>
+                    Build Brief — {selectedRequest.business_name}
+                  </h2>
+                  <Button
+                    onClick={() => setShowBriefModal(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </Button>
+                </div>
+                
+                {/* Business Details */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Business Details</h3>
+                  <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>Business:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>Type:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_type}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>City:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.city}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>Owner:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.owner_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>WhatsApp:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>+91 {selectedRequest.owner_whatsapp}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: "#666666" }}>Plan:</span>
+                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.plan_selected.toUpperCase()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* ChatGPT Prompt */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>ChatGPT Prompt</h3>
+                  <div className="rounded-xl border border-[#E0E0E0] p-4">
+                    <div className="bg-gray-50 rounded-lg p-4 mb-3 font-mono text-xs overflow-x-auto" style={{ backgroundColor: "#F8F9FA", maxHeight: "300px", overflowY: "auto" }}>
+                      {generateBrief({
+                        business_name: selectedRequest.business_name,
+                        business_type: selectedRequest.business_type,
+                        city: selectedRequest.city,
+                        owner_name: selectedRequest.owner_name,
+                        owner_whatsapp: selectedRequest.owner_whatsapp,
+                        plan_selected: selectedRequest.plan_selected,
+                        preferred_language: selectedRequest.preferred_language
+                      }).chatgptPrompt}
+                    </div>
+                    <Button
+                      onClick={() => handleCopyPrompt(generateBrief({
+                        business_name: selectedRequest.business_name,
+                        business_type: selectedRequest.business_type,
+                        city: selectedRequest.city,
+                        owner_name: selectedRequest.owner_name,
+                        owner_whatsapp: selectedRequest.owner_whatsapp,
+                        plan_selected: selectedRequest.plan_selected,
+                        preferred_language: selectedRequest.preferred_language
+                      }).chatgptPrompt)}
+                      className="w-full h-10 rounded-xl text-white font-semibold"
+                      style={{ backgroundColor: "#00C853" }}
+                    >
+                      <Copy size={16} className="mr-2" /> Copy Prompt
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Mandatory Elements */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Mandatory Elements</h3>
+                  <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                    <ul className="space-y-2">
+                      {generateBrief({
+                        business_name: selectedRequest.business_name,
+                        business_type: selectedRequest.business_type,
+                        city: selectedRequest.city,
+                        owner_name: selectedRequest.owner_name,
+                        owner_whatsapp: selectedRequest.owner_whatsapp,
+                        plan_selected: selectedRequest.plan_selected,
+                        preferred_language: selectedRequest.preferred_language
+                      }).mandatoryElements.map((element, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}>
+                          <Check size={14} style={{ color: "#00C853" }} />
+                          {element}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* Quick Links */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Quick Links</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Button
+                      onClick={() => window.open("https://chat.openai.com", "_blank")}
+                      variant="outline"
+                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
+                    >
+                      Open ChatGPT →
+                    </Button>
+                    <Button
+                      onClick={() => window.open("https://lovable.dev", "_blank")}
+                      variant="outline"
+                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
+                    >
+                      Open Lovable →
+                    </Button>
+                    <Button
+                      onClick={() => window.open("https://github.com", "_blank")}
+                      variant="outline"
+                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
+                    >
+                      Open GitHub →
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Submit GitHub URL */}
+                {selectedRequest.status === "building" && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Submit for Review</h3>
+                    <div className="space-y-3">
+                      <Input
+                        value={githubSubmitUrl}
+                        onChange={(e) => setGithubSubmitUrl(e.target.value)}
+                        placeholder="Enter GitHub repository URL"
+                        className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]"
+                        style={{ backgroundColor: "#FAFAFA" }}
+                      />
+                      <Button
+                        onClick={handleSubmitGithub}
+                        disabled={submittingGithub}
+                        className="w-full h-12 rounded-xl text-white font-semibold"
+                        style={{ backgroundColor: "#00C853" }}
+                      >
+                        {submittingGithub ? (
+                          <><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>
+                        ) : (
+                          <><Send size={16} className="mr-2" /> Submit GitHub URL →</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

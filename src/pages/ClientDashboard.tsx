@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, Phone, MessageCircle, Copy, TrendingUp, Clock, Zap, ChevronDown, ChevronUp, Wallet, Eye, Lock, AlertCircle, CheckCircle2, Star, Users, Globe, X } from "lucide-react";
+import { Bell, LogOut, Phone, MessageCircle, Copy, TrendingUp, Clock, Zap, ChevronDown, ChevronUp, Wallet, Eye, Lock, AlertCircle, CheckCircle2, Star, Users, Globe, X, Wrench, User, Code, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { getTrialProgress, checkAndTriggerSequence, Language, languageLabels } f
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { generateWeeklyReport, WeeklyReportData, getPastWeeklyReports, getWeekRange } from "@/lib/weeklyReport";
 import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
+import { getBusinessIcon, formatDeadline } from "@/lib/clientBrief";
 
 interface Lead {
   id: string;
@@ -44,6 +45,25 @@ interface SiteStats {
   inquiries: number;
   vsLastWeek: number;
   speedScore: number;
+}
+
+interface BuildRequest {
+  id: string;
+  business_id: string;
+  business_name: string;
+  business_type: string;
+  city: string;
+  owner_name: string;
+  owner_whatsapp: string;
+  plan_selected: string;
+  preferred_language: string;
+  status: string;
+  assigned_coder_id: string;
+  created_at: string;
+  deadline: string;
+  github_url: string;
+  submitted_at: string;
+  coder_name?: string;
 }
 
 const planNames: Record<string, string> = {
@@ -85,6 +105,7 @@ export default function ClientDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<SiteStats>({ visitors: 0, inquiries: 0, vsLastWeek: 0, speedScore: 94 });
+  const [buildRequest, setBuildRequest] = useState<BuildRequest | null>(null);
 
   // Modal states
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -137,6 +158,29 @@ export default function ClientDashboard() {
         vsLastWeek: Math.floor(Math.random() * 40) - 15,
         speedScore: 94,
       });
+
+      // Fetch build request
+      const { data: buildRequestData } = await (supabase as any).from("build_requests")
+        .select("*")
+        .eq("business_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      // Enrich with coder name if assigned
+      if (buildRequestData && buildRequestData.assigned_coder_id) {
+        const { data: coderData } = await (supabase.from("profiles") as any)
+          .select("full_name")
+          .eq("id", buildRequestData.assigned_coder_id)
+          .single();
+        
+        setBuildRequest({
+          ...buildRequestData,
+          coder_name: coderData?.full_name || "Unknown"
+        });
+      } else {
+        setBuildRequest(buildRequestData);
+      }
 
       // Fetch deployment for trial data (matching by owner whatsapp)
       const { data: deploymentData } = await (supabase as any).from("deployments")
@@ -478,6 +522,137 @@ export default function ClientDashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* Build Status Tracker */}
+        {buildRequest && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="rounded-2xl border border-border p-6 mb-6" 
+            style={{ backgroundColor: "#101810" }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-2xl">{getBusinessIcon(buildRequest.business_type)}</div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-1">Website Build Status</h3>
+                <p className="text-sm text-muted-foreground">
+                  {buildRequest.business_name} • {buildRequest.plan_selected.toUpperCase()} Plan
+                </p>
+              </div>
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                buildRequest.status === "pending" ? "bg-yellow-500/20 text-yellow-500" :
+                buildRequest.status === "building" ? "bg-blue-500/20 text-blue-500" :
+                buildRequest.status === "review" ? "bg-purple-500/20 text-purple-500" :
+                buildRequest.status === "deployed" ? "bg-green-500/20 text-green-500" :
+                "bg-red-500/20 text-red-500"
+              }`}>
+                {buildRequest.status === "pending" ? "Pending Assignment" :
+                 buildRequest.status === "building" ? "Building" :
+                 buildRequest.status === "review" ? "In Review" :
+                 buildRequest.status === "deployed" ? "Deployed" :
+                 buildRequest.status}
+              </div>
+            </div>
+            
+            {/* Progress Steps */}
+            <div className="flex items-center justify-between mb-4">
+              {[
+                { id: "pending", label: "Assigned", icon: User },
+                { id: "building", label: "Building", icon: Wrench },
+                { id: "review", label: "Review", icon: Code },
+                { id: "deployed", label: "Live", icon: Globe }
+              ].map((step, index) => {
+                const isActive = buildRequest.status === step.id || 
+                  (step.id === "deployed" && buildRequest.status === "deployed") ||
+                  (step.id === "review" && (buildRequest.status === "review" || buildRequest.status === "deployed")) ||
+                  (step.id === "building" && (buildRequest.status === "building" || buildRequest.status === "review" || buildRequest.status === "deployed")) ||
+                  (step.id === "pending" && buildRequest.assigned_coder_id);
+                
+                const isCompleted = isActive && buildRequest.status !== step.id;
+                
+                return (
+                  <div key={step.id} className="flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                      isCompleted ? "bg-green-500 text-white" :
+                      isActive ? "bg-blue-500 text-white" :
+                      "bg-gray-700 text-gray-400"
+                    }`}>
+                      <step.icon size={16} />
+                    </div>
+                    <span className={`text-xs ${
+                      isActive ? "text-foreground font-medium" : "text-muted-foreground"
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: "#1a1f1a" }}>
+              <div 
+                className="h-full rounded-full transition-all duration-500" 
+                style={{ 
+                  backgroundColor: "#00E676",
+                  width: buildRequest.status === "pending" && !buildRequest.assigned_coder_id ? "0%" :
+                         buildRequest.status === "pending" && buildRequest.assigned_coder_id ? "25%" :
+                         buildRequest.status === "building" ? "50%" :
+                         buildRequest.status === "review" ? "75%" :
+                         buildRequest.status === "deployed" ? "100%" : "0%"
+                }}
+              />
+            </div>
+            
+            {/* Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <User size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Builder:</span>
+                <span className="font-medium">
+                  {buildRequest.coder_name || "Assigning..."}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Deadline:</span>
+                <span className="font-medium">
+                  {formatDeadline(buildRequest.deadline)}
+                </span>
+              </div>
+              {buildRequest.github_url && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink size={14} className="text-muted-foreground" />
+                  <Button
+                    onClick={() => window.open(buildRequest.github_url, "_blank")}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 rounded-lg border-border text-xs"
+                    style={{ backgroundColor: "#080C09" }}
+                  >
+                    View GitHub
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Status Messages */}
+            <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <p className="text-sm text-muted-foreground">
+                {buildRequest.status === "pending" && !buildRequest.assigned_coder_id && 
+                  "🔍 Finding the perfect builder for your website..."}
+                {buildRequest.status === "pending" && buildRequest.assigned_coder_id && 
+                  "✅ Builder assigned! Starting work on your website..."}
+                {buildRequest.status === "building" && 
+                  "🔨 Your website is being built. You'll receive updates here!"}
+                {buildRequest.status === "review" && 
+                  "👀 Website is ready and under review. Almost live!"}
+                {buildRequest.status === "deployed" && 
+                  "🎉 Your website is live! Check your leads section for customer inquiries."}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Trial Progress Bar */}
         {(profile?.status === "trial" || trialProgress.day > 1) && (

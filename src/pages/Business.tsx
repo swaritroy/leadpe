@@ -151,7 +151,7 @@ export default function Business() {
       const whatsappDigits = formData.whatsappNumber.replace(/\D/g, "");
       
       // Save to Supabase
-      const { error } = await (supabase as any).from("signups").insert({
+      const { error: signupError } = await (supabase as any).from("signups").insert({
         owner_name: formData.ownerName,
         business_name: formData.businessName,
         business_type: formData.businessType,
@@ -164,7 +164,23 @@ export default function Business() {
         created_at: new Date().toISOString(),
       });
       
-      if (error) throw error;
+      if (signupError) throw signupError;
+      
+      // Auto-create build request
+      const { error: buildRequestError } = await (supabase as any).from("build_requests").insert({
+        business_id: code,
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        city: formData.city,
+        owner_name: formData.ownerName,
+        owner_whatsapp: whatsappDigits,
+        plan_selected: formData.plan,
+        preferred_language: formData.language,
+        status: "pending",
+        created_at: new Date().toISOString(),
+      });
+      
+      if (buildRequestError) throw buildRequestError;
       
       // Send WhatsApp messages
       const signupData = {
@@ -173,7 +189,8 @@ export default function Business() {
         city: formData.city,
         whatsapp: whatsappDigits,
         ownerName: formData.ownerName,
-        trialCode: code
+        trialCode: code,
+        plan: formData.plan
       };
       
       // Send to admin
@@ -182,6 +199,15 @@ export default function Business() {
         getMessage('newSignup', 'hinglish', signupData),
         null,
         'newSignup',
+        'hinglish'
+      );
+      
+      // Send build request notification to admin
+      await sendWhatsApp(
+        ADMIN,
+        getMessage('buildRequestCreated', 'hinglish', signupData),
+        null,
+        'buildRequestCreated',
         'hinglish'
       );
       

@@ -19,7 +19,11 @@ import {
   FileSpreadsheet,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  User,
+  Clock,
+  Wrench,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +41,8 @@ import {
   ResponsiveContainer 
 } from "recharts";
 import { generateWeeklyReport, sendWeeklyReportWhatsApp, saveWeeklyReport } from "@/lib/weeklyReport";
+import { sendWhatsApp } from "@/lib/whatsappService";
+import { getBusinessIcon, formatDeadline } from "@/lib/clientBrief";
 
 // Interfaces
 interface Profile {
@@ -101,6 +107,25 @@ interface Earning {
   created_at: string;
 }
 
+interface BuildRequest {
+  id: string;
+  business_id: string;
+  business_name: string;
+  business_type: string;
+  city: string;
+  owner_name: string;
+  owner_whatsapp: string;
+  plan_selected: string;
+  preferred_language: string;
+  status: string;
+  assigned_coder_id: string;
+  created_at: string;
+  deadline: string;
+  github_url: string;
+  submitted_at: string;
+  coder_name?: string;
+}
+
 interface ActionItem {
   id: string;
   type: "trial_day6" | "trial_day3" | "new_coder" | "no_leads";
@@ -129,6 +154,8 @@ export default function Admin() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
+  const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
@@ -182,10 +209,29 @@ export default function Admin() {
         .select("*")
         .order("created_at", { ascending: false });
       
+      const { data: buildRequestsData } = await (supabase as any).from("build_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
       setProfiles(profilesData || []);
       setDeployments(deploymentsData || []);
       setLeads(leadsData || []);
       setEarnings(earningsData || []);
+      setBuildRequests(buildRequestsData || []);
+      
+      // Set available coders
+      const coders = (profilesData || []).filter(p => p.role === "vibe_coder");
+      setAvailableCoders(coders);
+      
+      // Enrich build requests with coder names
+      const enrichedRequests = (buildRequestsData || []).map(request => {
+        const coder = coders.find(c => c.id === request.assigned_coder_id);
+        return {
+          ...request,
+          coder_name: coder?.full_name || "Unassigned"
+        };
+      });
+      setBuildRequests(enrichedRequests);
       
       generateActionItems(profilesData || [], deploymentsData || []);
     } catch (err) {
@@ -399,6 +445,44 @@ export default function Admin() {
     }
     toast({ title: "Marked as paid", description: "Payout status updated" });
     fetchData();
+  };
+  
+  const assignCoder = async (requestId: string, coderId: string) => {
+    try {
+      const { error } = await (supabase as any).from("build_requests")
+        .update({
+          status: "building",
+          assigned_coder_id: coderId
+        })
+        .eq("id", requestId);
+      
+      if (error) throw error;
+      
+      const request = buildRequests.find(r => r.id === requestId);
+      const coder = availableCoders.find(c => c.id === coderId);
+      
+      if (request && coder) {
+        // Send WhatsApp to business owner
+        await sendWhatsApp(
+          request.owner_whatsapp,
+          `🎉 Great news ${request.owner_name}!\nAapki website banana shuru ho gaya.\nBuilder: ${coder.full_name}\nReady in: 48 hours 🚀\nLeadPe ⚡`
+        );
+        
+        toast({
+          title: "✅ Coder Assigned!",
+          description: `${coder.full_name} assigned to ${request.business_name}`
+        });
+      }
+      
+      fetchData();
+    } catch (error) {
+      console.error("Error assigning coder:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign coder",
+        variant: "destructive"
+      });
+    }
   };
   
   const markAllPaid = async () => {
@@ -749,6 +833,170 @@ export default function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Build Requests */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => toggleSection("buildRequests")} className="flex items-center gap-2 text-lg font-bold font-display">
+              {expandedSections.has("buildRequests") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              Build Requests ({buildRequests.length})
+            </button>
+          </div>
+          
+          {expandedSections.has("buildRequests") && (
+            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead style={{ backgroundColor: "#080C09" }}>
+                    <tr>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Business</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type | City</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Owner</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Plan</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Coder</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deadline</th>
+                      <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {buildRequests.map((request) => (
+                      <tr key={request.id} className="hover:bg-[#1a1f1a]/50 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getBusinessIcon(request.business_type)}</span>
+                            <div>
+                              <div className="font-medium">{request.business_name}</div>
+                              <div className="text-xs text-muted-foreground">{request.owner_whatsapp}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm">
+                          <div>{request.business_type}</div>
+                          <div className="text-muted-foreground">{request.city}</div>
+                        </td>
+                        <td className="p-4 text-sm">{request.owner_name}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            request.plan_selected === "basic" ? "bg-gray-500/20 text-gray-500" :
+                            request.plan_selected === "growth" ? "bg-green-500/20 text-green-500" :
+                            "bg-purple-500/20 text-purple-500"
+                          }`}>
+                            {request.plan_selected.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            request.status === "pending" ? "bg-yellow-500/20 text-yellow-500" :
+                            request.status === "building" ? "bg-blue-500/20 text-blue-500" :
+                            request.status === "review" ? "bg-purple-500/20 text-purple-500" :
+                            request.status === "deployed" ? "bg-green-500/20 text-green-500" :
+                            "bg-red-500/20 text-red-500"
+                          }`}>
+                            {request.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm">
+                          {request.coder_name || "Unassigned"}
+                        </td>
+                        <td className="p-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {formatDeadline(request.deadline)}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          {request.status === "pending" && (
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  assignCoder(request.id, e.target.value);
+                                }
+                              }}
+                              className="text-xs px-2 py-1 rounded border border-border bg-[#080C09] text-foreground"
+                              defaultValue=""
+                            >
+                              <option value="">Assign...</option>
+                              {availableCoders.map(coder => (
+                                <option key={coder.id} value={coder.id}>{coder.full_name}</option>
+                              ))}
+                            </select>
+                          )}
+                          {request.github_url && (
+                            <button
+                              onClick={() => window.open(request.github_url, "_blank")}
+                              className="text-xs px-2 py-1 rounded border border-border hover:border-[#00E676]/50 transition-colors"
+                            >
+                              GitHub
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Mobile Cards */}
+              <div className="md:hidden p-4 space-y-3">
+                {buildRequests.map((request) => (
+                  <div key={request.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{getBusinessIcon(request.business_type)}</span>
+                        <span className="font-medium">{request.business_name}</span>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        request.status === "pending" ? "bg-yellow-500/20 text-yellow-500" :
+                        request.status === "building" ? "bg-blue-500/20 text-blue-500" :
+                        request.status === "review" ? "bg-purple-500/20 text-purple-500" :
+                        request.status === "deployed" ? "bg-green-500/20 text-green-500" :
+                        "bg-red-500/20 text-red-500"
+                      }`}>
+                        {request.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1 mb-3">
+                      <div>{request.business_type} • {request.city}</div>
+                      <div>Owner: {request.owner_name}</div>
+                      <div>Plan: {request.plan_selected.toUpperCase()}</div>
+                      <div>Coder: {request.coder_name || "Unassigned"}</div>
+                      <div className="flex items-center gap-1">
+                        <Clock size={10} />
+                        Deadline: {formatDeadline(request.deadline)}
+                      </div>
+                    </div>
+                    {request.status === "pending" && (
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            assignCoder(request.id, e.target.value);
+                          }
+                        }}
+                        className="w-full text-xs px-2 py-1 rounded border border-border bg-[#080C09] text-foreground"
+                        defaultValue=""
+                      >
+                        <option value="">Assign coder...</option>
+                        {availableCoders.map(coder => (
+                          <option key={coder.id} value={coder.id}>{coder.full_name}</option>
+                        ))}
+                      </select>
+                    )}
+                    {request.github_url && (
+                      <button
+                        onClick={() => window.open(request.github_url, "_blank")}
+                        className="w-full text-xs px-2 py-1 rounded border border-border hover:border-[#00E676]/50 transition-colors mt-2"
+                      >
+                        View GitHub
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
