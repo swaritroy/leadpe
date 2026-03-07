@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      build_requests: {
+        Row: {
+          assigned_coder_id: string | null
+          business_id: string | null
+          business_name: string | null
+          business_type: string | null
+          city: string | null
+          created_at: string | null
+          deadline: string | null
+          id: string
+          owner_name: string | null
+          owner_whatsapp: string | null
+          plan_selected: string | null
+          status: string | null
+        }
+        Insert: {
+          assigned_coder_id?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          owner_name?: string | null
+          owner_whatsapp?: string | null
+          plan_selected?: string | null
+          status?: string | null
+        }
+        Update: {
+          assigned_coder_id?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          owner_name?: string | null
+          owner_whatsapp?: string | null
+          plan_selected?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           addon_booking: boolean
@@ -101,6 +146,156 @@ export type Database = {
         }
         Relationships: []
       }
+      deployments: {
+        Row: {
+          building_fee: number | null
+          business_id: string | null
+          business_name: string | null
+          business_type: string | null
+          city: string | null
+          converted: boolean | null
+          created_at: string | null
+          day1_sent: boolean | null
+          day2_sent: boolean | null
+          day3_sent: boolean | null
+          day4_sent: boolean | null
+          day5_sent: boolean | null
+          day6_sent: boolean | null
+          day7_sent: boolean | null
+          github_url: string | null
+          id: string
+          indexnow_pinged: boolean | null
+          leadpe_commission: number | null
+          meta_keywords: string | null
+          monthly_passive: number | null
+          og_tags: string | null
+          owner_name: string | null
+          owner_whatsapp: string | null
+          schema_markup: string | null
+          seo_description: string | null
+          seo_keywords: string | null
+          seo_schema: string | null
+          seo_title: string | null
+          status: string | null
+          subdomain: string | null
+          trial_day: number | null
+          trial_start_date: string | null
+          url_slug: string | null
+          vibe_coder_earning: number | null
+          vibe_coder_id: string | null
+        }
+        Insert: {
+          building_fee?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          converted?: boolean | null
+          created_at?: string | null
+          day1_sent?: boolean | null
+          day2_sent?: boolean | null
+          day3_sent?: boolean | null
+          day4_sent?: boolean | null
+          day5_sent?: boolean | null
+          day6_sent?: boolean | null
+          day7_sent?: boolean | null
+          github_url?: string | null
+          id?: string
+          indexnow_pinged?: boolean | null
+          leadpe_commission?: number | null
+          meta_keywords?: string | null
+          monthly_passive?: number | null
+          og_tags?: string | null
+          owner_name?: string | null
+          owner_whatsapp?: string | null
+          schema_markup?: string | null
+          seo_description?: string | null
+          seo_keywords?: string | null
+          seo_schema?: string | null
+          seo_title?: string | null
+          status?: string | null
+          subdomain?: string | null
+          trial_day?: number | null
+          trial_start_date?: string | null
+          url_slug?: string | null
+          vibe_coder_earning?: number | null
+          vibe_coder_id?: string | null
+        }
+        Update: {
+          building_fee?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
+          converted?: boolean | null
+          created_at?: string | null
+          day1_sent?: boolean | null
+          day2_sent?: boolean | null
+          day3_sent?: boolean | null
+          day4_sent?: boolean | null
+          day5_sent?: boolean | null
+          day6_sent?: boolean | null
+          day7_sent?: boolean | null
+          github_url?: string | null
+          id?: string
+          indexnow_pinged?: boolean | null
+          leadpe_commission?: number | null
+          meta_keywords?: string | null
+          monthly_passive?: number | null
+          og_tags?: string | null
+          owner_name?: string | null
+          owner_whatsapp?: string | null
+          schema_markup?: string | null
+          seo_description?: string | null
+          seo_keywords?: string | null
+          seo_schema?: string | null
+          seo_title?: string | null
+          status?: string | null
+          subdomain?: string | null
+          trial_day?: number | null
+          trial_start_date?: string | null
+          url_slug?: string | null
+          vibe_coder_earning?: number | null
+          vibe_coder_id?: string | null
+        }
+        Relationships: []
+      }
+      earnings: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          deployment_id: string | null
+          id: string
+          month: string | null
+          paid: boolean | null
+          paid_at: string | null
+          type: string | null
+          vibe_coder_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          deployment_id?: string | null
+          id?: string
+          month?: string | null
+          paid?: boolean | null
+          paid_at?: string | null
+          type?: string | null
+          vibe_coder_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          deployment_id?: string | null
+          id?: string
+          month?: string | null
+          paid?: boolean | null
+          paid_at?: string | null
+          type?: string | null
+          vibe_coder_id?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           business_id: string
@@ -148,39 +343,168 @@ export type Database = {
           },
         ]
       }
+      message_log: {
+        Row: {
+          business_id: string | null
+          channel: string | null
+          id: string
+          language: string | null
+          message: string | null
+          message_type: string | null
+          sent_at: string | null
+          status: string | null
+          to_number: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          channel?: string | null
+          id?: string
+          language?: string | null
+          message?: string | null
+          message_type?: string | null
+          sent_at?: string | null
+          status?: string | null
+          to_number?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          channel?: string | null
+          id?: string
+          language?: string | null
+          message?: string | null
+          message_type?: string | null
+          sent_at?: string | null
+          status?: string | null
+          to_number?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          activated_at: string | null
+          amount: number | null
+          business_id: string | null
+          business_name: string | null
+          created_at: string | null
+          gateway_order_id: string | null
+          gst: number | null
+          id: string
+          method: string | null
+          plan: string | null
+          status: string | null
+          total: number | null
+        }
+        Insert: {
+          activated_at?: string | null
+          amount?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          gateway_order_id?: string | null
+          gst?: number | null
+          id?: string
+          method?: string | null
+          plan?: string | null
+          status?: string | null
+          total?: number | null
+        }
+        Update: {
+          activated_at?: string | null
+          amount?: number | null
+          business_id?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          gateway_order_id?: string | null
+          gst?: number | null
+          id?: string
+          method?: string | null
+          plan?: string | null
+          status?: string | null
+          total?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          business_name: string | null
+          business_type: string | null
+          city: string | null
           created_at: string
           display_name: string | null
+          email: string | null
+          founding_member: boolean | null
+          full_name: string | null
           id: string
           monthly_capacity: string | null
           onboarding_complete: boolean | null
+          plan_renewal_date: string | null
+          plan_status: string | null
           preferred_fee: number | null
+          preferred_language: string | null
+          role: string | null
+          site_url: string | null
+          status: string | null
+          subscription_plan: string | null
+          trial_code: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           upi_id: string | null
           user_id: string
           whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          founding_member?: boolean | null
+          full_name?: string | null
           id?: string
           monthly_capacity?: string | null
           onboarding_complete?: boolean | null
+          plan_renewal_date?: string | null
+          plan_status?: string | null
           preferred_fee?: number | null
+          preferred_language?: string | null
+          role?: string | null
+          site_url?: string | null
+          status?: string | null
+          subscription_plan?: string | null
+          trial_code?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           upi_id?: string | null
           user_id: string
           whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
+          business_name?: string | null
+          business_type?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          founding_member?: boolean | null
+          full_name?: string | null
           id?: string
           monthly_capacity?: string | null
           onboarding_complete?: boolean | null
+          plan_renewal_date?: string | null
+          plan_status?: string | null
           preferred_fee?: number | null
+          preferred_language?: string | null
+          role?: string | null
+          site_url?: string | null
+          status?: string | null
+          subscription_plan?: string | null
+          trial_code?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           upi_id?: string | null
           user_id?: string
           whatsapp_number?: string | null
@@ -242,6 +566,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signups: {
+        Row: {
+          business_name: string
+          business_type: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          owner_name: string | null
+          plan_selected: string | null
+          preferred_language: string | null
+          status: string | null
+          trial_code: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
+          whatsapp_number: string
+        }
+        Insert: {
+          business_name: string
+          business_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          owner_name?: string | null
+          plan_selected?: string | null
+          preferred_language?: string | null
+          status?: string | null
+          trial_code?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          whatsapp_number: string
+        }
+        Update: {
+          business_name?: string
+          business_type?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          owner_name?: string | null
+          plan_selected?: string | null
+          preferred_language?: string | null
+          status?: string | null
+          trial_code?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          whatsapp_number?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

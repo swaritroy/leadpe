@@ -7,44 +7,44 @@
 
 @layer base {
   :root {
-    --background: 140 20% 3%;
-    --foreground: 140 30% 90%;
+    --background: 130 30% 97%;
+    --foreground: 0 0% 10%;
 
-    --card: 140 20% 6%;
-    --card-foreground: 140 30% 90%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 140 20% 6%;
-    --popover-foreground: 140 30% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 145 100% 45%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 145 100% 39%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 140 10% 12%;
-    --secondary-foreground: 140 30% 90%;
+    --secondary: 130 20% 95%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 140 10% 12%;
-    --muted-foreground: 140 15% 40%;
+    --muted: 130 10% 93%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 145 100% 45%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 145 100% 39%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 140 10% 14%;
-    --input: 140 10% 14%;
-    --ring: 145 100% 45%;
+    --border: 140 20% 90%;
+    --input: 0 0% 88%;
+    --ring: 145 100% 39%;
 
     --radius: 1rem;
 
-    --sidebar-background: 140 20% 4%;
-    --sidebar-foreground: 140 30% 90%;
-    --sidebar-primary: 145 100% 45%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 140 10% 12%;
-    --sidebar-accent-foreground: 140 30% 90%;
-    --sidebar-border: 140 10% 14%;
-    --sidebar-ring: 145 100% 45%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 145 100% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 130 20% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 140 20% 90%;
+    --sidebar-ring: 145 100% 39%;
   }
 }
 
@@ -59,7 +59,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Syne', 'DM Sans', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -69,59 +69,28 @@
 
 @layer utilities {
   .text-gradient-hero {
-    background: linear-gradient(135deg, hsl(145 100% 45%), hsl(160 80% 50%));
+    background: linear-gradient(135deg, hsl(145 100% 39%), hsl(160 80% 45%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(135deg, hsl(145 100% 45%), hsl(160 80% 50%));
+    background: linear-gradient(135deg, hsl(145 100% 39%), hsl(160 80% 45%));
   }
 
-  .bg-gradient-dark {
-    background: linear-gradient(180deg, hsl(140 20% 3%), hsl(140 20% 6%));
+  .bg-gradient-light {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F0FFF4 100%);
   }
 
   .shadow-glow {
-    box-shadow: 0 0 40px hsl(145 100% 45% / 0.15);
+    box-shadow: 0 0 40px hsl(145 100% 39% / 0.12);
   }
 
   .shadow-glow-lg {
-    box-shadow: 0 0 60px hsl(145 100% 45% / 0.25);
+    box-shadow: 0 0 60px hsl(145 100% 39% / 0.2);
   }
 
-  /* Noise texture overlay */
-  .noise-overlay::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.03;
-    z-index: 100;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 256px 256px;
-  }
-
-  /* Floating mesh background */
-  .mesh-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background:
-      radial-gradient(ellipse at 20% 50%, hsl(145 100% 45% / 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, hsl(160 80% 50% / 0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 80%, hsl(145 100% 45% / 0.03) 0%, transparent 50%);
-  }
-
-  /* Staggered reveal */
   .reveal-up {
     animation: revealUp 0.6s ease-out forwards;
     opacity: 0;
