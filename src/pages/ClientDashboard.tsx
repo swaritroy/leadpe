@@ -431,30 +431,30 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#080C09" }}>
-        <div className="animate-spin w-8 h-8 border-2 border-[#00E676] border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
+        <div className="animate-spin w-8 h-8 border-2 border-[#00C853] border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ backgroundColor: "#080C09" }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
       {/* Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <LeadPeLogo theme="light" size="sm" />
           <div className="flex-1 text-center px-4">
-            <span className="text-sm font-medium truncate block">{profile?.business_name || "Your Business"}</span>
+            <span className="text-sm font-medium truncate block text-[#1A1A1A]">{profile?.business_name || "Your Business"}</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-white/5 transition-colors relative">
-              <Bell size={18} className="text-muted-foreground" />
-              {todayLeads > 0 && <span className="absolute top-0 right-0 w-2 h-2 rounded-full" style={{ backgroundColor: "#00E676" }} />}
+            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative">
+              <Bell size={18} className="text-[#666]" />
+              {todayLeads > 0 && <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#00C853]" />}
             </button>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-[#00C853] text-white">
               {user?.email?.[0].toUpperCase() || "U"}
             </div>
-            <button onClick={signOut} className="text-xs text-muted-foreground hover:text-foreground">
+            <button onClick={signOut} className="text-xs text-[#666] hover:text-[#1A1A1A]">
               <LogOut size={16} />
             </button>
           </div>
@@ -464,16 +464,16 @@ export default function ClientDashboard() {
       <div className="container mx-auto px-4 pt-20">
         {/* Hero Metric */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-8">
-          <div className="text-6xl md:text-7xl font-extrabold font-display mb-2" style={{ color: "#00E676" }}>
+          <div className="text-6xl md:text-7xl font-extrabold font-display mb-2 text-[#00C853]">
             {todayLeads}
           </div>
-          <div className="text-lg font-medium mb-1">New Leads Today 🔔</div>
-          <div className="text-sm text-muted-foreground">{thisMonthLeads} total leads this month</div>
+          <div className="text-lg font-medium mb-1 text-[#1A1A1A]">New Leads Today 🔔</div>
+          <div className="text-sm text-[#666]">{thisMonthLeads} total leads this month</div>
 
           {todayLeads === 0 && !hasDemoLead && (
-            <div className="mt-4 p-4 rounded-xl border border-border" style={{ backgroundColor: "#101810" }}>
-              <p className="text-sm text-muted-foreground">
-                Your site is live and working. First leads usually come within 7 days.
+            <div className="mt-4 p-4 rounded-xl border border-[#E0F2E9] bg-white">
+              <p className="text-sm text-[#666]">
+                Your site is live and working. First leads usually come within 7-14 days.
               </p>
             </div>
           )}
