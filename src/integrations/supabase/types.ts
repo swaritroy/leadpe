@@ -154,21 +154,36 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          monthly_capacity: string | null
+          onboarding_complete: boolean | null
+          preferred_fee: number | null
+          upi_id: string | null
           user_id: string
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          monthly_capacity?: string | null
+          onboarding_complete?: boolean | null
+          preferred_fee?: number | null
+          upi_id?: string | null
           user_id: string
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          monthly_capacity?: string | null
+          onboarding_complete?: boolean | null
+          preferred_fee?: number | null
+          upi_id?: string | null
           user_id?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

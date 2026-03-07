@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ const vettingChecksTemplate: VettingCheck[] = [
 export default function DevDashboard() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,11 +106,17 @@ export default function DevDashboard() {
     if (!user) return;
     setLoading(true);
 
-    const { data: profileData } = await (supabase.from("profiles") as any)
+    const { data: profileData } = await supabase.from("profiles")
       .select("*")
-      .eq("id", user.id)
-      .single();
+      .eq("user_id", user.id)
+      .maybeSingle();
     setProfile(profileData);
+
+    // Redirect to onboarding if not complete
+    if (profileData && !(profileData as any).onboarding_complete) {
+      navigate("/dev/onboarding");
+      return;
+    }
 
     const { data: deployData } = await (supabase as any).from("deployments")
       .select("*")
