@@ -209,22 +209,22 @@ export default function Studio() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#080C09" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30" style={{ backgroundColor: "rgba(8, 12, 9, 0.95)" }}>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LeadPeLogo theme="dark" size="sm" />
-            <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
+            <LeadPeLogo theme="light" size="sm" />
+            <span className="font-bold text-xl" style={{ color: "#00C853" }}>Studio</span>
           </div>
           <div className="flex items-center gap-6">
-            <a href="#how-you-earn" className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#how-you-earn" className="hidden md:block text-sm text-[#666666] hover:text-[#1A1A1A] transition-colors">
               How it Works
             </a>
             <Button
               onClick={scrollToSignup}
-              className="h-9 px-4 rounded-lg text-sm font-semibold text-black"
-              style={{ backgroundColor: "#00E676" }}
+              className="h-9 px-4 rounded-lg text-sm font-semibold text-white"
+              style={{ backgroundColor: "#00C853" }}
             >
               Start Earning <ArrowRight size={16} className="ml-1" />
             </Button>
@@ -241,38 +241,38 @@ export default function Studio() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-6" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}>
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-6" style={{ backgroundColor: "rgba(0, 200, 83, 0.1)", color: "#00C853" }}>
               ⚡ For AI Builders & Vibe Coders
             </span>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 font-display">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 font-display" style={{ color: "#1A1A1A" }}>
               Build Websites with AI.
               <br />
               Sell on LeadPe.
               <br />
               Earn Every Month.
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl mb-8 max-w-xl mx-auto leading-relaxed" style={{ color: "#666666" }}>
               No coding degree needed. Use ChatGPT + Lovable to build. LeadPe connects you to businesses and handles everything else. You just build and earn.
             </p>
 
             <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <span className="px-4 py-2 rounded-full text-sm font-semibold border border-border" style={{ backgroundColor: "#101810" }}>
+              <span className="px-4 py-2 rounded-full text-sm font-semibold border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                 ₹0 to join
               </span>
-              <span className="px-4 py-2 rounded-full text-sm font-semibold border" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", borderColor: "#00E676", color: "#00E676" }}>
+              <span className="px-4 py-2 rounded-full text-sm font-semibold border" style={{ backgroundColor: "rgba(0, 200, 83, 0.1)", borderColor: "#00C853", color: "#00C853" }}>
                 Earn ₹30/mo per client
               </span>
             </div>
 
             <Button
               onClick={scrollToSignup}
-              className="h-14 px-8 rounded-xl text-lg font-semibold text-black mb-8"
-              style={{ backgroundColor: "#00E676" }}
+              className="h-14 px-8 rounded-xl text-lg font-semibold text-white mb-8"
+              style={{ backgroundColor: "#00C853" }}
             >
               Start Earning — Join Free <ArrowRight className="ml-2" size={20} />
             </Button>
 
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm text-muted-foreground">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm" style={{ color: "#666666" }}>
               {[
                 "Free to join",
                 "No approval needed",
@@ -280,7 +280,7 @@ export default function Studio() {
                 "Earn passively",
               ].map((t) => (
                 <span key={t} className="flex items-center gap-1.5">
-                  <Check size={14} style={{ color: "#00E676" }} />
+                  <Check size={14} style={{ color: "#00C853" }} />
                   {t}
                 </span>
               ))}
@@ -407,7 +407,7 @@ export default function Studio() {
               <ul className="space-y-3">
                 {youDoItems.map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm">
-                    <Check size={14} style={{ color: "#00E676" }} />
+                    <Check size={14} style={{ color: "#00C853" }} />
                     <span className="text-foreground">{item}</span>
                   </li>
                 ))}
@@ -425,7 +425,7 @@ export default function Studio() {
               <ul className="space-y-3">
                 {weHandleItems.map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm">
-                    <Check size={14} style={{ color: "#00E676" }} />
+                    <Check size={14} style={{ color: "#00C853" }} />
                     <span className="text-foreground">{item}</span>
                   </li>
                 ))}
@@ -466,7 +466,7 @@ export default function Studio() {
               <ul className="space-y-2">
                 {autoFixedItems.map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check size={14} style={{ color: "#00E676" }} />
+                    <Check size={14} style={{ color: "#00C853" }} />
                     {item}
                   </li>
                 ))}
@@ -499,7 +499,7 @@ export default function Studio() {
             viewport={{ once: true }}
             className="text-center mt-8"
           >
-            <span className="inline-block px-4 py-2 rounded-full text-sm" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}>
+            <span className="inline-block px-4 py-2 rounded-full text-sm" style={{ backgroundColor: "rgba(0, 200, 83, 0.1)", color: "#00C853" }}>
               90% of sites pass automatically. We silently fix the rest.
             </span>
           </motion.div>
@@ -515,7 +515,7 @@ export default function Studio() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-4 font-display">Earn More as You Grow</h2>
+            <h2 className="text-3xl font-extrabold font-display mb-3" style={{ color: "#1A1A1A" }}>Earn More as You Grow</h2>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
@@ -527,14 +527,14 @@ export default function Studio() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
-                className="rounded-2xl border border-border p-5 text-center"
-                style={{ backgroundColor: "#101810" }}
+                className="rounded-2xl border border-[#E0F2E9] p-5 text-center"
+                style={{ backgroundColor: "#FFFFFF", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
               >
-                <h3 className="font-bold text-lg mb-2" style={{ color: "#00E676" }}>{tier.name}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{tier.clients}</p>
+                <h3 className="font-bold text-lg mb-2" style={{ color: "#00C853" }}>{tier.name}</h3>
+                <p className="text-sm mb-3" style={{ color: "#666666" }}>{tier.clients}</p>
                 <div className="space-y-1 text-sm">
-                  <p>Building fee: <span className="text-foreground">{tier.buildingFee}</span></p>
-                  <p>Passive: <span className="text-foreground">{tier.passive}</span></p>
+                  <p>Building fee: <span style={{ color: "#1A1A1A" }}>{tier.buildingFee}</span></p>
+                  <p>Passive: <span style={{ color: "#1A1A1A" }}>{tier.passive}</span></p>
                 </div>
               </motion.div>
             ))}
@@ -555,11 +555,11 @@ export default function Studio() {
             viewport={{ once: true }}
             className="text-center mb-8"
           >
-            <h2 className="text-3xl font-extrabold font-display mb-3">Join LeadPe Studio</h2>
-            <p className="text-muted-foreground">Free. Instant. No approval needed.</p>
+            <h2 className="text-3xl font-extrabold font-display mb-3" style={{ color: "#1A1A1A" }}>Join LeadPe Studio</h2>
+            <p style={{ color: "#666666" }}>Free. Instant. No approval needed.</p>
           </motion.div>
 
-          <div className="rounded-2xl border border-border p-6 sm:p-8" style={{ backgroundColor: "#101810" }}>
+          <div className="rounded-2xl border border-[#E0F2E9] p-6 sm:p-8" style={{ backgroundColor: "#FFFFFF", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
             <AnimatePresence mode="wait">
               {!showSuccess ? (
                 <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
@@ -568,8 +568,8 @@ export default function Studio() {
                     <Input
                       value={form.fullName}
                       onChange={(e) => updateForm("fullName", e.target.value)}
-                      className={`rounded-xl border ${errors.fullName ? "border-red-500" : "border-border"}`}
-                      style={{ backgroundColor: "#080C09" }}
+                      className={`rounded-xl border ${errors.fullName ? "border-red-500" : "border-[#E0E0E0]"}`}
+                      style={{ backgroundColor: "#FAFAFA" }}
                       placeholder="Your name"
                     />
                     {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
@@ -680,31 +680,31 @@ export default function Studio() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/30 py-10">
+      <footer className="border-t border-[#E0F2E9] py-10" style={{ backgroundColor: "#F0FFF4" }}>
         <div className="container px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div>
               <div className="flex items-center gap-2">
-                <LeadPeLogo theme="dark" size="sm" />
-                <span className="font-bold text-xl" style={{ color: "#00E676" }}>Studio</span>
+                <LeadPeLogo theme="light" size="sm" />
+                <span className="font-bold text-xl" style={{ color: "#00C853" }}>Studio</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Build. Deploy. Earn.</p>
+              <p className="text-sm mt-2" style={{ color: "#666666" }}>Build. Deploy. Earn.</p>
             </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#how-you-earn" className="hover:text-foreground transition-colors">How it Works</a>
-              <a href="#studio-signup" className="hover:text-foreground transition-colors">Commission Structure</a>
+            <div className="flex gap-6 text-sm" style={{ color: "#666666" }}>
+              <a href="#how-you-earn" className="hover:text-[#1A1A1A] transition-colors">How it Works</a>
+              <a href="#studio-signup" className="hover:text-[#1A1A1A] transition-colors">Commission Structure</a>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-border/20">
-            <div className="text-xs text-muted-foreground">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-[#E0F2E9]">
+            <div className="text-xs" style={{ color: "#666666" }}>
               © 2026 LeadPe Studio
             </div>
-            <Link to="/" className="text-xs hover:underline" style={{ color: "#3D5C40" }}>
+            <Link to="/" className="text-xs hover:underline" style={{ color: "#00C853" }}>
               For Businesses → leadpe.online
             </Link>
           </div>
           <div className="text-center mt-4">
-            <a href="mailto:hello@leadpe.online" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <a href="mailto:hello@leadpe.online" className="text-xs hover:text-[#1A1A1A] transition-colors" style={{ color: "#666666" }}>
               Support: hello@leadpe.online
             </a>
           </div>

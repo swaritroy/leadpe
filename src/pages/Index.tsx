@@ -36,13 +36,13 @@ const howItWorks = [
   },
   {
     number: "3",
-    icon: "�",
+    icon: "💼",
     title: "Appear on Google",
     desc: "Your site goes live with full SEO. Customers in your city find you first.",
   },
   {
     number: "4",
-    icon: "�",
+    icon: "📥",
     title: "Get Customers on WhatsApp",
     desc: "Every inquiry lands on your WhatsApp instantly. You call. You close.",
   },
@@ -73,29 +73,31 @@ const testimonials = [
 
 const pricingPlans = [
   {
-    name: "Website Building",
-    price: "₹500 — ₹2,000",
-    period: "",
-    desc: "One time only",
+    name: "BASIC — FREE",
+    price: "₹0",
+    period: "7 days trial",
+    desc: "Website building: ₹500-2000 (separate)",
     featured: false,
     features: [
-      { text: "Built by AI-powered builders", included: true },
-      { text: "Professional design", included: true },
+      { text: "5 leads visible", included: true },
+      { text: "Basic website hosting", included: true },
       { text: "Mobile optimized", included: true },
       { text: "Ready in 48 hours", included: true },
-      { text: "10x cheaper than agencies", included: true },
+      { text: "Email support", included: true },
+      { text: "WhatsApp alerts", included: false },
     ],
-    cta: "Get My Website",
+    cta: "Start Free Trial",
     outlined: true,
   },
   {
-    name: "LeadPe Management",
+    name: "GROWTH — ₹299/mo",
     price: "₹299",
     period: "/month",
-    desc: "Cancel anytime",
+    desc: "Website building: ₹500-2000 (separate)",
     featured: true,
-    badge: "Everything You Need",
+    badge: "MAIN PLAN — EVERYTHING INCLUDED",
     features: [
+      { text: "Unlimited leads", included: true },
       { text: "Website hosting", included: true },
       { text: "SEO optimization", included: true },
       { text: "Lead capture", included: true },
@@ -105,6 +107,25 @@ const pricingPlans = [
     ],
     cta: "Start Free Trial",
     outlined: false,
+  },
+  {
+    name: "LeadPe Pro — All Inclusive",
+    price: "₹999",
+    period: "/month",
+    desc: "Website building: FREE ✅ (LeadPe pays vibe coder)",
+    featured: false,
+    badge: "NEW — PREMIUM PLAN",
+    features: [
+      { text: "Everything in Growth", included: true },
+      { text: "AI appointment booking", included: true },
+      { text: "Google Review automation", included: true },
+      { text: "WhatsApp auto-reply", included: true },
+      { text: "Priority support", included: true },
+      { text: "Monthly strategy call", included: true },
+      { text: "Custom domain (not subdomain)", included: true },
+    ],
+    cta: "Get Pro Plan",
+    outlined: true,
   },
 ];
 
@@ -139,7 +160,7 @@ const fadeUp = {
 };
 
 const scrollToSignup = () => {
-  document.getElementById("business-signup")?.scrollIntoView({ behavior: "smooth" });
+  window.location.href = '/business';
 };
 
 export default function Index() {
@@ -806,7 +827,81 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SECTION 9 — SIGNUP FORM */}
+      {/* SECTION 9 — LAUNCH OFFER */}
+      <section className="py-16 bg-gradient-to-r from-[#00C853] to-[#00A843]">
+        <div className="container px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-4">
+              <span className="text-white text-sm font-medium">🔥 LAUNCH OFFER — First 30 days only</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+              "Founding Member" Badge
+            </h2>
+            <p className="text-xl text-white/90 mb-6">
+              Get ₹999 Pro plan with your website FREE
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
+            >
+              <h3 className="text-xl font-bold mb-4 text-white">What You Get:</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3 text-white/90">
+                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
+                  <span>Get your website FREE (worth ₹500-2000)</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/90">
+                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
+                  <span>Priority onboarding with our team</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/90">
+                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
+                  <span>Direct WhatsApp with founder</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/90">
+                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
+                  <span>Lock in ₹999 forever (price goes up later)</span>
+                </li>
+              </ul>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
+            >
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
+                  <span className="text-2xl font-bold text-white">50</span>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-white">Limited Spots</h3>
+                <p className="text-white/90 mb-6">
+                  First 50 businesses only
+                </p>
+                <Button
+                  onClick={scrollToSignup}
+                  className="w-full h-12 rounded-xl bg-white text-[#00C853] font-semibold hover:bg-white/90 transition-all duration-300"
+                >
+                  Claim Your Spot Now
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 10 — SIGNUP FORM */}
       <section id="business-signup" className="py-20 bg-white">
         <div className="container px-4 max-w-md mx-auto">
           <div className="bg-[#F0FFF4] rounded-3xl p-8 md:p-10">
@@ -916,7 +1011,7 @@ export default function Index() {
                         value={bizForm.city}
                         onChange={(e) => updateBizForm("city", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.city ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#FAFAFA" }}
+                        style={{ backgroundColor: "#000000" }}
                         placeholder="e.g. Mumbai"
                       />
                       {bizErrors.city && <p className="text-xs text-red-500 mt-1">{bizErrors.city}</p>}
@@ -928,7 +1023,7 @@ export default function Index() {
                         value={bizForm.whatsappNumber}
                         onChange={(e) => updateBizForm("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                         className={`rounded-xl border h-12 text-base ${bizErrors.whatsappNumber ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#FAFAFA" }}
+                        style={{ backgroundColor: "#000000" }}
                         placeholder="e.g. 9876543210"
                         type="tel"
                       />
@@ -941,7 +1036,7 @@ export default function Index() {
                         value={bizForm.ownerName}
                         onChange={(e) => updateBizForm("ownerName", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.ownerName ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#FAFAFA" }}
+                        style={{ backgroundColor: "#000000" }}
                         placeholder="Your full name"
                       />
                       {bizErrors.ownerName && <p className="text-xs text-red-500 mt-1">{bizErrors.ownerName}</p>}
