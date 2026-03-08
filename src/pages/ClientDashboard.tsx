@@ -1172,7 +1172,7 @@ export default function ClientDashboard() {
             {/* Three Simple Status Items */}
             <div className="space-y-3">
               {/* Website Status */}
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-3">
                   <span className="text-green-500">✅</span>
                   <span className="text-sm font-medium">Website</span>
