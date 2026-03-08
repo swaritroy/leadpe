@@ -1133,7 +1133,7 @@ export default function ClientDashboard() {
         </motion.div>
 
         {/* Plan & Wallet */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border p-5 mb-6" style={{ backgroundColor: "#101810" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-[#E0F2E9] p-5 mb-6" style={{ backgroundColor: "#FFFFFF" }}>
           <h2 className="text-lg font-bold font-display mb-4">Your Plan</h2>
           <div className="flex items-center gap-3 mb-4">
             <span className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}>
