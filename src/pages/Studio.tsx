@@ -1,221 +1,310 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
-import { WEBSITE_PACKAGES, MONTHLY_MANAGEMENT } from "@/lib/packages";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.1, duration: 0.5 },
-  }),
-};
+import { WEBSITE_PACKAGES } from "@/lib/packages";
 
 export default function Studio() {
   const [sitesPerMonth, setSitesPerMonth] = useState(5);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const avgEarning = 1200;
   const buildingIncome = sitesPerMonth * avgEarning;
   const after6Months = sitesPerMonth * 6 * 30;
   const after12Months = sitesPerMonth * 12 * 30;
-  const yearTotal = buildingIncome * 12 + (sitesPerMonth * 30 * 78); // rough sum of growing passive
+  const yearTotal = buildingIncome * 12 + (sitesPerMonth * 30 * 78);
+
+  const faqs = [
+    { q: "Do I need coding skills?", a: "Zero coding needed. If you can use WhatsApp and ChatGPT, you can build websites with LeadPe. We guide you step by step." },
+    { q: "When do I get paid?", a: "Within 24 hours of delivery via UPI directly to your account. Plus ₹30 every month per live client. Forever." },
+    { q: "How long does one website take?", a: "First time: 4-6 hours. After practice: 2-3 hours. The more you build, the faster you get." },
+    { q: "Can I do this part-time?", a: "Yes. Many builders work only on weekends. 5 websites/month = ₹6,000/month part-time." },
+    { q: "What if client wants changes?", a: "1 free revision included. We give exact feedback. Our quality check catches issues before delivery." },
+    { q: "Which UPI ID do I use?", a: "Any UPI works: PhonePe, Google Pay, Paytm — all accepted. Earnings go directly there." },
+  ];
+
+  const packageColors: Record<string, { border: string; badge: string; badgeBg: string; earn: string }> = {
+    basic: { border: "#999999", badge: "#999", badgeBg: "#F5F5F5", earn: "#00C853" },
+    standard: { border: "#00C853", badge: "#fff", badgeBg: "#00C853", earn: "#00C853" },
+    premium: { border: "#7C3AED", badge: "#7C3AED", badgeBg: "#F3E8FF", earn: "#7C3AED" },
+    complex: { border: "#FF6B00", badge: "#FF6B00", badgeBg: "#FFF0E6", earn: "#FF6B00" },
+  };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7", fontFamily: "'DM Sans', sans-serif" }}>
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#E0F2E9]" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LeadPeLogo theme="light" size="sm" />
-            <span className="text-sm text-[#999]">Studio</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ borderBottom: "1px solid #E0E0E0", height: 64 }}>
+        <div className="max-w-6xl mx-auto px-8 h-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700 }}>
+              <span style={{ color: "#1A1A1A" }}>Lead</span><span style={{ color: "#00C853" }}>Pe</span>
+            </span>
+            <span style={{ color: "#E0E0E0", fontSize: 20 }}>|</span>
+            <span style={{ color: "#00C853", fontSize: 16 }}>Studio</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link to="/studio/auth"><button style={{ color: "#666", fontSize: 14, background: "none", border: "none", cursor: "pointer" }}>Sign In</button></Link>
             <Link to="/studio/auth">
-              <Button variant="ghost" className="text-sm text-[#666]">Sign In</Button>
-            </Link>
-            <Link to="/studio/auth">
-              <Button className="h-9 px-4 rounded-lg text-sm font-semibold text-white bg-[#00C853] hover:bg-[#00A843]">
-                Join Studio <ArrowRight size={14} className="ml-1" />
-              </Button>
+              <button style={{ backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                Join Free <span style={{ marginLeft: 4 }}>→</span>
+              </button>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero — Dark */}
-      <section className="pt-16" style={{ backgroundColor: "#1A1A1A" }}>
-        <div className="container mx-auto px-4 py-20 md:py-28 text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold mb-6 text-white bg-[#00C853]">
-              💰 Non-technical builders welcome
-            </span>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-6" style={{ fontFamily: "Syne, sans-serif" }}>
-              Build Websites with AI.
-              <br />
-              Earn Every Month.
-            </h1>
-            <p className="text-base md:text-lg max-w-xl mx-auto mb-8 leading-relaxed" style={{ color: "#999" }}>
-              Use ChatGPT + Lovable to build.
-              LeadPe distributes to businesses.
-              You earn ₹640–₹4,000 per site + ₹30/month passive forever.
-            </p>
+      {/* Hero */}
+      <section style={{ padding: "100px 24px 80px", textAlign: "center" }}>
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <span style={{ display: "inline-block", backgroundColor: "#E8F5E9", color: "#00C853", borderRadius: 100, padding: "8px 20px", fontSize: 14, marginBottom: 24 }}>
+            🇮🇳 Built for Non-Technical Indians
+          </span>
 
-            <div className="flex flex-wrap justify-center gap-6 mb-10 text-white">
-              {[
-                { value: "₹30/mo", label: "Per client passive" },
-                { value: "80%", label: "Your share" },
-                { value: "48hrs", label: "Average build time" },
-                { value: "0", label: "Coding skills needed" },
-              ].map((s) => (
-                <div key={s.label} className="text-center">
-                  <div className="text-2xl md:text-3xl font-extrabold" style={{ color: "#00C853" }}>{s.value}</div>
-                  <div className="text-xs mt-1" style={{ color: "#888" }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
+          <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 56, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.1, marginBottom: 0 }} className="text-4xl md:text-[56px]">
+            Build Websites with AI.
+            <br />
+            <span style={{ textDecoration: "underline", textDecorationColor: "#00C853", textUnderlineOffset: 6 }}>Earn Every Month.</span>
+          </h1>
 
+          <p style={{ color: "#666", fontSize: 18, maxWidth: 520, margin: "20px auto 0", lineHeight: 1.6 }}>
+            Use ChatGPT + Lovable to build websites for local businesses. No coding. No degree. Just AI tools.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Link to="/studio/auth">
-              <Button className="h-14 px-10 rounded-xl text-lg font-semibold text-white bg-[#00C853] hover:bg-[#00A843]">
-                Start Earning → 
-              </Button>
+              <button style={{ backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "16px 36px", fontSize: 16, fontWeight: 600, cursor: "pointer" }}>
+                Start Earning Free →
+              </button>
             </Link>
-          </motion.div>
-        </div>
+            <a href="#how-it-works">
+              <button style={{ backgroundColor: "#fff", color: "#1A1A1A", border: "2px solid #E0E0E0", borderRadius: 10, padding: "14px 36px", fontSize: 16, fontWeight: 600, cursor: "pointer" }}>
+                See How It Works
+              </button>
+            </a>
+          </div>
+
+          <p style={{ color: "#999", fontSize: 13, marginTop: 20 }}>
+            ✓ Free to join &nbsp;&nbsp; ✓ No coding needed &nbsp;&nbsp; ✓ Earn from day 1
+          </p>
+        </motion.div>
       </section>
 
-      {/* Earnings Calculator */}
-      <section className="py-20" style={{ backgroundColor: "#1A1A1A" }}>
-        <div className="container mx-auto px-4 max-w-xl">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-            className="bg-white rounded-2xl p-8 shadow-xl">
-            <h2 className="text-2xl font-extrabold text-[#1A1A1A] mb-6 text-center" style={{ fontFamily: "Syne, sans-serif" }}>
-              Calculate Your Earnings 🧮
-            </h2>
-
-            <div className="mb-6">
-              <label className="text-sm font-medium text-[#666] mb-2 block">
-                How many sites per month? <span className="font-bold text-[#00C853]">{sitesPerMonth}</span>
-              </label>
-              <input type="range" min={1} max={20} value={sitesPerMonth}
-                onChange={(e) => setSitesPerMonth(parseInt(e.target.value))}
-                className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                style={{ accentColor: "#00C853", backgroundColor: "#E0F2E9" }}
-              />
-              <div className="flex justify-between text-xs text-[#999] mt-1"><span>1</span><span>20</span></div>
+      {/* Stats Strip */}
+      <section style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", borderBottom: "1px solid #E0E0E0", padding: "40px 24px" }}>
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-[#E0E0E0]">
+          {[
+            { value: "₹30", label: "Per client per month" },
+            { value: "80%", label: "Your earnings share" },
+            { value: "48hrs", label: "Average build time" },
+            { value: "₹0", label: "Coding skills needed" },
+          ].map((s) => (
+            <div key={s.label} className="text-center px-4">
+              <div style={{ fontFamily: "Syne, sans-serif", fontSize: 44, fontWeight: 700, color: "#00C853" }}>{s.value}</div>
+              <div style={{ fontSize: 14, color: "#666", marginTop: 4 }}>{s.label}</div>
             </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between items-center p-3 rounded-xl" style={{ backgroundColor: "#F5FFF7" }}>
-                <span className="text-sm text-[#666]">Building income</span>
-                <span className="font-bold text-[#1A1A1A]">{sitesPerMonth} × ₹{avgEarning.toLocaleString()} = ₹{buildingIncome.toLocaleString()}/mo</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-xl" style={{ backgroundColor: "#F5FFF7" }}>
-                <span className="text-sm text-[#666]">After 6 months passive</span>
-                <span className="font-bold text-[#1A1A1A]">{sitesPerMonth * 6} sites × ₹30 = ₹{after6Months.toLocaleString()}/mo</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-xl" style={{ backgroundColor: "#F5FFF7" }}>
-                <span className="text-sm text-[#666]">After 1 year passive</span>
-                <span className="font-bold text-[#1A1A1A]">{sitesPerMonth * 12} sites × ₹30 = ₹{after12Months.toLocaleString()}/mo</span>
-              </div>
-            </div>
-
-            <div className="text-center p-4 rounded-xl border-2" style={{ borderColor: "#00C853", backgroundColor: "rgba(0,200,83,0.05)" }}>
-              <div className="text-sm text-[#666] mb-1">Total Year 1 Estimate</div>
-              <div className="text-3xl font-extrabold" style={{ color: "#00C853", fontFamily: "Syne, sans-serif" }}>
-                ₹{yearTotal.toLocaleString()}+
-              </div>
-            </div>
-          </motion.div>
+          ))}
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-extrabold text-center mb-12 text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>
-            How It Works
-          </h2>
-          <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+      <section id="how-it-works" style={{ backgroundColor: "#fff", padding: "80px 24px" }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 8 }}>How It Works</h2>
+          <p style={{ color: "#666", fontSize: 16, textAlign: "center", marginBottom: 48 }}>3 simple steps. Earn from day one.</p>
+
+          <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: "📝", title: "Client requests website", desc: "Business signs up on LeadPe. You get the request." },
-              { icon: "🤖", title: "Build with AI", desc: "Use ChatGPT + Lovable. No coding needed. 2-4 hours work." },
-              { icon: "🚀", title: "LeadPe auto deploys", desc: "Submit GitHub link. We deploy automatically." },
-              { icon: "💰", title: "Earn forever", desc: "₹640-₹4,000 upfront. ₹30/month passive. Always." },
-            ].map((step, i) => (
-              <motion.div key={i} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-                className="text-center p-6 rounded-2xl border border-[#E0F2E9]">
-                <div className="text-4xl mb-4">{step.icon}</div>
-                <h3 className="font-bold text-[#1A1A1A] mb-2">{step.title}</h3>
-                <p className="text-sm text-[#666]">{step.desc}</p>
+              { step: 1, emoji: "🤖", title: "Build with AI", desc: "We give you a ready prompt. Paste it in ChatGPT. Copy output to Lovable. Professional website ready in 2-4 hours.", time: "⏱️ 2-4 hours" },
+              { step: 2, emoji: "📤", title: "Submit to LeadPe", desc: "Submit your GitHub link. We run quality checks and auto deploy your website instantly.", time: "⏱️ 5 minutes" },
+              { step: 3, emoji: "💰", title: "Earn Forever", desc: "Get paid within 24 hours via UPI. Plus ₹30 every month per live site. Forever. Passively.", time: "💸 Forever" },
+            ].map((s) => (
+              <motion.div key={s.step} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                style={{ backgroundColor: "#fff", borderRadius: 16, padding: 36, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #00C853", textAlign: "center" }}>
+                <span style={{ display: "inline-block", backgroundColor: "#E8F5E9", color: "#00C853", borderRadius: 100, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16 }}>Step {s.step}</span>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>{s.emoji}</div>
+                <h3 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>{s.title}</h3>
+                <p style={{ fontSize: 14, color: "#666", lineHeight: 1.6, marginBottom: 16 }}>{s.desc}</p>
+                <span style={{ backgroundColor: "#F5F5F5", color: "#999", borderRadius: 100, padding: "6px 14px", fontSize: 12 }}>{s.time}</span>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Website Packages */}
-      <section className="py-20" style={{ backgroundColor: "#F5FFF7" }}>
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-extrabold text-center mb-4 text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>
-            What You'll Build
-          </h2>
-          <p className="text-center text-[#666] mb-12">4 website tiers. Pick your earning level.</p>
+      {/* Earnings Calculator */}
+      <section style={{ backgroundColor: "#F5FFF7", padding: "80px 24px" }}>
+        <div className="max-w-[580px] mx-auto">
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 8 }}>Calculate Your Earnings</h2>
+          <p style={{ color: "#666", fontSize: 16, textAlign: "center", marginBottom: 32 }}>Move the slider to see your potential income.</p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {WEBSITE_PACKAGES.map((pkg, i) => (
-              <motion.div key={pkg.id} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-                className={`bg-white rounded-2xl p-6 border-2 relative ${pkg.recommended ? 'border-[#00C853] shadow-lg' : 'border-[#E0F2E9]'}`}>
-                {pkg.recommended && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white bg-[#00C853]">
-                    Most Popular
+          <div style={{ backgroundColor: "#fff", borderRadius: 16, padding: 40, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <p style={{ fontSize: 15, color: "#666", marginBottom: 8 }}>Websites per month:</p>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 52, fontWeight: 700, color: "#00C853", textAlign: "center", marginBottom: 16 }}>
+              {sitesPerMonth} websites/month
+            </div>
+            <input type="range" min={1} max={20} value={sitesPerMonth}
+              onChange={(e) => setSitesPerMonth(parseInt(e.target.value))}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer mb-6"
+              style={{ accentColor: "#00C853", backgroundColor: "#E8F5E9" }}
+            />
+
+            <div className="grid grid-cols-2" style={{ border: "1px solid #E0E0E0", borderRadius: 12, overflow: "hidden" }}>
+              {[
+                { label: "This Month", value: `₹${buildingIncome.toLocaleString()}`, color: "#00C853" },
+                { label: "After 6 Months (Passive)", value: `₹${after6Months.toLocaleString()}/mo`, color: "#1A1A1A" },
+                { label: "After 1 Year (Passive)", value: `₹${after12Months.toLocaleString()}/mo`, color: "#1A1A1A" },
+                { label: "Year 1 Total", value: `₹${yearTotal.toLocaleString()}+`, color: "#00C853" },
+              ].map((c, i) => (
+                <div key={c.label} style={{ padding: 24, borderBottom: i < 2 ? "1px solid #E0E0E0" : undefined, borderRight: i % 2 === 0 ? "1px solid #E0E0E0" : undefined }}>
+                  <p style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>{c.label}</p>
+                  <p style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 700, color: c.color }}>{c.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 12, color: "#999", textAlign: "center", marginTop: 16 }}>
+              Calculated based on Standard package (₹1,500). Your share = ₹1,200
+            </p>
+
+            <Link to="/studio/auth" className="block mt-6">
+              <button style={{ width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "16px", fontSize: 16, fontWeight: 600, cursor: "pointer" }}>
+                Start Earning Free →
+              </button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Packages */}
+      <section style={{ backgroundColor: "#fff", padding: "80px 24px" }}>
+        <div className="max-w-5xl mx-auto">
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 8 }}>What You Will Build</h2>
+          <p style={{ color: "#666", fontSize: 16, textAlign: "center", marginBottom: 48 }}>Accept any request. Work at your own pace.</p>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {WEBSITE_PACKAGES.map((pkg) => {
+              const pc = packageColors[pkg.id];
+              const isStandard = pkg.id === "standard";
+              return (
+                <div key={pkg.id} style={{
+                  backgroundColor: "#fff", borderRadius: 12, padding: 28,
+                  boxShadow: isStandard ? "0 8px 30px rgba(0,200,83,0.12)" : "0 2px 12px rgba(0,0,0,0.06)",
+                  borderTop: `4px solid ${pc.border}`,
+                  border: isStandard ? `2px solid #00C853` : undefined,
+                  borderTopWidth: 4,
+                }}>
+                  <span style={{ display: "inline-block", backgroundColor: pc.badgeBg, color: pc.badge, borderRadius: 100, padding: "4px 12px", fontSize: 11, fontWeight: 700, marginBottom: 12 }}>
+                    {pkg.badge}{isStandard ? " ⭐" : ""}
+                  </span>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 36, fontWeight: 700, color: "#1A1A1A" }}>
+                    {pkg.priceLabel || `₹${pkg.price.toLocaleString()}`}
                   </div>
-                )}
-                <div className="text-xs font-bold px-2 py-1 rounded-full inline-block mb-3 text-white" style={{ backgroundColor: pkg.color }}>
-                  {pkg.badge}
+                  <p style={{ fontSize: 12, color: "#999", marginBottom: 8 }}>one-time</p>
+                  <div style={{ height: 1, backgroundColor: "#E0E0E0", margin: "12px 0" }} />
+                  <p style={{ fontSize: 12, color: "#666" }}>You Earn:</p>
+                  <p style={{ fontFamily: "Syne, sans-serif", fontSize: 24, fontWeight: 700, color: pc.earn }}>
+                    ₹{pkg.coderEarning.toLocaleString()}
+                  </p>
+                  <p style={{ fontSize: 12, color: "#666", marginBottom: 16 }}>+ ₹30/month passive</p>
+                  <div className="space-y-1.5 mb-4">
+                    {pkg.features.map((f) => (
+                      <div key={f} className="flex items-start gap-2" style={{ fontSize: 13, color: "#666" }}>
+                        <span style={{ color: "#00C853", fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 11, color: "#999", marginBottom: 4 }}>Best For:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {pkg.bestFor.map((b) => (
+                      <span key={b} style={{ backgroundColor: "#F5F5F5", color: "#666", borderRadius: 100, padding: "2px 8px", fontSize: 10 }}>{b}</span>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="font-bold text-lg text-[#1A1A1A] mb-1">{pkg.name}</h3>
-                <div className="text-2xl font-extrabold text-[#1A1A1A] mb-1">
-                  {pkg.priceLabel || `₹${pkg.price.toLocaleString()}`}
-                </div>
-                <div className="text-sm font-semibold mb-4" style={{ color: "#00C853" }}>
-                  You earn: ₹{pkg.coderEarning.toLocaleString()}
-                </div>
-                <div className="text-xs text-[#999] mb-3">Delivery: {pkg.deliveryDays} days</div>
-                <ul className="space-y-2 mb-4">
-                  {pkg.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-[#666]">
-                      <Check size={12} className="text-[#00C853] mt-0.5 flex-shrink-0" /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-wrap gap-1">
-                  {pkg.bestFor.map((b) => (
-                    <span key={b} className="text-[10px] px-2 py-0.5 rounded-full bg-[#F0F0F0] text-[#666]">{b}</span>
-                  ))}
-                </div>
-              </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Tools */}
+      <section style={{ backgroundColor: "#F5FFF7", padding: "80px 24px" }}>
+        <div className="max-w-4xl mx-auto">
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 8 }}>Tools You Will Use</h2>
+          <p style={{ color: "#666", fontSize: 16, textAlign: "center", marginBottom: 48 }}>All free. Set up in 10 minutes.</p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { emoji: "🤖", name: "ChatGPT", desc: "Generate website content and copy automatically.", free: "Free ✓", url: "https://chatgpt.com" },
+              { emoji: "🎨", name: "Lovable", desc: "Build the actual website visually. No coding needed.", free: "Free tier available ✓", url: "https://lovable.dev" },
+              { emoji: "📁", name: "GitHub", desc: "Save and submit your website to LeadPe.", free: "Free ✓", url: "https://github.com" },
+            ].map((t) => (
+              <div key={t.name} style={{ backgroundColor: "#fff", borderRadius: 16, padding: 28, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>{t.emoji}</div>
+                <h3 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>{t.name}</h3>
+                <p style={{ fontSize: 14, color: "#666", marginBottom: 12 }}>{t.desc}</p>
+                <p style={{ fontSize: 14, color: "#00C853", fontWeight: 700, marginBottom: 16 }}>{t.free}</p>
+                <button onClick={() => window.open(t.url, "_blank")}
+                  style={{ backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 10, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                  Open {t.name} →
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Join CTA */}
-      <section className="py-20" style={{ backgroundColor: "#1A1A1A" }}>
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4" style={{ fontFamily: "Syne, sans-serif" }}>
-            Ready to Start Earning?
-          </h2>
-          <p className="text-[#999] mb-8">First build request waiting for you.</p>
-          <Link to="/studio/auth">
-            <Button className="h-14 px-10 rounded-xl text-lg font-semibold text-white bg-[#00C853] hover:bg-[#00A843]">
-              Join LeadPe Studio →
-            </Button>
-          </Link>
+      {/* FAQ */}
+      <section style={{ backgroundColor: "#fff", padding: "80px 24px" }}>
+        <div className="max-w-[680px] mx-auto">
+          <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 48 }}>Common Questions</h2>
+          {faqs.map((faq, i) => (
+            <div key={i} style={{ borderBottom: "1px solid #E0E0E0" }}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full flex items-center justify-between py-5"
+                style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A" }}>{faq.q}</span>
+                <span style={{ color: "#666", fontSize: 20, flexShrink: 0, marginLeft: 16 }}>{openFaq === i ? "−" : "+"}</span>
+              </button>
+              {openFaq === i && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                  style={{ paddingBottom: 16, fontSize: 14, color: "#666", lineHeight: 1.7 }}>
+                  {faq.a}
+                </motion.div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
+
+      {/* Final CTA */}
+      <section style={{ backgroundColor: "#1A1A1A", padding: "80px 24px", textAlign: "center" }}>
+        <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 52, fontWeight: 700, color: "#fff", lineHeight: 1.1, marginBottom: 16 }} className="text-4xl md:text-[52px]">
+          Your First Website<br />Is Waiting. 🚀
+        </h2>
+        <p style={{ color: "#999", fontSize: 18, marginBottom: 32 }}>Join free. Pick a request today. Start earning tomorrow.</p>
+        <Link to="/studio/auth">
+          <button style={{ backgroundColor: "#00C853", color: "#000", border: "none", borderRadius: 10, padding: "18px 48px", fontSize: 18, fontWeight: 700, cursor: "pointer" }}>
+            Join LeadPe Studio Free →
+          </button>
+        </Link>
+        <p style={{ color: "#444", fontSize: 13, marginTop: 16 }}>Free to join • UPI payments • No commitment</p>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", padding: "32px 24px" }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div>
+            <span style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 700 }}>
+              <span style={{ color: "#1A1A1A" }}>Lead</span><span style={{ color: "#00C853" }}>Pe</span>
+            </span>
+            <span style={{ color: "#999", fontSize: 14, marginLeft: 8 }}>Studio</span>
+            <p style={{ color: "#999", fontSize: 13, marginTop: 4 }}>© 2026 LeadPe. Made in India 🇮🇳</p>
+          </div>
+          <Link to="/" style={{ color: "#666", fontSize: 13, textDecoration: "none" }}>For Businesses →</Link>
+        </div>
+      </footer>
     </div>
   );
 }

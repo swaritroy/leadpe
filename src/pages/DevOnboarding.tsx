@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Copy, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import LeadPeLogo from "@/components/LeadPeLogo";
 import { checkWebsiteQuality } from "@/lib/qualityChecker";
-import { WEBSITE_PACKAGES } from "@/lib/packages";
 
 const PRACTICE_BRIEF = {
   businessName: "Sharma Coaching Centre",
@@ -35,15 +32,6 @@ Style: Clean, professional, mobile-first, white and green (#00C853) color scheme
 Must include LeadPe lead capture form.
 Indian local business aesthetic.`;
 
-const FEE_OPTIONS = [
-  { value: 500, label: "₹500 (Budget)" },
-  { value: 800, label: "₹800 (Standard)" },
-  { value: 1200, label: "₹1,200 (Premium)" },
-  { value: 2000, label: "₹2,000 (Professional)" },
-];
-
-const CAPACITY_OPTIONS = ["1-2 sites", "3-5 sites", "6-10 sites", "10+ sites"];
-
 export default function DevOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -51,11 +39,7 @@ export default function DevOnboarding() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [upiId, setUpiId] = useState("");
-  const [preferredFee, setPreferredFee] = useState(800);
-  const [monthlyCapacity, setMonthlyCapacity] = useState("3-5 sites");
-  const [profileData, setProfileData] = useState<any>(null);
-
-  // Practice build
+  const [toolsDone, setToolsDone] = useState<Set<string>>(new Set());
   const [practiceUrl, setPracticeUrl] = useState("");
   const [practiceChecking, setPracticeChecking] = useState(false);
   const [practiceScore, setPracticeScore] = useState<number | null>(null);
@@ -64,7 +48,7 @@ export default function DevOnboarding() {
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => { if (data) { setProfileData(data); setUpiId((data as any).upi_id || ""); } });
+      .then(({ data }) => { if (data) setUpiId((data as any).upi_id || ""); });
   }, [user]);
 
   const handleCopyPrompt = () => {
@@ -78,36 +62,23 @@ export default function DevOnboarding() {
       return;
     }
     setPracticeChecking(true);
-    setPracticeScore(null);
     try {
       const report = await checkWebsiteQuality(practiceUrl, {
-        name: PRACTICE_BRIEF.businessName,
-        type: PRACTICE_BRIEF.type,
-        city: PRACTICE_BRIEF.city,
+        name: PRACTICE_BRIEF.businessName, type: PRACTICE_BRIEF.type, city: PRACTICE_BRIEF.city,
       });
       setPracticeScore(report.score);
       setPracticePassed(report.passed);
-      if (report.passed) {
-        toast({ title: "✅ Practice passed!", description: `Score: ${report.score}/100` });
-      } else {
-        toast({ title: `⚠️ Score: ${report.score}/100`, description: "Fix issues and resubmit. Need ≥ 70.", variant: "destructive" });
-      }
     } catch {
       setPracticeScore(75);
       setPracticePassed(true);
-      toast({ title: "✅ Practice accepted!", description: "Score: 75/100" });
     }
     setPracticeChecking(false);
   };
 
-  const handleSaveEarnings = async () => {
+  const handleSaveUpi = async () => {
     if (!user) return;
     setSaving(true);
-    await (supabase as any).from("profiles").update({
-      upi_id: upiId,
-      preferred_fee: preferredFee,
-      monthly_capacity: monthlyCapacity,
-    }).eq("user_id", user.id);
+    await (supabase as any).from("profiles").update({ upi_id: upiId }).eq("user_id", user.id);
     setSaving(false);
     setStep(5);
   };
@@ -119,203 +90,203 @@ export default function DevOnboarding() {
   };
 
   const progress = (step / 5) * 100;
-
-  const slideVariants = {
-    enter: { opacity: 0, x: 40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
-  };
+  const slide = { enter: { opacity: 0, x: 40 }, center: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 } };
 
   return (
-    <div className="min-h-screen bg-[#F5FFF7]">
-      <div className="p-4 flex items-center justify-between">
-        <LeadPeLogo theme="light" size="md" />
-        <span className="text-sm text-gray-500">Step {step} of 5</span>
+    <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7", fontFamily: "'DM Sans', sans-serif" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <span style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700 }}>
+          <span style={{ color: "#1A1A1A" }}>Lead</span><span style={{ color: "#00C853" }}>Pe</span>
+          <span style={{ color: "#00C853", fontSize: 14, marginLeft: 6 }}>Studio</span>
+        </span>
+        <span style={{ fontSize: 13, color: "#999" }}>Step {step} of 5</span>
       </div>
-      <Progress value={progress} className="h-1.5 mx-4 rounded-full bg-gray-200 [&>div]:bg-[#00C853]" />
 
-      <div className="max-w-lg mx-auto px-4 py-6">
+      {/* Progress */}
+      <div className="px-6 mb-6">
+        <div className="flex justify-between mb-2">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} style={{
+              width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              backgroundColor: step >= s ? "#00C853" : "#E0E0E0", color: step >= s ? "#fff" : "#999",
+              fontSize: 13, fontWeight: 700,
+            }}>
+              {step > s ? <Check size={14} /> : s}
+            </div>
+          ))}
+        </div>
+        <div style={{ height: 4, backgroundColor: "#E8F5E9", borderRadius: 4, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress}%`, backgroundColor: "#00C853", borderRadius: 4, transition: "width 0.3s" }} />
+        </div>
+      </div>
+
+      <div className="max-w-[560px] mx-auto px-6 pb-20">
         <AnimatePresence mode="wait">
-          {/* STEP 1 — WELCOME */}
+          {/* STEP 1 */}
           {step === 1 && (
-            <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-6">
-              <div className="bg-white rounded-2xl p-8 shadow-sm text-center space-y-4">
-                <div className="text-6xl">🚀</div>
-                <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Syne, sans-serif" }}>
-                  Welcome to LeadPe Studio!
-                </h1>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  You'll build websites using ChatGPT + Lovable. Zero coding knowledge needed.
+            <motion.div key="s1" variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <div style={{ backgroundColor: "#fff", borderRadius: 16, padding: 36, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
+                <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+                <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>Welcome to LeadPe Studio!</h1>
+                <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7, marginBottom: 24 }}>
+                  You will build websites using AI tools. No coding. Just prompts and clicks.
                 </p>
+                <button onClick={() => setStep(2)} style={{ width: "100%", height: 52, backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: "pointer" }}>
+                  Let's Start →
+                </button>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { emoji: "💰", text: "₹640-₹4,000 per site" },
-                  { emoji: "📈", text: "₹30/mo passive per client" },
-                  { emoji: "🎯", text: "Clients provided by LeadPe" },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white rounded-xl p-3 text-center shadow-sm">
-                    <div className="text-2xl mb-1">{s.emoji}</div>
-                    <p className="text-xs text-gray-700 font-medium">{s.text}</p>
-                  </div>
-                ))}
-              </div>
-              <Button onClick={() => setStep(2)} className="w-full h-12 bg-[#00C853] hover:bg-[#00B848] text-white font-semibold rounded-xl">
-                Let's Start <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
             </motion.div>
           )}
 
-          {/* STEP 2 — TOOLS SETUP */}
+          {/* STEP 2 */}
           {step === 2 && (
-            <motion.div key="s2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4">
-              <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Syne, sans-serif" }}>Your AI Tools</h1>
-              <p className="text-sm text-gray-500">Create free accounts on all 3. Come back when done.</p>
+            <motion.div key="s2" variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Your AI Tools</h1>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Create free accounts on all 3. Come back when done.</p>
 
               {[
-                { emoji: "🤖", name: "ChatGPT", desc: "For generating website content", url: "https://chatgpt.com" },
-                { emoji: "🎨", name: "Lovable", desc: "For building the website", url: "https://lovable.dev" },
-                { emoji: "📦", name: "GitHub", desc: "For saving your work", url: "https://github.com" },
+                { id: "chatgpt", emoji: "🤖", name: "ChatGPT", desc: "For generating website content", url: "https://chatgpt.com" },
+                { id: "lovable", emoji: "🎨", name: "Lovable", desc: "For building the website", url: "https://lovable.dev" },
+                { id: "github", emoji: "📦", name: "GitHub", desc: "For saving your work", url: "https://github.com" },
               ].map((tool) => (
-                <div key={tool.name} className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4">
-                  <span className="text-3xl">{tool.emoji}</span>
+                <div key={tool.id} style={{
+                  backgroundColor: "#fff", borderRadius: 12, padding: 20, marginBottom: 12,
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                  border: toolsDone.has(tool.id) ? "2px solid #00C853" : "1px solid #E0E0E0",
+                }} className="flex items-center gap-4">
+                  <span style={{ fontSize: 36 }}>{tool.emoji}</span>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{tool.name}</h3>
-                    <p className="text-xs text-gray-500">{tool.desc}</p>
+                    <p style={{ fontWeight: 600, color: "#1A1A1A", fontSize: 15 }}>{tool.name}</p>
+                    <p style={{ fontSize: 12, color: "#666" }}>{tool.desc}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => window.open(tool.url, "_blank")}
-                    className="text-xs border-[#00C853] text-[#00C853]">
-                    <ExternalLink className="w-3 h-3 mr-1" /> Open
-                  </Button>
+                  <div className="flex flex-col gap-1 items-end">
+                    <button onClick={() => window.open(tool.url, "_blank")}
+                      style={{ fontSize: 12, color: "#00C853", fontWeight: 600, background: "none", border: "1px solid #00C853", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>
+                      Open →
+                    </button>
+                    <label className="flex items-center gap-1 cursor-pointer" style={{ fontSize: 11, color: "#999" }}>
+                      <input type="checkbox" checked={toolsDone.has(tool.id)}
+                        onChange={() => setToolsDone((prev) => { const n = new Set(prev); n.has(tool.id) ? n.delete(tool.id) : n.add(tool.id); return n; })}
+                        style={{ accentColor: "#00C853" }} />
+                      Done
+                    </label>
+                  </div>
                 </div>
               ))}
 
-              <Button onClick={() => setStep(3)} className="w-full h-12 bg-[#00C853] hover:bg-[#00B848] text-white font-semibold rounded-xl">
-                I'm Ready <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <button onClick={() => setStep(3)} disabled={toolsDone.size < 3}
+                style={{ width: "100%", height: 52, backgroundColor: toolsDone.size >= 3 ? "#00C853" : "#E0E0E0", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: "pointer", marginTop: 12, opacity: toolsDone.size >= 3 ? 1 : 0.5 }}>
+                Next →
+              </button>
+              <button onClick={() => setStep(3)} style={{ width: "100%", textAlign: "center", fontSize: 12, color: "#999", marginTop: 8, background: "none", border: "none", cursor: "pointer" }}>
+                Skip for now
+              </button>
             </motion.div>
           )}
 
-          {/* STEP 3 — PRACTICE BUILD */}
+          {/* STEP 3 */}
           {step === 3 && (
-            <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4">
-              <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Syne, sans-serif" }}>Practice Build</h1>
-              <p className="text-sm text-gray-500">Before taking real clients, let's do a practice build.</p>
+            <motion.div key="s3" variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Practice First</h1>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Build one practice website before taking real orders. No payment — just learning.</p>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm space-y-3">
-                <p className="text-xs font-bold text-[#00C853] uppercase tracking-wide">Practice Brief</p>
+              <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#00C853", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Practice Brief</p>
                 {Object.entries(PRACTICE_BRIEF).map(([k, v]) => (
-                  <div key={k} className="flex justify-between text-sm">
-                    <span className="text-gray-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                    <span className="text-gray-900 font-medium">{v}</span>
+                  <div key={k} className="flex justify-between" style={{ fontSize: 14, marginBottom: 6 }}>
+                    <span style={{ color: "#666", textTransform: "capitalize" }}>{k.replace(/([A-Z])/g, " $1")}</span>
+                    <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{v}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm">
-                <p className="text-sm font-semibold text-gray-900 mb-2">ChatGPT Prompt</p>
-                <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto">
+              <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>ChatGPT Prompt</p>
+                <pre style={{ backgroundColor: "#FAFAFA", border: "1px solid #E0E0E0", borderRadius: 10, padding: 12, fontSize: 12, color: "#666", whiteSpace: "pre-wrap", maxHeight: 160, overflowY: "auto" }}>
                   {CHATGPT_PROMPT}
                 </pre>
                 <div className="flex gap-2 mt-3">
-                  <Button variant="outline" size="sm" onClick={handleCopyPrompt} className="text-xs border-[#00C853] text-[#00C853]">
-                    <Copy className="w-3 h-3 mr-1" /> Copy Prompt
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.open("https://lovable.dev", "_blank")} className="text-xs border-[#00C853] text-[#00C853]">
-                    <ExternalLink className="w-3 h-3 mr-1" /> Open Lovable
-                  </Button>
+                  <button onClick={handleCopyPrompt} style={{ fontSize: 12, color: "#00C853", fontWeight: 600, background: "none", border: "1px solid #00C853", borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <Copy size={12} /> Copy Prompt
+                  </button>
+                  <button onClick={() => window.open("https://lovable.dev", "_blank")} style={{ fontSize: 12, color: "#00C853", fontWeight: 600, background: "none", border: "1px solid #00C853", borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <ExternalLink size={12} /> Open Lovable
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm space-y-3">
-                <p className="text-sm font-semibold text-gray-900">Submit GitHub URL</p>
+              <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>Submit GitHub URL</p>
                 <Input value={practiceUrl} onChange={(e) => setPracticeUrl(e.target.value)}
-                  placeholder="https://github.com/you/repo" className="bg-[#FAFAFA] border-gray-300 text-gray-900 h-11 rounded-lg" />
+                  placeholder="https://github.com/you/repo" className="bg-white border-[#E0E0E0] text-[#111] h-11 rounded-xl mb-3" />
                 {practiceScore !== null && (
-                  <div className={`p-3 rounded-lg text-sm text-center ${practicePassed ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-                    {practicePassed ? `✅ Score: ${practiceScore}/100 — Passed!` : `⚠️ Score: ${practiceScore}/100 — Need ≥ 70. Fix issues and resubmit.`}
+                  <div style={{ padding: 12, borderRadius: 10, fontSize: 13, textAlign: "center", marginBottom: 12,
+                    backgroundColor: practicePassed ? "#F0FFF4" : "#FEF2F2",
+                    color: practicePassed ? "#00C853" : "#EF4444",
+                    border: `1px solid ${practicePassed ? "#00C853" : "#FECACA"}` }}>
+                    {practicePassed ? `✅ Score: ${practiceScore}/100 — Passed!` : `⚠️ Score: ${practiceScore}/100 — Need ≥ 70`}
                   </div>
                 )}
-                <Button onClick={handlePracticeSubmit} disabled={practiceChecking || !practiceUrl}
-                  className="w-full h-11 bg-[#1A1A1A] hover:bg-[#333] text-white rounded-lg text-sm font-semibold">
+                <button onClick={handlePracticeSubmit} disabled={practiceChecking || !practiceUrl}
+                  style={{ width: "100%", height: 44, backgroundColor: "#1A1A1A", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", opacity: practiceChecking ? 0.6 : 1 }}>
                   {practiceChecking ? "Checking..." : "Submit Practice →"}
-                </Button>
+                </button>
               </div>
 
-              <Button onClick={() => setStep(4)} disabled={!practicePassed}
-                className="w-full h-12 bg-[#00C853] hover:bg-[#00B848] text-white font-semibold rounded-xl disabled:opacity-40">
+              <button onClick={() => setStep(4)} disabled={!practicePassed}
+                style={{ width: "100%", height: 52, backgroundColor: practicePassed ? "#00C853" : "#E0E0E0", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: "pointer", opacity: practicePassed ? 1 : 0.5 }}>
                 {practicePassed ? "Continue →" : "Pass practice first"}
-                {practicePassed && <ArrowRight className="ml-2 w-4 h-4" />}
-              </Button>
-              <button onClick={() => setStep(4)} className="w-full text-center text-xs text-gray-400 hover:text-gray-600">
+              </button>
+              <button onClick={() => setStep(4)} style={{ width: "100%", textAlign: "center", fontSize: 12, color: "#999", marginTop: 8, background: "none", border: "none", cursor: "pointer" }}>
                 Skip practice (not recommended)
               </button>
             </motion.div>
           )}
 
-          {/* STEP 4 — PAYMENT SETUP */}
+          {/* STEP 4 */}
           {step === 4 && (
-            <motion.div key="s4" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-4">
-              <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Syne, sans-serif" }}>Set Up Payments</h1>
-              <p className="text-sm text-gray-500">Enter your UPI ID to receive earnings.</p>
+            <motion.div key="s4" variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Set Up Payments</h1>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Where should we send earnings?</p>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-900">UPI ID *</label>
-                  <Input placeholder="yourupi@paytm" value={upiId} onChange={(e) => setUpiId(e.target.value)}
-                    className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400" />
-                  <p className="text-xs text-gray-400 mt-1">Payouts every Friday</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-900">Preferred building fee</label>
-                  <select value={preferredFee} onChange={(e) => setPreferredFee(Number(e.target.value))}
-                    className="mt-1 w-full h-10 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
-                    {FEE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-900">Capacity per month</label>
-                  <select value={monthlyCapacity} onChange={(e) => setMonthlyCapacity(e.target.value)}
-                    className="mt-1 w-full h-10 rounded-md border border-gray-300 bg-white text-gray-900 px-3 text-sm">
-                    {CAPACITY_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
+              <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 16 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: "#1A1A1A", display: "block", marginBottom: 8 }}>UPI ID</label>
+                <Input placeholder="rajesh@paytm" value={upiId} onChange={(e) => setUpiId(e.target.value)}
+                  className="bg-white border-[#E0E0E0] text-[#111] h-12 rounded-xl" />
+                <p style={{ fontSize: 11, color: "#999", marginTop: 4 }}>PhonePe, Google Pay, Paytm — all accepted</p>
               </div>
 
-              <Button onClick={handleSaveEarnings} disabled={!upiId || saving}
-                className="w-full h-12 bg-[#00C853] hover:bg-[#00B848] text-white font-semibold rounded-xl disabled:opacity-50">
-                {saving ? "Saving..." : "Save & Continue"} <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <button onClick={handleSaveUpi} disabled={!upiId || saving}
+                style={{ width: "100%", height: 52, backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: "pointer", opacity: (!upiId || saving) ? 0.5 : 1 }}>
+                {saving ? "Saving..." : "Confirm UPI →"}
+              </button>
             </motion.div>
           )}
 
-          {/* STEP 5 — READY */}
+          {/* STEP 5 */}
           {step === 5 && (
-            <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="space-y-6">
-              <div className="text-center space-y-3">
+            <motion.div key="s5" variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-20 h-20 rounded-full bg-[#00C853] flex items-center justify-center mx-auto">
-                  <Check className="w-10 h-10 text-white" />
-                </motion.div>
-                <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Syne, sans-serif" }}>You're Ready to Earn! 🎉</h1>
-                <p className="text-sm text-gray-500">First real build request is waiting for you.</p>
+                  style={{ fontSize: 64, marginBottom: 16 }}>🚀</motion.div>
+                <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>You Are Ready!</h1>
+                <p style={{ fontSize: 14, color: "#666" }}>First real build request is waiting for you.</p>
               </div>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm">
-                <p className="text-sm font-semibold text-gray-900 mb-3">Potential this month</p>
-                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#F5FFF7" }}>
-                  <div className="text-3xl font-extrabold" style={{ color: "#00C853" }}>
-                    ₹{(parseInt(monthlyCapacity) * preferredFee * 0.8 || 6000).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {monthlyCapacity} × ₹{preferredFee} × 80%
-                  </div>
+              <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 24, textAlign: "center" }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 12 }}>Potential this month</p>
+                <div style={{ backgroundColor: "#F0FFF4", borderRadius: 12, padding: 20 }}>
+                  <p style={{ fontFamily: "Syne, sans-serif", fontSize: 36, fontWeight: 700, color: "#00C853" }}>₹6,000</p>
+                  <p style={{ fontSize: 12, color: "#666", marginTop: 4 }}>5 builds × ₹1,200</p>
                 </div>
+                <p style={{ fontSize: 12, color: "#666", marginTop: 12 }}>After 6 months passive: ₹900/month</p>
               </div>
 
-              <Button onClick={handleComplete} className="w-full h-12 bg-[#00C853] hover:bg-[#00B848] text-white font-semibold rounded-xl">
-                Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              <button onClick={handleComplete}
+                style={{ width: "100%", height: 52, backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: "pointer" }}>
+                Go to Dashboard →
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
