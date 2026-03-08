@@ -425,16 +425,26 @@ export default function Admin() {
   
   const payouts = Array.from(payoutByCoder.entries()).map(([id, data]) => ({ id, ...data }));
   
-  const filteredBusinesses = businesses.filter(b => {
-    const matchesSearch = (b.business_name || b.full_name).toLowerCase().includes(businessSearch.toLowerCase()) ||
-                         (b.city || "").toLowerCase().includes(businessSearch.toLowerCase());
+  const normalizedBusinessSearch = businessSearch.toLowerCase().trim();
+  const filteredBusinesses = businesses.filter((b) => {
+    const businessName = (b.business_name ?? b.full_name ?? "").toLowerCase();
+    const businessCity = (b.city ?? "").toLowerCase();
+    const matchesSearch =
+      normalizedBusinessSearch === "" ||
+      businessName.includes(normalizedBusinessSearch) ||
+      businessCity.includes(normalizedBusinessSearch);
     const matchesFilter = businessFilter === "all" || b.status === businessFilter;
     return matchesSearch && matchesFilter;
   });
-  
-  const filteredCoders = vibeCoders.filter(c => {
-    const matchesSearch = c.full_name.toLowerCase().includes(coderSearch.toLowerCase()) ||
-                         c.whatsapp_number.includes(coderSearch);
+
+  const normalizedCoderSearch = coderSearch.toLowerCase().trim();
+  const filteredCoders = vibeCoders.filter((c) => {
+    const coderName = (c.full_name ?? "").toLowerCase();
+    const coderWhatsapp = c.whatsapp_number ?? "";
+    const matchesSearch =
+      normalizedCoderSearch === "" ||
+      coderName.includes(normalizedCoderSearch) ||
+      coderWhatsapp.includes(coderSearch);
     return matchesSearch;
   });
   
