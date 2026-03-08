@@ -73,59 +73,45 @@ const testimonials = [
 
 const pricingPlans = [
   {
-    name: "BASIC — FREE",
+    name: "Free Trial",
     price: "₹0",
-    period: "7 days trial",
-    desc: "Website building: ₹500-2000 (separate)",
+    period: "",
+    desc: "21 days free • No credit card needed",
     featured: false,
     features: [
-      { text: "5 leads visible", included: true },
-      { text: "Basic website hosting", included: true },
-      { text: "Mobile optimized", included: true },
-      { text: "Ready in 48 hours", included: true },
-      { text: "Email support", included: true },
-      { text: "WhatsApp alerts", included: false },
+      { text: "Website built in 48 hours", included: true },
+      { text: "All leads visible", included: true },
+      { text: "WhatsApp ping active", included: true },
+      { text: "Full dashboard access", included: true },
+      { text: "SEO optimization", included: true },
+      { text: "Google Maps setup", included: true },
+      { text: "Cancel anytime", included: true },
     ],
-    cta: "Start Free Trial",
+    cta: "Start Free →",
     outlined: true,
+    note: "After 21 days — upgrade to keep receiving leads",
+    link: "/business",
   },
   {
-    name: "GROWTH — ₹299/mo",
+    name: "Growth",
     price: "₹299",
     period: "/month",
-    desc: "Website building: ₹500-2000 (separate)",
+    desc: "GST included • Cancel anytime",
     featured: true,
-    badge: "MAIN PLAN — EVERYTHING INCLUDED",
+    badge: "Most Popular",
     features: [
-      { text: "Unlimited leads", included: true },
-      { text: "Website hosting", included: true },
-      { text: "SEO optimization", included: true },
-      { text: "Lead capture", included: true },
-      { text: "WhatsApp alerts 🔔", included: true },
-      { text: "Weekly report", included: true },
-      { text: "24/7 Support", included: true },
-    ],
-    cta: "Start Free Trial",
-    outlined: false,
-  },
-  {
-    name: "LeadPe Pro — All Inclusive",
-    price: "₹999",
-    period: "/month",
-    desc: "Website building: FREE ✅ (LeadPe pays vibe coder)",
-    featured: false,
-    badge: "NEW — PREMIUM PLAN",
-    features: [
-      { text: "Everything in Growth", included: true },
-      { text: "AI appointment booking", included: true },
-      { text: "Google Review automation", included: true },
-      { text: "WhatsApp auto-reply", included: true },
+      { text: "Everything in Free Trial", included: true },
+      { text: "Unlimited leads forever", included: true },
+      { text: "Instant WhatsApp ping", included: true },
+      { text: "Custom domain", included: true },
+      { text: "Weekly Monday report", included: true },
+      { text: "Google Maps setup", included: true },
       { text: "Priority support", included: true },
-      { text: "Monthly strategy call", included: true },
-      { text: "Custom domain (not subdomain)", included: true },
     ],
-    cta: "Get Pro Plan",
-    outlined: true,
+    cta: "Get Growth Plan →",
+    outlined: false,
+    roi: "1 customer = ₹1,500+ • LeadPe = ₹299/mo",
+    link: "/payment?plan=growth&amount=299",
   },
 ];
 
@@ -133,12 +119,13 @@ const pricingPlans = [
 const comparisonData = {
   headers: ["", "LeadPe", "Agency", "Fiverr", "DIY"],
   rows: [
-    { label: "Website", values: ["₹2K", "₹20K", "₹8K", "₹0"] },
-    { label: "Time", values: ["48hr", "2 week", "1 week", "Months"] },
-    { label: "Monthly", values: ["₹299", "₹5K", "None", "₹2K"] },
+    { label: "Website Cost", values: ["₹500-2K", "₹20K+", "₹5K+", "₹0"] },
+    { label: "Monthly", values: ["₹299", "₹5K+", "₹0", "₹2K+"] },
+    { label: "Delivery", values: ["48hrs", "2-4wks", "1-2wks", "Months"] },
     { label: "Leads", values: ["✅", "❌", "❌", "❌"] },
-    { label: "WhatsApp", values: ["✅", "❌", "❌", "❌"] },
-    { label: "SEO Auto", values: ["✅", "Maybe", "❌", "❌"] },
+    { label: "WhatsApp Ping", values: ["✅", "❌", "❌", "❌"] },
+    { label: "SEO", values: ["✅", "Maybe", "Basic", "❌"] },
+    { label: "Support", values: ["✅", "Paid", "None", "❌"] },
   ],
 };
 
@@ -724,7 +711,7 @@ export default function Index() {
           </motion.div>
 
           {/* Two Pricing Cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
             {pricingPlans.map((plan, i) => (
               <motion.div
                 key={plan.name}
@@ -765,7 +752,11 @@ export default function Index() {
                   ))}
                 </ul>
                 <Button
-                  onClick={scrollToSignup}
+                  onClick={() => {
+                    const link = (plan as any).link;
+                    if (link) navigate(link);
+                    else scrollToSignup();
+                  }}
                   className={`w-full rounded-xl h-11 font-semibold ${
                     plan.outlined 
                       ? "border border-[#00C853] text-[#00C853] bg-transparent hover:bg-[#F0FFF4]" 
@@ -1011,7 +1002,7 @@ export default function Index() {
                         value={bizForm.city}
                         onChange={(e) => updateBizForm("city", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.city ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="e.g. Mumbai"
                       />
                       {bizErrors.city && <p className="text-xs text-red-500 mt-1">{bizErrors.city}</p>}
@@ -1023,7 +1014,7 @@ export default function Index() {
                         value={bizForm.whatsappNumber}
                         onChange={(e) => updateBizForm("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                         className={`rounded-xl border h-12 text-base ${bizErrors.whatsappNumber ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="e.g. 9876543210"
                         type="tel"
                       />
@@ -1036,7 +1027,7 @@ export default function Index() {
                         value={bizForm.ownerName}
                         onChange={(e) => updateBizForm("ownerName", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.ownerName ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="Your full name"
                       />
                       {bizErrors.ownerName && <p className="text-xs text-red-500 mt-1">{bizErrors.ownerName}</p>}

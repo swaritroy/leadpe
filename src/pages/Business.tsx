@@ -24,52 +24,36 @@ const businessTypes = [
 
 const pricingPlans = [
   {
-    name: "Basic — FREE",
+    name: "Free Trial",
     price: "₹0",
-    period: "7 day trial",
-    desc: "Website building: ₹500-2000 (separate)",
+    period: "",
+    desc: "21 days — no credit card",
     featured: false,
     features: [
-      "✓ Website included",
-      "✓ 5 leads/month",
-      "✓ LeadPe subdomain"
+      "✓ Website built in 48 hours",
+      "✓ All leads visible",
+      "✓ WhatsApp ping active",
+      "✓ Full dashboard access",
     ],
-    cta: "Choose Basic",
-    value: "basic"
+    cta: "Choose Free Trial",
+    value: "trial"
   },
   {
-    name: "Growth — ₹299/mo",
+    name: "Growth Plan",
     price: "₹299",
     period: "/month",
-    desc: "Most Popular",
+    desc: "Unlimited leads + WhatsApp ping",
     featured: true,
     badge: "Most Popular",
     features: [
-      "✓ Everything in Basic",
-      "✓ Unlimited leads",
-      "✓ WhatsApp ping 🔔",
-      "✓ Weekly report",
-      "✓ Custom domain"
+      "✓ Everything in Free Trial",
+      "✓ Unlimited leads forever",
+      "✓ Instant WhatsApp ping",
+      "✓ Custom domain",
+      "✓ Weekly Monday report",
     ],
     cta: "Choose Growth",
     value: "growth"
-  },
-  {
-    name: "Pro — ₹999/mo",
-    price: "₹999",
-    period: "/month",
-    desc: "All Inclusive",
-    badge: "Founding Member Offer",
-    features: [
-      "✓ Website FREE included",
-      "✓ Everything in Growth",
-      "✓ AI booking",
-      "✓ Google Review auto",
-      "✓ Priority support",
-      "✓ Lock in price forever"
-    ],
-    cta: "Choose Pro",
-    value: "pro"
   }
 ];
 
@@ -93,8 +77,8 @@ export default function Business() {
     city: "",
     whatsappNumber: "",
     ownerName: "",
-    plan: "",
-    language: "hinglish"
+    plan: "growth",
+    language: "english"
   });
   
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -286,8 +270,8 @@ export default function Business() {
           <Input
             value={formData.businessName}
             onChange={(e) => updateForm("businessName", e.target.value)}
-            className={`rounded-xl border h-12 ${errors.businessName ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.businessName ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="e.g. Shiva Study Centre"
           />
           {errors.businessName && <p className="text-xs text-red-500 mt-1">{errors.businessName}</p>}
@@ -341,8 +325,8 @@ export default function Business() {
           <Input
             value={formData.city}
             onChange={(e) => updateForm("city", e.target.value)}
-            className={`rounded-xl border h-12 ${errors.city ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.city ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="e.g. Vaishali, Bihar"
           />
           {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
@@ -356,8 +340,8 @@ export default function Business() {
           <Input
             value={formData.whatsappNumber}
             onChange={(e) => updateForm("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
-            className={`rounded-xl border h-12 ${errors.whatsappNumber ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.whatsappNumber ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="+91 98765 43210"
             type="tel"
           />
@@ -372,8 +356,8 @@ export default function Business() {
           <Input
             value={formData.ownerName}
             onChange={(e) => updateForm("ownerName", e.target.value)}
-            className={`rounded-xl border h-12 ${errors.ownerName ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.ownerName ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="e.g. Sanjay Singhania"
           />
           {errors.ownerName && <p className="text-xs text-red-500 mt-1">{errors.ownerName}</p>}
