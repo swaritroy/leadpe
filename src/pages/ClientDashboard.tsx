@@ -50,6 +50,7 @@ export default function ClientDashboard() {
   const [copiedField, setCopiedField] = useState("");
   const [buildRequest, setBuildRequest] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [newLeadAlert, setNewLeadAlert] = useState<Lead | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await (supabase.from("profiles") as any)
