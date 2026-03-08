@@ -805,7 +805,7 @@ export default function ClientDashboard() {
             </div>
             
             {/* Auto Tip */}
-            <div className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+            <div className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
               <p className="text-sm">{weeklyReport.tip}</p>
             </div>
           </motion.div>
