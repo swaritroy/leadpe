@@ -848,7 +848,7 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("buildRequests") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
