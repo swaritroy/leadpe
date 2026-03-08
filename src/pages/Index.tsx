@@ -711,7 +711,7 @@ export default function Index() {
           </motion.div>
 
           {/* Two Pricing Cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
             {pricingPlans.map((plan, i) => (
               <motion.div
                 key={plan.name}
