@@ -135,6 +135,7 @@ export default function Business() {
           trial_start_date: trialStart,
           trial_end_date: trialEnd,
           onboarding_complete: false,
+          referred_by: referralCode || null,
         }).eq("user_id", authData.user.id);
 
         // 4. Insert user role
