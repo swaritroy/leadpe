@@ -820,7 +820,7 @@ export default function Admin() {
                   const coderEarnings = earnings.filter(e => e.vibe_coder_id === c.id);
                   const unpaid = coderEarnings.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0);
                   return (
-                    <div key={c.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div key={c.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">{c.full_name}</span>
                         <span className="font-bold" style={{ color: "#00E676" }}>₹{unpaid.toLocaleString()}</span>
