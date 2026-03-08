@@ -1589,7 +1589,7 @@ export default function DevDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div></>
   );
 }
 
