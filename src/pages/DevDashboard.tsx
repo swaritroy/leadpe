@@ -959,7 +959,7 @@ export default function DevDashboard() {
                 {/* Green Card */}
                 <div
                   className="rounded-2xl border-2 p-6 mb-6 mx-auto max-w-md"
-                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                  style={{ borderColor: "#00C853", backgroundColor: "#FFFFFF" }}
                 >
                   <p className="text-lg font-medium mb-4" style={{ color: "#00E676" }}>
                     {deployedSubdomain}
