@@ -30,23 +30,39 @@ export default function Auth() {
     if (!siPw) { setError("Please enter your password."); return; }
 
     setLoading(true);
-    const { data, error: authErr } = await supabase.auth.signInWithPassword({
-      email: `${digits}@leadpe.business`,
-      password: siPw,
-    });
+
+    // Try both email formats for backward compatibility
+    let data: any = null;
+    let authErr: any = null;
+
+    // Try @leadpe.com first (new format)
+    const res1 = await supabase.auth.signInWithPassword({ email: `${digits}@leadpe.com`, password: siPw });
+    if (!res1.error) {
+      data = res1.data;
+    } else {
+      // Try @leadpe.business (old format)
+      const res2 = await supabase.auth.signInWithPassword({ email: `${digits}@leadpe.business`, password: siPw });
+      if (!res2.error) {
+        data = res2.data;
+      } else {
+        authErr = res1.error;
+      }
+    }
+
     setLoading(false);
 
-    if (authErr) { setError("Incorrect number or password."); return; }
+    if (authErr || !data) { setError("Incorrect number or password."); return; }
 
-    // Get role from profile
-    const { data: profile } = await (supabase.from("profiles") as any)
+    // Get role from user_roles table
+    const { data: roleData } = await supabase
+      .from("user_roles")
       .select("role")
       .eq("user_id", data.user.id)
       .maybeSingle();
 
-    const role = profile?.role || "business";
+    const role = roleData?.role || "business";
     if (role === "admin") navigate("/admin", { replace: true });
-    else if (role === "vibe_coder" || role === "developer") navigate("/dev/dashboard", { replace: true });
+    else if (role === "developer") navigate("/dev/dashboard", { replace: true });
     else navigate("/client/dashboard", { replace: true });
   };
 
@@ -60,7 +76,7 @@ export default function Auth() {
     if (suPw !== suCpw) { setError("Passwords do not match."); return; }
 
     setLoading(true);
-    const email = `${digits}@leadpe.business`;
+    const email = `${digits}@leadpe.com`;
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email,
       password: suPw,
@@ -74,15 +90,22 @@ export default function Auth() {
     }
 
     if (authData.user) {
-      await (supabase.from("profiles") as any).upsert({
-        user_id: authData.user.id,
+      // Update auto-created profile
+      await (supabase.from("profiles") as any).update({
         full_name: suName,
         whatsapp_number: digits,
         email,
         role: "business",
         status: "trial",
-      });
+        trial_start_date: new Date().toISOString(),
+        trial_end_date: new Date(Date.now() + 21 * 86400000).toISOString(),
+      }).eq("user_id", authData.user.id);
+
+      // Insert role
       await (supabase.from("user_roles") as any).insert({ user_id: authData.user.id, role: "business" });
+
+      // Auto sign in
+      await supabase.auth.signInWithPassword({ email, password: suPw });
     }
 
     setLoading(false);
@@ -101,7 +124,6 @@ export default function Auth() {
             <p className="text-sm" style={{ color: "#666666" }}>Sign in to your dashboard</p>
           </div>
 
-          {/* Tabs */}
           <div className="flex rounded-xl p-1 mb-6" style={{ backgroundColor: "#F8F8F8", border: "1px solid #E0E0E0" }}>
             {(["signin", "signup"] as const).map((t) => (
               <button key={t} onClick={() => { setTab(t); setError(""); }}
@@ -130,7 +152,7 @@ export default function Auth() {
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Password</label>
                   <div className="relative">
                     <Input type={showPw ? "text" : "password"} value={siPw} onChange={(e) => setSiPw(e.target.value)}
-                      className="rounded-xl h-12 pr-10" style={inputStyle} placeholder="Enter password" />
+                      className="rounded-xl h-12 pr-10" style={inputStyle} placeholder="Enter password or trial code" />
                     <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#666666" }}>
                       {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
