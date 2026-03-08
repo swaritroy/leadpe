@@ -30,6 +30,14 @@ interface Lead {
   source: string | null;
 }
 
+interface SEOData {
+  page_title: string | null;
+  meta_description: string | null;
+  keywords: string | null;
+  whatsapp_bio: string | null;
+  google_description: string | null;
+}
+
 export default function ClientDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
