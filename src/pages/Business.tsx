@@ -77,8 +77,8 @@ export default function Business() {
     city: "",
     whatsappNumber: "",
     ownerName: "",
-    plan: "",
-    language: "hinglish"
+    plan: "growth",
+    language: "english"
   });
   
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
