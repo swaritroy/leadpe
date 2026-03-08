@@ -246,6 +246,12 @@ export default function Admin() {
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       setPendingMessages(msgsData || []);
+
+      // Fetch orders
+      const { data: ordersData } = await (supabase as any).from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      setOrders(ordersData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
