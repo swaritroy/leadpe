@@ -46,6 +46,7 @@ const AppContent = () => {
           <Route path="/payment" element={<Payment />} />
           <Route path="/studio" element={<Studio />} />
           <Route path="/studio/auth" element={<StudioAuth />} />
+          <Route path="/get-website" element={<GetWebsite />} />
 
           {/* Protected business routes */}
           <Route path="/client/dashboard" element={
