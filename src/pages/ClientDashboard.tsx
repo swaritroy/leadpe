@@ -64,14 +64,29 @@ export default function ClientDashboard() {
     if (!user) return;
     const init = async () => {
       await fetchProfile(user.id);
+      // Fetch SEO data
+      const { data: seo } = await (supabase.from("business_seo") as any)
+        .select("page_title, meta_description, keywords, whatsapp_bio, google_description")
+        .eq("business_id", user.id)
+        .maybeSingle();
+      if (seo) setSeoData(seo);
+      setSeoLoading(false);
       setLoading(false);
     };
     init();
 
-    // Poll every 30s for activation changes
     const interval = setInterval(() => fetchProfile(user.id), 30000);
-    return () => clearInterval(interval);
-  }, [user, fetchProfile]);
+    // Poll for SEO if not yet available
+    const seoInterval = setInterval(async () => {
+      if (seoData) return;
+      const { data: seo } = await (supabase.from("business_seo") as any)
+        .select("page_title, meta_description, keywords, whatsapp_bio, google_description")
+        .eq("business_id", user.id)
+        .maybeSingle();
+      if (seo) { setSeoData(seo); setSeoLoading(false); }
+    }, 10000);
+    return () => { clearInterval(interval); clearInterval(seoInterval); };
+  }, [user, fetchProfile, seoData]);
 
   // Realtime leads subscription
   useEffect(() => {
