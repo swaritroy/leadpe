@@ -293,10 +293,50 @@ export default function ClientDashboard() {
           </motion.div>
         )}
 
+        {/* NEW LEAD NOTIFICATION BANNER */}
+        <AnimatePresence>
+          {newLeadAlert && (
+            <motion.div
+              initial={{ y: -60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -60, opacity: 0 }}
+              className="fixed top-16 left-0 right-0 z-40 px-4 py-3"
+              style={{ backgroundColor: "#00C853" }}
+            >
+              <div className="container mx-auto max-w-lg flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white">
+                  <Bell size={16} />
+                  <span className="text-sm font-medium">
+                    🔔 New Lead! {newLeadAlert.customer_name} wants {newLeadAlert.message || "your service"}
+                  </span>
+                </div>
+                {newLeadAlert.phone && (
+                  <a
+                    href={`https://wa.me/91${newLeadAlert.phone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold px-3 py-1 rounded-lg bg-white"
+                    style={{ color: "#00C853" }}
+                  >
+                    Call Now →
+                  </a>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* LEADS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl p-6 mb-4 relative" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Leads 📊</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-lg" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Leads 📊</h3>
+            {leads.length > 0 && (
+              <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>
+                {leads.length} total
+              </span>
+            )}
+          </div>
 
           {leads.length === 0 ? (
             <div className="text-center py-6">
@@ -311,12 +351,45 @@ export default function ClientDashboard() {
             <div className="relative">
               {/* Blur leads if trial expired */}
               <div style={trial?.isExpired ? { filter: "blur(6px)", pointerEvents: "none" } : {}}>
-                {leads.slice(0, 5).map((lead) => (
-                  <div key={lead.id} className="border-b py-3" style={{ borderColor: "#E0E0E0" }}>
-                    <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>{lead.customer_name}</p>
-                    <p className="text-xs" style={{ color: "#666" }}>{lead.phone} • {new Date(lead.created_at).toLocaleDateString("en-IN")}</p>
-                  </div>
-                ))}
+                {leads.slice(0, 10).map((lead) => {
+                  const isNew = (Date.now() - new Date(lead.created_at).getTime()) < 3600000;
+                  const timeAgo = (() => {
+                    const mins = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / 60000);
+                    if (mins < 60) return `${mins}m ago`;
+                    const hrs = Math.floor(mins / 60);
+                    if (hrs < 24) return `${hrs}h ago`;
+                    return `${Math.floor(hrs / 24)}d ago`;
+                  })();
+                  
+                  return (
+                    <div key={lead.id} className="py-3 border-b" style={{ borderColor: "#F0F0F0", borderLeftWidth: "4px", borderLeftColor: "#00C853", paddingLeft: "12px", marginBottom: "4px" }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>{lead.customer_name}</p>
+                          {isNew && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>NEW</span>
+                          )}
+                        </div>
+                        <span className="text-[10px]" style={{ color: "#999" }}>{timeAgo}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs mb-2" style={{ color: "#666" }}>
+                        {lead.phone && <span className="flex items-center gap-1"><Phone size={10} /> {lead.phone}</span>}
+                        {lead.message && <span>🔍 {lead.message}</span>}
+                      </div>
+                      {lead.phone && (
+                        <a
+                          href={`https://wa.me/91${lead.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium text-white"
+                          style={{ backgroundColor: "#25D366" }}
+                        >
+                          <MessageCircle size={12} /> WhatsApp →
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {trial?.isExpired && (
