@@ -1103,7 +1103,7 @@ export default function ClientDashboard() {
         </section>
 
         {/* Weekly Report */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-2xl border border-border p-5 mb-6" style={{ backgroundColor: "#101810" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-2xl border border-[#E0F2E9] p-5 mb-6" style={{ backgroundColor: "#FFFFFF" }}>
           <h2 className="text-lg font-bold font-display mb-4">This Week's Performance</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
