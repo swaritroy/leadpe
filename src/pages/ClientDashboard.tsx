@@ -45,6 +45,9 @@ export default function ClientDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [trial, setTrial] = useState<TrialStatus | null>(null);
+  const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const [seoLoading, setSeoLoading] = useState(true);
+  const [copiedField, setCopiedField] = useState("");
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await (supabase.from("profiles") as any)
