@@ -1406,7 +1406,7 @@ export default function DevDashboard() {
           </div>
         </section>
       </div>
-      
+
       {/* Brief Modal */}
       <AnimatePresence>
         {showBriefModal && selectedRequest && (
@@ -1421,170 +1421,78 @@ export default function DevDashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              style={{ backgroundColor: "#FFFFFF" }}
-              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>
-                    Build Brief — {selectedRequest.business_name}
-                  </h2>
-                  <Button
-                    onClick={() => setShowBriefModal(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </Button>
-                </div>
-                
-                {/* Business Details */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Business Details</h3>
-                  <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>Business:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>Type:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>City:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.city}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>Owner:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.owner_name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>WhatsApp:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>+91 {selectedRequest.owner_whatsapp}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: "#666666" }}>Plan:</span>
-                        <span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.plan_selected.toUpperCase()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* ChatGPT Prompt */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>ChatGPT Prompt</h3>
-                  <div className="rounded-xl border border-[#E0E0E0] p-4">
-                    <div className="bg-gray-50 rounded-lg p-4 mb-3 font-mono text-xs overflow-x-auto" style={{ backgroundColor: "#F8F9FA", maxHeight: "300px", overflowY: "auto" }}>
-                      {generateBrief({
-                        business_name: selectedRequest.business_name,
-                        business_type: selectedRequest.business_type,
-                        city: selectedRequest.city,
-                        owner_name: selectedRequest.owner_name,
-                        owner_whatsapp: selectedRequest.owner_whatsapp,
-                        plan_selected: selectedRequest.plan_selected,
-                        preferred_language: selectedRequest.preferred_language
-                      }).chatgptPrompt}
-                    </div>
-                    <Button
-                      onClick={() => handleCopyPrompt(generateBrief({
-                        business_name: selectedRequest.business_name,
-                        business_type: selectedRequest.business_type,
-                        city: selectedRequest.city,
-                        owner_name: selectedRequest.owner_name,
-                        owner_whatsapp: selectedRequest.owner_whatsapp,
-                        plan_selected: selectedRequest.plan_selected,
-                        preferred_language: selectedRequest.preferred_language
-                      }).chatgptPrompt)}
-                      className="w-full h-10 rounded-xl text-white font-semibold"
-                      style={{ backgroundColor: "#00C853" }}
-                    >
-                      <Copy size={16} className="mr-2" /> Copy Prompt
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Mandatory Elements */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Mandatory Elements</h3>
-                  <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                    <ul className="space-y-2">
-                      {generateBrief({
-                        business_name: selectedRequest.business_name,
-                        business_type: selectedRequest.business_type,
-                        city: selectedRequest.city,
-                        owner_name: selectedRequest.owner_name,
-                        owner_whatsapp: selectedRequest.owner_whatsapp,
-                        plan_selected: selectedRequest.plan_selected,
-                        preferred_language: selectedRequest.preferred_language
-                      }).mandatoryElements.map((element, index) => (
-                        <li key={index} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}>
-                          <Check size={14} style={{ color: "#00C853" }} />
-                          {element}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                
-                {/* Quick Links */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Quick Links</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Button
-                      onClick={() => window.open("https://chat.openai.com", "_blank")}
-                      variant="outline"
-                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
-                    >
-                      Open ChatGPT →
-                    </Button>
-                    <Button
-                      onClick={() => window.open("https://lovable.dev", "_blank")}
-                      variant="outline"
-                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
-                    >
-                      Open Lovable →
-                    </Button>
-                    <Button
-                      onClick={() => window.open("https://github.com", "_blank")}
-                      variant="outline"
-                      className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]"
-                    >
-                      Open GitHub →
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Submit GitHub URL */}
-                {selectedRequest.status === "building" && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Submit for Review</h3>
-                    <div className="space-y-3">
-                      <Input
-                        value={githubSubmitUrl}
-                        onChange={(e) => setGithubSubmitUrl(e.target.value)}
-                        placeholder="Enter GitHub repository URL"
-                        className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]"
-                        style={{ backgroundColor: "#FAFAFA" }}
-                      />
-                      <Button
-                        onClick={handleSubmitGithub}
-                        disabled={submittingGithub}
-                        className="w-full h-12 rounded-xl text-white font-semibold"
-                        style={{ backgroundColor: "#00C853" }}
-                      >
-                        {submittingGithub ? (
-                          <><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>
-                        ) : (
-                          <><Send size={16} className="mr-2" /> Submit GitHub URL →</>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>
+                  Build Brief — {selectedRequest.business_name}
+                </h2>
+                <Button onClick={() => setShowBriefModal(false)} variant="ghost" size="sm">✕</Button>
               </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Business Details</h3>
+                <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>Business:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_name}</span></div>
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>Type:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.business_type}</span></div>
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>City:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.city}</span></div>
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>Owner:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.owner_name}</span></div>
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>WhatsApp:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>+91 {selectedRequest.owner_whatsapp}</span></div>
+                    <div className="flex justify-between"><span style={{ color: "#666" }}>Plan:</span><span style={{ color: "#1A1A1A", fontWeight: 500 }}>{selectedRequest.plan_selected?.toUpperCase()}</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>ChatGPT Prompt</h3>
+                <div className="rounded-xl p-4 text-sm whitespace-pre-wrap" style={{ backgroundColor: "#F8F9FA", color: "#1A1A1A" }}>
+                  {generateBrief({ business_name: selectedRequest.business_name, business_type: selectedRequest.business_type, city: selectedRequest.city, owner_name: selectedRequest.owner_name, owner_whatsapp: selectedRequest.owner_whatsapp, plan_selected: selectedRequest.plan_selected, preferred_language: selectedRequest.preferred_language }).chatgptPrompt}
+                </div>
+                <Button
+                  onClick={() => handleCopyPrompt(generateBrief({ business_name: selectedRequest.business_name, business_type: selectedRequest.business_type, city: selectedRequest.city, owner_name: selectedRequest.owner_name, owner_whatsapp: selectedRequest.owner_whatsapp, plan_selected: selectedRequest.plan_selected, preferred_language: selectedRequest.preferred_language }).chatgptPrompt)}
+                  className="w-full h-10 rounded-xl text-white font-semibold mt-3"
+                  style={{ backgroundColor: "#00C853" }}
+                >
+                  <Copy size={16} className="mr-2" /> Copy Prompt
+                </Button>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Mandatory Elements</h3>
+                <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                  <ul className="space-y-2">
+                    {generateBrief({ business_name: selectedRequest.business_name, business_type: selectedRequest.business_type, city: selectedRequest.city, owner_name: selectedRequest.owner_name, owner_whatsapp: selectedRequest.owner_whatsapp, plan_selected: selectedRequest.plan_selected, preferred_language: selectedRequest.preferred_language }).mandatoryElements.map((element: string, index: number) => (
+                      <li key={index} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}>
+                        <Check size={14} style={{ color: "#00C853" }} />
+                        {element}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Quick Links</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Button onClick={() => window.open("https://chat.openai.com", "_blank")} variant="outline" className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]">Open ChatGPT →</Button>
+                  <Button onClick={() => window.open("https://lovable.dev", "_blank")} variant="outline" className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]">Open Lovable →</Button>
+                  <Button onClick={() => window.open("https://github.com", "_blank")} variant="outline" className="h-12 rounded-xl border-[#00C853] text-[#00C853] bg-white hover:bg-[#F0FFF4]">Open GitHub →</Button>
+                </div>
+              </div>
+
+              {selectedRequest.status === "building" && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Submit for Review</h3>
+                  <div className="space-y-3">
+                    <Input value={githubSubmitUrl} onChange={(e) => setGithubSubmitUrl(e.target.value)} placeholder="Enter GitHub repository URL" className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]" style={{ backgroundColor: "#FFFFFF" }} />
+                    <Button onClick={handleSubmitGithub} disabled={submittingGithub} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                      {submittingGithub ? (<><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>) : (<><Send size={16} className="mr-2" /> Submit GitHub URL →</>)}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
