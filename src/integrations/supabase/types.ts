@@ -22,6 +22,7 @@ export type Database = {
           business_name: string | null
           business_type: string | null
           city: string | null
+          coder_earning: number | null
           created_at: string | null
           deadline: string | null
           deploy_url: string | null
@@ -30,9 +31,15 @@ export type Database = {
           id: string
           owner_name: string | null
           owner_whatsapp: string | null
+          package_id: string | null
+          package_price: number | null
           plan_selected: string | null
+          practice_build: boolean | null
+          reference_sites: string | null
+          special_requirements: string | null
           status: string | null
           submitted_at: string | null
+          website_purpose: string | null
         }
         Insert: {
           assigned_coder_id?: string | null
@@ -41,6 +48,7 @@ export type Database = {
           business_name?: string | null
           business_type?: string | null
           city?: string | null
+          coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
           deploy_url?: string | null
@@ -49,9 +57,15 @@ export type Database = {
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
+          package_id?: string | null
+          package_price?: number | null
           plan_selected?: string | null
+          practice_build?: boolean | null
+          reference_sites?: string | null
+          special_requirements?: string | null
           status?: string | null
           submitted_at?: string | null
+          website_purpose?: string | null
         }
         Update: {
           assigned_coder_id?: string | null
@@ -60,6 +74,7 @@ export type Database = {
           business_name?: string | null
           business_type?: string | null
           city?: string | null
+          coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
           deploy_url?: string | null
@@ -68,9 +83,15 @@ export type Database = {
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
+          package_id?: string | null
+          package_price?: number | null
           plan_selected?: string | null
+          practice_build?: boolean | null
+          reference_sites?: string | null
+          special_requirements?: string | null
           status?: string | null
           submitted_at?: string | null
+          website_purpose?: string | null
         }
         Relationships: []
       }
@@ -494,6 +515,7 @@ export type Database = {
           full_name: string | null
           id: string
           monthly_capacity: string | null
+          monthly_passive: number | null
           onboarding_complete: boolean | null
           plan_renewal_date: string | null
           plan_status: string | null
@@ -503,6 +525,9 @@ export type Database = {
           site_url: string | null
           status: string | null
           subscription_plan: string | null
+          total_earned: number | null
+          total_sites_built: number | null
+          total_sites_live: number | null
           trial_code: string | null
           trial_end_date: string | null
           trial_start_date: string | null
@@ -522,6 +547,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
+          monthly_passive?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
@@ -531,6 +557,9 @@ export type Database = {
           site_url?: string | null
           status?: string | null
           subscription_plan?: string | null
+          total_earned?: number | null
+          total_sites_built?: number | null
+          total_sites_live?: number | null
           trial_code?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -550,6 +579,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
+          monthly_passive?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
@@ -559,6 +589,9 @@ export type Database = {
           site_url?: string | null
           status?: string | null
           subscription_plan?: string | null
+          total_earned?: number | null
+          total_sites_built?: number | null
+          total_sites_live?: number | null
           trial_code?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
