@@ -1127,7 +1127,7 @@ export default function ClientDashboard() {
               <div className="text-xs text-muted-foreground">Site Speed</div>
             </div>
           </div>
-          <div className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+          <div className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
             <p className="text-sm">💡 <span className="font-medium">Tip of the week:</span> {getTip()}</p>
           </div>
         </motion.div>
