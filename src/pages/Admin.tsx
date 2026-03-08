@@ -236,6 +236,13 @@ export default function Admin() {
       setBuildRequests(enrichedRequests);
       
       generateActionItems(profilesData || [], deploymentsData || []);
+
+      // Fetch pending messages
+      const { data: msgsData } = await (supabase.from("scheduled_messages") as any)
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      setPendingMessages(msgsData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
