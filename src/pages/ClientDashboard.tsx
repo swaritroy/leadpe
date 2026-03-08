@@ -417,13 +417,27 @@ export default function ClientDashboard() {
             <button
               onClick={() => {
                 const code = profile?.trial_code || "N/A";
-                alert(`Your trial code: ${code}`);
+                navigator.clipboard.writeText(code);
+                alert(`Your trial code: ${code}\n\nCopied to clipboard!`);
               }}
               className="flex flex-col items-center justify-center gap-2 rounded-xl"
               style={{ border: "1px solid #E0E0E0", padding: 14, background: "#fff", cursor: "pointer", minHeight: 80 }}
             >
               <FileText size={18} style={{ color: "#1A1A1A" }} />
               <span style={{ fontSize: 13, color: "#1A1A1A" }}>My Trial Code</span>
+            </button>
+
+            <button
+              onClick={() => {
+                const url = `https://leadpe.lovable.app/business?ref=${profile?.trial_code || ""}`;
+                const msg = `I'm using LeadPe for my business website. Get yours free for 21 days!\n${url}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl"
+              style={{ border: "1px solid #E0E0E0", padding: 14, background: "#fff", cursor: "pointer", minHeight: 80 }}
+            >
+              <Share2 size={18} style={{ color: "#00C853" }} />
+              <span style={{ fontSize: 13, color: "#00C853", fontWeight: 600 }}>Refer & Earn</span>
             </button>
           </div>
         </motion.div>
