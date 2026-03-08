@@ -1020,7 +1020,7 @@ export default function Admin() {
                     <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(val) => `₹${val}`} />
                     <Tooltip contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #E0F2E9", borderRadius: "8px" }} itemStyle={{ color: "#00C853" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
-                    <Bar dataKey="revenue" fill="#00E676" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" fill="#00C853" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
