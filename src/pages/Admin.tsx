@@ -159,11 +159,13 @@ export default function Admin() {
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [orderFilter, setOrderFilter] = useState("all");
   
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
