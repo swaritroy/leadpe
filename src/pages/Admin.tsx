@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -158,11 +159,13 @@ export default function Admin() {
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [orderFilter, setOrderFilter] = useState("all");
   
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
@@ -243,6 +246,12 @@ export default function Admin() {
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       setPendingMessages(msgsData || []);
+
+      // Fetch orders
+      const { data: ordersData } = await (supabase as any).from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      setOrders(ordersData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -492,6 +501,19 @@ export default function Admin() {
         variant: "destructive"
       });
     }
+  };
+
+  const assignCoderToOrder = async (orderId: string, coderId: string) => {
+    const coder = availableCoders.find((c) => c.id === coderId);
+    await (supabase as any).from("orders").update({
+      status: "building",
+      assigned_coder_id: coderId,
+      assigned_coder_name: coder?.full_name || "Unknown",
+    }).eq("id", orderId);
+    const order = orders.find((o) => o.id === orderId);
+    if (order) await logEvent(order.order_id, ORDER_EVENTS.CODER_ASSIGNED, coder?.full_name);
+    toast({ title: "Coder assigned!", description: `${coder?.full_name} assigned` });
+    fetchData();
   };
   
   const markAllPaid = async () => {
@@ -1204,6 +1226,105 @@ export default function Admin() {
                 </div>
               ))}
             </div>
+          )}
+        </motion.div>
+
+        {/* ── ORDERS SECTION ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("orders")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("orders") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            Orders ({orders.length})
+          </button>
+
+          {expandedSections.has("orders") && (
+            <>
+              {/* Status tabs */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {["all", "pending", "building", "demo_ready", "approved", "paid", "live"].map((s) => (
+                  <button key={s} onClick={() => setOrderFilter(s)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${orderFilter === s ? "bg-[#00C853] text-white" : "bg-[#F5F5F5] text-[#666] hover:bg-[#E0E0E0]"}`}>
+                    {s === "all" ? "All" : s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                    {s !== "all" && ` (${orders.filter((o) => o.status === s).length})`}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {orders
+                  .filter((o) => orderFilter === "all" || o.status === orderFilter)
+                  .map((o) => (
+                    <div key={o.id} className="bg-white rounded-xl p-4 border border-[#E0F2E9]" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="font-bold text-[#1A1A1A] text-sm">{o.order_id}</span>
+                          <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${
+                            o.status === "live" ? "bg-[#00C853]" : o.status === "paid" ? "bg-blue-500" : o.status === "demo_ready" ? "bg-purple-500" : o.status === "building" ? "bg-yellow-500" : "bg-gray-400"
+                          }`}>{o.status?.replace("_", " ")}</span>
+                        </div>
+                        <span className="text-xs text-[#999]">{new Date(o.created_at).toLocaleDateString("en-IN")}</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-1 text-xs text-[#666] mb-3">
+                        <p>👤 {o.customer_name}</p>
+                        <p>📱 {o.customer_whatsapp}</p>
+                        <p>🏢 {o.business_name}</p>
+                        <p>📍 {o.city}</p>
+                        <p>📦 {o.package_id} — ₹{o.total_price?.toLocaleString()}</p>
+                        <p>👷 {o.assigned_coder_name || "Unassigned"}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {/* Assign coder */}
+                        {!o.assigned_coder_id && (
+                          <select
+                            onChange={(e) => assignCoderToOrder(o.id, e.target.value)}
+                            className="text-xs border border-[#E0E0E0] rounded-lg px-2 py-1.5 bg-white"
+                            defaultValue="">
+                            <option value="" disabled>Assign Coder</option>
+                            {availableCoders.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+                          </select>
+                        )}
+                        {o.status === "demo_ready" && (
+                          <Button size="sm" className="text-xs rounded-lg bg-purple-500 text-white"
+                            onClick={() => {
+                              const msg = `🎨 Aapki website demo tayaar hai!\n\nBusiness: ${o.business_name}\n\nDemo link: ${o.demo_url || "Coming soon"}\n\nDemo dekho aur batao:\n✅ Pasand aaya → reply HAAN\n🔄 Changes chahiye → reply BADLO\n\nLeadPe 🌱`;
+                              window.open(`https://wa.me/91${o.customer_whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+                            }}>
+                            Send Demo WhatsApp
+                          </Button>
+                        )}
+                        {o.status === "paid" && (
+                          <Button size="sm" className="text-xs rounded-lg bg-[#00C853] text-white"
+                            onClick={async () => {
+                              await (supabase as any).from("orders").update({ status: "live", went_live_at: new Date().toISOString() }).eq("id", o.id);
+                              await logEvent(o.order_id, ORDER_EVENTS.SITE_WENT_LIVE);
+                              toast({ title: "Marked Live! 🚀" });
+                              fetchData();
+                            }}>
+                            Mark Live 🚀
+                          </Button>
+                        )}
+                        {/* Timeline */}
+                        <Button size="sm" variant="outline" className="text-xs rounded-lg border-[#E0E0E0]"
+                          onClick={async () => {
+                            const { data: timeline } = await (supabase as any).from("order_timeline").select("*").eq("order_id", o.order_id).order("timestamp", { ascending: true });
+                            const events = (timeline || []).map((t: any) => `${new Date(t.timestamp).toLocaleString("en-IN")} — ${t.event}${t.details ? `: ${t.details}` : ""}`).join("\n");
+                            alert(`Timeline for ${o.order_id}:\n\n${events || "No events yet"}`);
+                          }}>
+                          <Eye size={12} className="mr-1" /> Timeline
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs rounded-lg border-[#E0E0E0]"
+                          onClick={() => window.open(`https://wa.me/91${o.customer_whatsapp}`, "_blank")}>
+                          <MessageCircle size={12} className="mr-1" /> WhatsApp
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                {orders.filter((o) => orderFilter === "all" || o.status === orderFilter).length === 0 && (
+                  <p className="text-center text-sm text-[#999] py-8">No orders in this status</p>
+                )}
+              </div>
+            </>
           )}
         </motion.div>
       </div>
