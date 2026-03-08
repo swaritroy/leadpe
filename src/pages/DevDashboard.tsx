@@ -546,11 +546,8 @@ export default function DevDashboard() {
       setSubmittingGithub(false);
     }
   };
-    setDeploySuccess(false);
-    setDeployedSubdomain("");
-    setDeployedBusinessName("");
-    setEarnedAmount(0);
-  };
+
+
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`https://${deployedSubdomain}`);
