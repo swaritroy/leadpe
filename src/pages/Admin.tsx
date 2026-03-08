@@ -1083,7 +1083,7 @@ export default function Admin() {
                   
                   <div className="md:hidden p-4 space-y-3">
                     {payouts.map((p) => (
-                      <div key={p.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                      <div key={p.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-semibold">{p.name}</span>
                           <span className="font-bold" style={{ color: "#00E676" }}>₹{p.total.toLocaleString()}</span>
