@@ -159,6 +159,7 @@ export default function Admin() {
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
+  const [messageLog, setMessageLog] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState("all");
