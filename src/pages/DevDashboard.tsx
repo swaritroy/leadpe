@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check, Shield, ClipboardCopy } from "lucide-react";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check, Shield, ClipboardCopy, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ import { generateBrief, copyToClipboard, getBusinessIcon, getBuildingFee, format
 import { deployWebsite } from "@/lib/deployService";
 import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qualityChecker";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
+import { WEBSITE_PACKAGES, getPackageById } from "@/lib/packages";
+import { updateCoderEarnings } from "@/lib/earningsCalc";
 
 interface Deployment {
   id: string;
