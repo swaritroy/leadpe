@@ -1308,7 +1308,7 @@ export default function DevDashboard() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4 p-4">
                 {deployments.map((site) => (
-                  <div key={site.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                  <div key={site.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold">{site.business_name}</span>
                       <span
