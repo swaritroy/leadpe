@@ -1055,7 +1055,7 @@ export default function Admin() {
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr style={{ backgroundColor: "#080C09" }}>
+                        <tr style={{ backgroundColor: "#F0FFF4" }}>
                           <th className="text-left p-4 text-sm font-medium">Vibe Coder</th>
                           <th className="text-left p-4 text-sm font-medium">Active Sites</th>
                           <th className="text-left p-4 text-sm font-medium">Monthly Passive</th>
