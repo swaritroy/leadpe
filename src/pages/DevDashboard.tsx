@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send } from "lucide-react";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
