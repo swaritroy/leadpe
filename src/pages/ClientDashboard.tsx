@@ -924,7 +924,7 @@ export default function ClientDashboard() {
               <div className="hidden md:block rounded-2xl border border-[#E0F2E9] overflow-hidden opacity-50" style={{ backgroundColor: "#FFFFFF", filter: "blur(2px)" }}>
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
                       <th className="text-left p-4 text-sm font-medium">Interest</th>
                       <th className="text-left p-4 text-sm font-medium">Number</th>
