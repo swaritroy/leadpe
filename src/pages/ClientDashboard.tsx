@@ -94,6 +94,24 @@ export default function ClientDashboard() {
     fetchLeads();
   }, [user]);
 
+  // Realtime profile changes (detect plan activation)
+  useEffect(() => {
+    if (!user) return;
+    const profileChannel = supabase
+      .channel("profile-status")
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "profiles",
+        filter: `user_id=eq.${user.id}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        if (updated.status === "active" && profile?.status !== "active") {
+          setShowCelebration(true);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(profileChannel); };
+  }, [user, profile?.status]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/", { replace: true });
