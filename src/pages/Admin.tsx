@@ -1156,6 +1156,56 @@ export default function Admin() {
             </div>
           )}
         </motion.div>
+
+        {/* PENDING WHATSAPP MESSAGES */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="rounded-2xl border p-6 mb-6" style={{ backgroundColor: "#FFFFFF", borderColor: "#E0E0E0" }}>
+          <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => toggleSection("messages")}>
+            <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>
+              <MessageCircle size={20} style={{ color: "#00C853" }} /> Pending WhatsApp Messages
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>{pendingMessages.length}</span>
+            </h2>
+            {expandedSections.has("messages") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </div>
+
+          {expandedSections.has("messages") && (
+            <div className="space-y-3">
+              {pendingMessages.length === 0 ? (
+                <p className="text-sm text-center py-4" style={{ color: "#666666" }}>No pending messages 🎉</p>
+              ) : pendingMessages.map((msg) => (
+                <div key={msg.id} className="rounded-xl p-4" style={{ backgroundColor: "#F9F9F9", border: "1px solid #E0E0E0" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "#E8F5E9", color: "#00C853" }}>{msg.type}</span>
+                      <span className="text-xs" style={{ color: "#666666" }}>To: {msg.to}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: "#999999" }}>{new Date(msg.created_at).toLocaleDateString("en-IN")}</span>
+                  </div>
+                  <p className="text-sm mb-3 whitespace-pre-line" style={{ color: "#1A1A1A" }}>{msg.message}</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="text-xs rounded-lg"
+                      style={{ borderColor: "#00C853", color: "#00C853" }}
+                      onClick={() => { navigator.clipboard.writeText(msg.message); setCopiedMsgId(msg.id); setTimeout(() => setCopiedMsgId(""), 2000); }}>
+                      {copiedMsgId === msg.id ? "Copied! ✓" : "Copy Message 📋"}
+                    </Button>
+                    <Button size="sm" className="text-xs rounded-lg text-white" style={{ backgroundColor: "#00C853" }}
+                      onClick={async () => {
+                        await (supabase.from("scheduled_messages") as any).update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", msg.id);
+                        setPendingMessages((prev) => prev.filter((m) => m.id !== msg.id));
+                        toast({ title: "Marked as sent ✅" });
+                      }}>
+                      Mark Sent ✅
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs rounded-lg" style={{ borderColor: "#E0E0E0" }}
+                      onClick={() => window.open(`https://wa.me/91${msg.to.replace(/\D/g, "")}?text=${encodeURIComponent(msg.message)}`, "_blank")}>
+                      Send on WhatsApp →
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
