@@ -1,128 +1,190 @@
 
 
-## LeadPe Rebrand & Platform Overhaul Plan
+# LeadPe Production-Ready Platform — Gap Analysis & Implementation Plan
 
-This is a comprehensive rebrand from "Synapse Shift" to **LeadPe** with a completely new design system, new pages, and updated content targeting Indian local businesses.
+## Current State Assessment
 
-### Scope Summary
+The platform already has a solid foundation with most core pages, auth system, database tables, and basic flows working. Here's what exists and what needs fixing/adding:
 
-The work covers ~15 files across 6 major areas:
+### What Already Works
+- Auth system (AuthContext, ProtectedRoute, PublicRoute, role-based routing)
+- All pages exist: Index, Business, Auth, GetWebsite, Payment, Studio, StudioAuth, ClientDashboard, DevDashboard, DevOnboarding, Admin, DemoPreview, ClientSettings
+- Database tables: profiles, signups, orders, build_requests, leads, business_seo, scheduled_messages, quality_reports, earnings, order_timeline, payments, deployments, businesses, projects, user_roles
+- AI services (SEO generation, welcome messages)
+- Deploy service (Vercel API)
+- Quality checker
+- Trial manager
+- Evidence/timeline system
+- Lead widget generator
+- Packages system
+- WhatsApp integration
+
+### Gaps & Issues to Fix
 
 ---
 
-### 1. Design System Overhaul (`src/index.css`, `tailwind.config.ts`)
+## Phase 1: Critical Fixes & Missing Constants
 
-- Replace all Synapse brand tokens with LeadPe tokens:
-  - Primary: `#00E676` (electric green)
-  - Background: `#080C09` (near-black green-tinted)
-  - Card: `#101810` (dark green-tinted)
-  - Text: `#DCF0E0`, Muted: `#5A7A5E`
-- Import **Syne** (800 weight headlines) and **DM Sans** (body) fonts
-- Add noise texture overlay via CSS pseudo-element
-- Add custom green cursor on desktop (`cursor: url(...)`)
-- Add smooth scroll (`scroll-behavior: smooth`)
-- Staggered reveal animation utilities
-- Border radius defaults: 16px-24px
-- Floating animated mesh background (CSS gradient animation)
-- Replace `.bg-gradient-hero` with green gradient
-- Dark mode as **default** (not toggled)
+### 1. Create `src/lib/constants.ts`
+All hardcoded values scattered across files need to be centralized:
+- ADMIN_WHATSAPP, TRIAL_DAYS, FOUNDING_SPOTS, FOUNDING_LEFT
+- All price constants, coder/leadpe share percentages, passive per site
 
-### 2. Logo & Branding (`src/components/SynapseLogo.tsx` → `src/components/LeadPeLogo.tsx`)
+### 2. Fix RLS Policies (RESTRICTIVE → PERMISSIVE)
+Many tables still have `RESTRICTIVE` policies (build_requests, deployments, earnings, leads, businesses, profiles, user_roles, etc.). These need to be converted to PERMISSIVE to prevent access issues. The previous migration only fixed user_roles and profiles but missed other tables.
 
-- Replace hexagon+lightning with text logo: "Lead" in white, "Pe" in `#00E676`
-- Update all imports across Navbar, Auth, Footer, etc.
+### 3. Fix `handle_new_user` Trigger
+The trigger exists as a function but there is no actual trigger attached (`db-triggers` shows empty). Need to create the trigger on `auth.users` table. Wait — we cannot attach triggers to `auth` schema. The trigger likely exists but isn't shown in the metadata. Need to verify via a test signup.
 
-### 3. Navbar (`src/components/Navbar.tsx`)
+---
 
-- Always dark, blur background
-- Left: LeadPe logo
-- Right: "How it Works" link, "Pricing" link, "Get Started Free" green button
-- Mobile hamburger menu
-- Remove old "Marketplace", "Developer", "Business" links
+## Phase 2: Page-Level Improvements
 
-### 4. Homepage (`src/pages/Index.tsx`) — Complete Rewrite
+### 4. Index.tsx Improvements
+- Add "For Builders" nav link
+- Ensure the Vibe Coder bar at bottom exists (currently has it)
+- Ensure comparison table is present (already exists)
+- Add founding member badge/countdown if desired
+- Minor copy/polish
 
-Sections in order:
-1. **Hero with Role Selection** — Two large cards: "I Want More Customers" (Business) and "I Want to Build & Earn" (Developer), with perks lists, CTAs that scroll to relevant sections, trust row below
-2. **How It Works** — 4 steps on left, WhatsApp phone mockup on right (animated float, notification badge)
-3. **For Who Section** — Grid of 10 business type cards with Hindi descriptions
-4. **Stats Bar** — 63M+ MSMEs, 48hrs, 90+ Lighthouse, ₹0 trial
-5. **Pricing Section** — 3 tiers: Basic (₹0), Growth (₹299, featured), Pro (₹499) with feature checklists
-6. **Free Trial CTA** — WhatsApp number input + "🚀 Free Start" button
-7. **Footer** — LeadPe logo, tagline, links, "Made in India 🇮🇳"
+### 5. Business.tsx — Signup Wizard Hardening
+- Ensure all 10 post-submit steps fire reliably (auth user creation, profile update, signups insert, build_request creation, SEO generation, welcome message, WhatsApp to admin, success screen, auto-login, navigate)
+- Add `business_since` and `description` fields if missing
+- Use constants for trial days
 
-### 5. Business Onboarding (`src/pages/Business.tsx`) — Complete Rewrite
+### 6. ClientDashboard.tsx Enhancements
+- Remove any SEO/technical sections if they leak through
+- Add "Share My Website" quick action (WhatsApp share with URL)
+- Add "My Trial Code" quick action
+- Link to ClientSettings from quick actions
+- Ensure celebration confetti works when status changes to "live"
+- Add new lead toast notification (partially exists)
 
-Replace the old static "Command Center" with a **3-step wizard**:
-- Step 1: Business Name, Type (dropdown), City, WhatsApp Number, Owner Name
-- Step 2: Short description, Timing, Starting Price, Special offer
-- Step 3: Summary card, referral code field, "Start My 7-Day Free Trial" CTA
-- Each field has Hindi hints below English labels
-- Progress bar at top
-- On submit: insert into `businesses` table
+### 7. GetWebsite.tsx — Order Flow Polish
+- Custom subdomain input (recently added)
+- WhatsApp OTP verification step (currently just form submit)
+- Build record document generation
+- Ensure `website_purpose` dropdown exists
+- Ensure order success page shows order ID + build record
 
-### 6. Developer/Studio Page (`src/pages/Developer.tsx`) — Complete Rewrite
+### 8. DemoPreview.tsx Improvements
+- Add sticky top watermark bar: "LeadPe Demo — Not Live Yet"
+- Add sticky bottom bar with price and approve/changes buttons
+- Disable contact forms and WhatsApp buttons in demo
+- Blur form fields in demo mode
 
-- Hero: "Build Sites. Deploy Fast. Earn Monthly."
-- How It Works for Devs (4 steps)
-- **Earnings Calculator**: slider (1-50 clients), live calculation (clients × ₹299 × 20%)
-- Vetting Agent section: checklist with score thresholds (85/90)
-- Developer Signup Form: Name, WhatsApp, Email, sample site link, tools used, capacity
-- Submit to `profiles` or a new developer applications flow
+### 9. Payment.tsx Enhancements
+- Add polling for profile status change (30-second interval)
+- Add celebration screen when admin activates
+- Add trust badges (Safe, Cancel anytime, etc.)
+- GST display
 
-### 7. Auth Page (`src/pages/Auth.tsx`)
+### 10. Studio.tsx Polish
+- Ensure white+green theme (already done)
+- Verify earnings calculator works (exists)
+- Verify all 4 packages shown with coder earnings
 
-- Rebrand from "SYNAPSE SHIFT" to "LeadPe" with new logo and green gradient
-- Keep Google login functionality unchanged
+### 11. DevDashboard.tsx Improvements
+- Add bottom mobile navigation (Home, Builds, Earnings, Profile tabs)
+- Ensure brief modal shows ChatGPT prompt, widget code, copy buttons
+- Ensure quality report shows score circle, checklist
+- Ensure auto-deploy triggers on score >= 70
+- Add "My Live Sites" section with ₹30/month label
 
-### 8. Client Dashboard (`src/pages/ClientDashboard.tsx`)
+### 12. DevOnboarding.tsx
+- Ensure all 5 steps work: Welcome, Tools, Practice Build, Payment Setup, Ready
+- Practice build quality check integration (exists)
 
-- Rebrand text: "Command Center" → simpler business-friendly language
-- Update "Lead Access Suspended" message to "Renew plan to see your X pending customers 🔒" with ₹299 pricing
-- Update add-on names and prices to match spec (WhatsApp Auto-Reply ₹199/mo, AI Booking ₹499/mo, etc.)
-- Mobile: cards instead of tables, big call buttons, Hindi labels on key actions
+### 13. Admin.tsx — Missing Tabs/Sections
+- **Orders tab**: Exists but needs status filter tabs for all statuses (New, Building, Demo Sent, Approved, Paid, Live)
+- **Leads tab**: Add cross-business leads view with filters by business, city, date
+- **Payments tab**: Add dedicated payments section with confirm/activate buttons
+- **Order timeline**: Already has inline timeline viewer
+- Activate business plan button (mark business as "active" in profiles)
+- Mark order as "demo_ready" and set demo_url
 
-### 9. Dev Dashboard (`src/pages/DevDashboard.tsx`)
+### 14. LoadingSpinner Component
+Create a reusable `LoadingSpinner.tsx` component to replace duplicated spinner code across pages.
 
-- Rebrand: "Pilot Dashboard" → "LeadPe Studio"
-- Update earnings display to ₹ currency
-- Categories: add Indian business types (Coaching Centre, Doctor, etc.)
+---
 
-### 10. Client Settings (`src/pages/ClientSettings.tsx`)
+## Phase 3: System-Level Features
 
-- Make labels more business-friendly with Hindi hints
-- Update service pricing to be generic (not dentist-specific)
+### 15. Referral System
+- Add referral_code generation on business signup (LP-XXXXXX format already used for trial codes)
+- Add `referred_by`, `referral_count`, `free_months_earned` columns to profiles (migration)
+- Add share button in ClientDashboard that opens WhatsApp with referral link
+- Track referral on Business.tsx signup (check `?ref=` URL param)
 
-### 11. ViewSite (`src/pages/ViewSite.tsx`)
+### 16. Realtime Subscriptions
+- ClientDashboard: leads realtime (exists), build_requests realtime (exists), profiles realtime (needs adding for plan activation detection)
+- DevDashboard: build_requests realtime for new pending requests
+- Admin: signups, orders, payments realtime badges
+- Enable realtime on relevant tables via `ALTER PUBLICATION supabase_realtime ADD TABLE`
 
-- Footer: "Powered by LeadPe" instead of "Synapse Shift"
-- Suspension banner text update
+### 17. WhatsApp Message Automation
+- Ensure scheduled_messages are created at every key event
+- Welcome message on signup (exists in Business.tsx)
+- Coder assigned notification
+- Website live notification
+- Lead notification (via widget)
+- Trial day 18 and 21 reminders (admin-triggered from scheduled_messages)
 
-### 12. Select Role (`src/pages/SelectRole.tsx`)
+### 18. Watermark System for Demo Sites
+- This is external to the platform (applies to deployed sites)
+- The DemoPreview page handles the in-platform demo view
+- Add instructions in dev brief about watermark removal after payment
 
-- Rebrand text and styling to LeadPe green theme
+---
 
-### 13. Routing (`src/App.tsx`)
+## Phase 4: Database Migrations Needed
 
-- Keep existing routes, ensure `/business` now serves the onboarding wizard
-- Keep `/developer` as studio page
+### Migration 1: Referral columns on profiles
+```sql
+ALTER TABLE public.profiles 
+  ADD COLUMN IF NOT EXISTS referred_by text,
+  ADD COLUMN IF NOT EXISTS referral_count integer DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS free_months_earned integer DEFAULT 0;
+```
 
-### 14. Database
+### Migration 2: Fix RESTRICTIVE policies on remaining tables
+Convert all remaining RESTRICTIVE policies to PERMISSIVE on: build_requests, deployments, earnings, leads, businesses, business_seo, orders, payments, signups, message_log, order_timeline, quality_reports, projects, scheduled_messages.
 
-- Add columns to `businesses` table for new onboarding fields: `business_type`, `city`, `whatsapp_number`, `owner_name`, `description`, `timing`, `starting_price`, `special_offer`, `referral_code`, `trial_start_date`, `trial_active`
-- Migration to add these columns with sensible defaults
+### Migration 3: Enable realtime
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.build_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+```
 
-### Technical Notes
+---
 
-- All existing backend logic (RLS, auth, leads, projects) remains intact
-- Google Auth continues to work via `lovable.auth.signInWithOAuth`
-- No Next.js — staying on React/Vite as per platform constraints
-- WhatsApp API integration (Twilio/Zapier) is out of scope for this implementation but UI elements will be present
-- Razorpay/Stripe payment integration can be added as a follow-up
+## Implementation Order (Priority)
 
-### Estimated Changes
+1. **Create constants.ts** — foundational, used everywhere
+2. **Fix all RESTRICTIVE RLS policies** — critical, blocks all data access
+3. **Create LoadingSpinner component** — reusable, quick win
+4. **Admin.tsx** — add Leads tab, Payments tab, activate business action
+5. **ClientDashboard.tsx** — add share/trial code actions, profile realtime for payment detection
+6. **Payment.tsx** — add polling + celebration
+7. **DemoPreview.tsx** — watermark bar + bottom CTA bar
+8. **DevDashboard.tsx** — bottom mobile nav, live sites section
+9. **Business.tsx** — referral param tracking
+10. **Referral system** — migration + dashboard share button
+11. **Enable realtime** — migration + subscription setup
+12. **Polish all pages** — mobile perfection, error handling, loading states
 
-- ~15 files modified/created
-- 1 database migration
-- Complete visual rebrand with zero backend disruption
+---
+
+## Estimated Scope
+
+This is a large undertaking spanning 12+ files and 3-4 database migrations. I recommend implementing in batches:
+
+- **Batch 1**: Constants + RLS fixes + LoadingSpinner (foundation)
+- **Batch 2**: Admin enhancements + ClientDashboard polish + Payment polling
+- **Batch 3**: DemoPreview + DevDashboard mobile nav + Referral system
+- **Batch 4**: Realtime subscriptions + final polish + mobile testing
+
+Shall I proceed with Batch 1 first?
 
