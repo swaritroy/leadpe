@@ -254,6 +254,13 @@ export default function Admin() {
         .select("*")
         .order("created_at", { ascending: false });
       setOrders(ordersData || []);
+
+      // Fetch message log
+      const { data: msgLogData } = await (supabase as any).from("message_log")
+        .select("*")
+        .order("sent_at", { ascending: false })
+        .limit(100);
+      setMessageLog(msgLogData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
