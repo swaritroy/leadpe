@@ -1282,7 +1282,7 @@ export default function ClientDashboard() {
             <button
               onClick={() => setShowLanguageSelector(true)}
               className="px-4 py-2 rounded-lg text-sm font-medium border border-border hover:border-[#00E676] transition-colors"
-              style={{ backgroundColor: "#080C09" }}
+              style={{ backgroundColor: "#F0FFF4" }}
             >
               {languageLabels[profile?.preferred_language || "hinglish"].flag} {languageLabels[profile?.preferred_language || "hinglish"].label}
             </button>
