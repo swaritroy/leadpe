@@ -147,6 +147,8 @@ export default function Payment() {
           }
 
           toast({ title: "Payment successful! ✅" });
+          // Refresh profile so dashboard shows updated plan
+          await refreshProfile();
           if (isOrderPayment) {
             setShowPending(true);
           } else {
