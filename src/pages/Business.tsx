@@ -4,7 +4,7 @@ import { ArrowRight, Check, ChevronDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
 
