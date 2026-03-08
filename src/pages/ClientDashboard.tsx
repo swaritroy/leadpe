@@ -130,10 +130,7 @@ export default function ClientDashboard() {
   // Status bar config
   const getStatusBar = () => {
     if (isPaid || isActive) {
-      const renewDate = profile?.plan_renewal_date
-        ? new Date(profile.plan_renewal_date as string).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-        : "";
-      return { bg: "#E8F5E9", text: "✅ Growth Plan — Active", color: "#1A1A1A", btn: renewDate ? `Valid till ${renewDate}` : "", btnColor: "#666", showBtn: false };
+      return { bg: "#E8F5E9", text: "✅ Growth Plan — Active", color: "#1A1A1A", btn: "", btnColor: "#666", showBtn: false };
     }
     if (isExpired) return { bg: "#FFEBEE", text: "🔴 Trial ended", color: "#C62828", btn: "Unlock Leads →", btnColor: "#FF5252", showBtn: true };
     if (trial?.isTrialEnding) return { bg: "#FFF3E0", text: `⚠️ Trial ends in ${trial.daysLeft} days!`, color: "#E65100", btn: "Upgrade Now →", btnColor: "#FF6B00", showBtn: true };
