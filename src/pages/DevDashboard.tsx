@@ -1206,15 +1206,24 @@ export default function DevDashboard() {
                     </div>
                     
                     <div className="space-y-2 mb-4">
+                      {(request as any).package_id && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Package:</span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: getPackageById((request as any).package_id).color }}>
+                            {getPackageById((request as any).package_id).badge}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Plan:</span>
-                        <span className="font-medium" style={{ color: "#00E676" }}>
-                          {request.plan_selected.toUpperCase()}
+                        <span className="text-muted-foreground">You earn:</span>
+                        <span className="font-bold" style={{ color: "#00C853" }}>
+                          ₹{((request as any).coder_earning || getBuildingFee(request.plan_selected)).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Fee:</span>
-                        <span className="font-medium">₹{getBuildingFee(request.plan_selected)}</span>
+                        <span className="text-muted-foreground">+ Passive:</span>
+                        <span className="text-muted-foreground">₹30/mo</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Deadline:</span>
