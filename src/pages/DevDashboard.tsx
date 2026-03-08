@@ -103,6 +103,9 @@ export default function DevDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<BuildRequest | null>(null);
   const [githubSubmitUrl, setGithubSubmitUrl] = useState("");
   const [submittingGithub, setSubmittingGithub] = useState(false);
+  const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [qualityChecking, setQualityChecking] = useState(false);
+  const [widgetCopied, setWidgetCopied] = useState(false);
 
   // Deploy flow states
   const [githubUrl, setGithubUrl] = useState("");
