@@ -1142,7 +1142,7 @@ export default function ClientDashboard() {
             {isTrial && <span className="text-sm text-muted-foreground">Trial ends in {trialDaysLeft} days</span>}
           </div>
           {plan === "basic" && isActive && (
-            <div className="p-4 rounded-xl border border-dashed border-border mb-4" style={{ backgroundColor: "#080C09" }}>
+            <div className="p-4 rounded-xl border border-dashed border-[#E0F2E9] mb-4" style={{ backgroundColor: "#F0FFF4" }}>
               <p className="text-sm text-muted-foreground mb-3">More customers are waiting. Growth plan gives you unlimited leads and WhatsApp notifications.</p>
               <Button 
                 onClick={() => setShowRenewModal(true)}
