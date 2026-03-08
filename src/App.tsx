@@ -16,6 +16,7 @@ import Payment from "./pages/Payment";
 import Studio from "./pages/Studio";
 import StudioAuth from "./pages/StudioAuth";
 import GetWebsite from "./pages/GetWebsite";
+import DemoPreview from "./pages/DemoPreview";
 import DevDashboard from "./pages/DevDashboard";
 import DevOnboarding from "./pages/DevOnboarding";
 import Admin from "./pages/Admin";
