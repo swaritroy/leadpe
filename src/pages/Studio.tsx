@@ -93,7 +93,7 @@ export default function Studio() {
 
       {/* Stats Strip */}
       <section style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", borderBottom: "1px solid #E0E0E0", padding: "40px 24px" }}>
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x" style={{ divideColor: "#E0E0E0" }}>
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x divide-[#E0E0E0]">
           {[
             { value: "₹30", label: "Per client per month" },
             { value: "80%", label: "Your earnings share" },
