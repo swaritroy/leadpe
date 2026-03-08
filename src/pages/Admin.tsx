@@ -1012,7 +1012,7 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("revenue") && (
-            <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-6" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueChartData}>
