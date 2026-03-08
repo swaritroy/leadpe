@@ -1392,7 +1392,7 @@ export default function DevDashboard() {
                   disabled={thisMonthEarned < 200}
                   className="w-full h-12 rounded-xl font-semibold"
                   style={{
-                    backgroundColor: thisMonthEarned >= 200 ? "#00E676" : "#1a1f1a",
+                    backgroundColor: thisMonthEarned >= 200 ? "#00C853" : "#E0E0E0",
                     color: thisMonthEarned >= 200 ? "#000" : "#666",
                   }}
                 >
