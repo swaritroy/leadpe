@@ -1162,7 +1162,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.35 }} 
             className="rounded-2xl border border-border p-5 mb-6" 
-            style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">🗺️</span>
