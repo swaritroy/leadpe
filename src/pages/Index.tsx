@@ -998,7 +998,7 @@ export default function Index() {
                         value={bizForm.city}
                         onChange={(e) => updateBizForm("city", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.city ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="e.g. Mumbai"
                       />
                       {bizErrors.city && <p className="text-xs text-red-500 mt-1">{bizErrors.city}</p>}
