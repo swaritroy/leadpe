@@ -752,7 +752,11 @@ export default function Index() {
                   ))}
                 </ul>
                 <Button
-                  onClick={scrollToSignup}
+                  onClick={() => {
+                    const link = (plan as any).link;
+                    if (link) navigate(link);
+                    else scrollToSignup();
+                  }}
                   className={`w-full rounded-xl h-11 font-semibold ${
                     plan.outlined 
                       ? "border border-[#00C853] text-[#00C853] bg-transparent hover:bg-[#F0FFF4]" 
