@@ -1016,7 +1016,7 @@ export default function Admin() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1f1a" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0F2E9" />
                     <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(val) => `₹${val}`} />
                     <Tooltip contentStyle={{ backgroundColor: "#101810", border: "1px solid #1a1f1a", borderRadius: "8px" }} itemStyle={{ color: "#00E676" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
