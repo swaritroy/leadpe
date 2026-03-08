@@ -947,7 +947,7 @@ export default function ClientDashboard() {
               {/* Mobile Blurred Cards */}
               <div className="md:hidden space-y-3 opacity-50">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-xl border border-border p-4" style={{ backgroundColor: "#101810", filter: "blur(2px)" }}>
+                  <div key={i} className="rounded-xl border border-[#E0F2E9] p-4" style={{ backgroundColor: "#FFFFFF", filter: "blur(2px)" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold" style={{ filter: "blur(6px)" }}>███████</span>
                     </div>
