@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, allowedRoles, redirectTo = "/auth" }: Protec
   }
 
   if (!user) return <Navigate to={redirectTo} replace />;
-  if (!role) return <Navigate to="/select-role" replace />;
+  if (!role) return <Navigate to="/" replace />;
   if (allowedRoles && !allowedRoles.includes(role)) return <Navigate to="/" replace />;
 
   return <>{children}</>;
