@@ -1252,7 +1252,7 @@ export default function ClientDashboard() {
                 key={action.id}
                 onClick={() => setActiveModal(action.id)}
                 className="p-4 rounded-xl border border-border text-left hover:border-[#00E676]/30 transition-colors"
-                style={{ backgroundColor: "#101810" }}
+                style={{ backgroundColor: "#FFFFFF" }}
               >
                 <action.icon size={20} className="mb-2" style={{ color: "#00E676" }} />
                 <span className="text-sm font-medium">{action.label}</span>
