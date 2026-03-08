@@ -945,7 +945,7 @@ export default function Admin() {
               {/* Mobile Cards */}
               <div className="md:hidden p-4 space-y-3">
                 {buildRequests.map((request) => (
-                  <div key={request.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                  <div key={request.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getBusinessIcon(request.business_type)}</span>
