@@ -762,7 +762,7 @@ export default function DevDashboard() {
                 )}
 
                 {/* Business Details Form */}
-                <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-2xl border border-[#E0F2E9] p-6" style={{ backgroundColor: "#FFFFFF" }}>
                   <h3 className="text-xl font-bold font-display mb-2">Almost Live! 🎉</h3>
                   <p className="text-muted-foreground mb-6">Tell us about this business to complete deployment.</p>
 
