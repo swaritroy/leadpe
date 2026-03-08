@@ -735,7 +735,7 @@ export default function DevDashboard() {
                 {/* Score Card */}
                 <div
                   className="rounded-2xl border-2 p-6 text-center"
-                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                  style={{ borderColor: "#00C853", backgroundColor: "#FFFFFF" }}
                 >
                   <div className="text-5xl font-extrabold font-display mb-2" style={{ color: "#00E676" }}>
                     {finalScore}/100
