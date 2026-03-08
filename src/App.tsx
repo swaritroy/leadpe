@@ -15,6 +15,7 @@ import ClientSettings from "./pages/ClientSettings";
 import Payment from "./pages/Payment";
 import Studio from "./pages/Studio";
 import StudioAuth from "./pages/StudioAuth";
+import GetWebsite from "./pages/GetWebsite";
 import DevDashboard from "./pages/DevDashboard";
 import DevOnboarding from "./pages/DevOnboarding";
 import Admin from "./pages/Admin";
@@ -45,6 +46,7 @@ const AppContent = () => {
           <Route path="/payment" element={<Payment />} />
           <Route path="/studio" element={<Studio />} />
           <Route path="/studio/auth" element={<StudioAuth />} />
+          <Route path="/get-website" element={<GetWebsite />} />
 
           {/* Protected business routes */}
           <Route path="/client/dashboard" element={

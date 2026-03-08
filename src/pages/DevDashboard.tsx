@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check, Shield, ClipboardCopy } from "lucide-react";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check, Shield, ClipboardCopy, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ import { generateBrief, copyToClipboard, getBusinessIcon, getBuildingFee, format
 import { deployWebsite } from "@/lib/deployService";
 import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qualityChecker";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
+import { WEBSITE_PACKAGES, getPackageById } from "@/lib/packages";
+import { updateCoderEarnings } from "@/lib/earningsCalc";
 
 interface Deployment {
   id: string;
@@ -43,6 +45,12 @@ interface BuildRequest {
   deadline: string;
   github_url: string;
   submitted_at: string;
+  package_id?: string;
+  package_price?: number;
+  coder_earning?: number;
+  website_purpose?: string;
+  reference_sites?: string;
+  special_requirements?: string;
 }
 
 interface Earning {
@@ -106,7 +114,7 @@ export default function DevDashboard() {
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [qualityChecking, setQualityChecking] = useState(false);
   const [widgetCopied, setWidgetCopied] = useState(false);
-
+  const [packageFilter, setPackageFilter] = useState("all");
   // Deploy flow states
   const [githubUrl, setGithubUrl] = useState("");
   const [urlError, setUrlError] = useState("");
@@ -585,13 +593,12 @@ export default function DevDashboard() {
           })
           .eq("id", selectedRequest.id);
         
-        await (supabase as any).from("earnings").insert({
-          vibe_coder_id: user?.id,
-          amount: 800,
-          type: "building",
-          month: new Date().toISOString().slice(0, 7),
-          paid: false,
-          created_at: new Date().toISOString(),
+        const coderEarn = selectedRequest.coder_earning || 640;
+        
+        await updateCoderEarnings(user!.id, {
+          id: selectedRequest.id,
+          coder_earning: coderEarn,
+          business_name: selectedRequest.business_name,
         });
         
         const ownerPhone = selectedRequest.owner_whatsapp?.replace(/\D/g, "") || "";
@@ -601,9 +608,10 @@ export default function DevDashboard() {
         
         window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nQuality: ${report.score}/100\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
         
+        const earnedAmt = selectedRequest.coder_earning || 640;
         toast({
           title: "🚀 Website Live!",
-          description: `${deployResult.deployUrl} — ₹800 earned!`
+          description: `${deployResult.deployUrl} — ₹${earnedAmt} earned!`
         });
       } else {
         toast({
@@ -1135,10 +1143,28 @@ export default function DevDashboard() {
 
         {/* Available Build Requests */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold font-display mb-2">Available Build Requests 🔨</h2>
-          <p className="text-sm text-muted-foreground mb-4">Accept a request and start earning.</p>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-xl font-bold font-display">Build Requests 🏗️</h2>
+              <p className="text-sm text-muted-foreground">{buildRequests.length} waiting</p>
+            </div>
+          </div>
+
+          {/* Package Filter */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["all", ...WEBSITE_PACKAGES.map(p => p.id)].map((f) => {
+              const pkg = f === "all" ? null : getPackageById(f);
+              return (
+                <button key={f} onClick={() => setPackageFilter(f)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${packageFilter === f ? 'text-white' : 'text-[#666] bg-white border border-[#E0E0E0]'}`}
+                  style={packageFilter === f ? { backgroundColor: pkg?.color || "#00C853" } : {}}>
+                  {f === "all" ? "All" : pkg?.badge}
+                </button>
+              );
+            })}
+          </div>
           
-          {buildRequests.length === 0 ? (
+          {buildRequests.filter(r => packageFilter === "all" || (r as any).package_id === packageFilter).length === 0 ? (
             <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                 <Wrench size={24} style={{ color: "#00E676" }} />
@@ -1150,7 +1176,7 @@ export default function DevDashboard() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {buildRequests.map((request) => {
+              {buildRequests.filter(r => packageFilter === "all" || (r as any).package_id === packageFilter).map((request) => {
                 const brief = generateBrief({
                   business_name: request.business_name,
                   business_type: request.business_type,
@@ -1180,15 +1206,24 @@ export default function DevDashboard() {
                     </div>
                     
                     <div className="space-y-2 mb-4">
+                      {(request as any).package_id && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Package:</span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: getPackageById((request as any).package_id).color }}>
+                            {getPackageById((request as any).package_id).badge}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Plan:</span>
-                        <span className="font-medium" style={{ color: "#00E676" }}>
-                          {request.plan_selected.toUpperCase()}
+                        <span className="text-muted-foreground">You earn:</span>
+                        <span className="font-bold" style={{ color: "#00C853" }}>
+                          ₹{((request as any).coder_earning || getBuildingFee(request.plan_selected)).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Fee:</span>
-                        <span className="font-medium">₹{getBuildingFee(request.plan_selected)}</span>
+                        <span className="text-muted-foreground">+ Passive:</span>
+                        <span className="text-muted-foreground">₹30/mo</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Deadline:</span>

@@ -21,6 +21,8 @@ export default function StudioAuth() {
   const [fullName, setFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPhone, setSignUpPhone] = useState("");
+  const [signUpCity, setSignUpCity] = useState("");
+  const [signUpUpi, setSignUpUpi] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -37,7 +39,6 @@ export default function StudioAuth() {
     setLoading(false);
     if (authError) { setError(authError.message.includes("Invalid login") ? "Wrong email or password." : "Something went wrong."); return; }
 
-    // Check onboarding status
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase.from("profiles").select("onboarding_complete").eq("user_id", user.id).maybeSingle();
@@ -80,9 +81,15 @@ export default function StudioAuth() {
         full_name: fullName,
         email: signUpEmail,
         whatsapp_number: phoneDigits,
+        city: signUpCity,
+        upi_id: signUpUpi,
         role: "vibe_coder",
         status: "active",
         onboarding_complete: false,
+        total_earned: 0,
+        total_sites_built: 0,
+        total_sites_live: 0,
+        monthly_passive: 0,
       }, { onConflict: "user_id" });
 
       await (supabase.from("user_roles") as any).upsert({
@@ -90,7 +97,7 @@ export default function StudioAuth() {
         role: "developer",
       }, { onConflict: "user_id,role" });
 
-      const msg = encodeURIComponent(`⚡ NEW VIBE CODER\n━━━━━━━━━━━━\nName: ${fullName}\nEmail: ${signUpEmail}\nWhatsApp: ${phoneDigits}\n━━━━━━━━━━━━\nLeadPe Studio ⚡`);
+      const msg = encodeURIComponent(`⚡ NEW VIBE CODER\n━━━━━━━━━━━━\nName: ${fullName}\nEmail: ${signUpEmail}\nWhatsApp: ${phoneDigits}\nCity: ${signUpCity}\n━━━━━━━━━━━━\nLeadPe Studio ⚡`);
       window.open(`https://wa.me/919973383902?text=${msg}`, "_blank", "noopener,noreferrer");
     }
 
@@ -109,8 +116,8 @@ export default function StudioAuth() {
               <LeadPeLogo theme="light" size="lg" />
               <span className="font-bold text-xl" style={{ color: "#00C853" }}>Studio</span>
             </div>
-            <h1 className="text-xl font-bold text-[#1A1A1A]">Join LeadPe Studio</h1>
-            <p className="text-sm text-[#666]">Build websites. Earn every month.</p>
+            <h1 className="text-xl font-bold text-[#1A1A1A]">Join as a Vibe Coder</h1>
+            <p className="text-sm text-[#666]">No coding skills needed. Just ChatGPT + Lovable.</p>
           </div>
 
           {/* Tab Switcher */}
@@ -158,24 +165,35 @@ export default function StudioAuth() {
               </motion.form>
             ) : (
               <motion.form key="signup" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                onSubmit={handleSignUp} className="space-y-4">
+                onSubmit={handleSignUp} className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Full Name</label>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">Full Name *</label>
                   <Input value={fullName} onChange={(e) => setFullName(e.target.value)}
                     className={inputClass} style={{ backgroundColor: "#FAFAFA" }} placeholder="Your full name" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Email</label>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">Email *</label>
                   <Input type="email" value={signUpEmail} onChange={(e) => setSignUpEmail(e.target.value)}
                     className={inputClass} style={{ backgroundColor: "#FAFAFA" }} placeholder="you@email.com" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">WhatsApp Number</label>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">WhatsApp Number *</label>
                   <Input type="tel" value={signUpPhone} onChange={(e) => setSignUpPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                     className={inputClass} style={{ backgroundColor: "#FAFAFA" }} placeholder="9876543210" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Password</label>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">City *</label>
+                  <Input value={signUpCity} onChange={(e) => setSignUpCity(e.target.value)}
+                    className={inputClass} style={{ backgroundColor: "#FAFAFA" }} placeholder="e.g. Patna" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">UPI ID (for payments)</label>
+                  <Input value={signUpUpi} onChange={(e) => setSignUpUpi(e.target.value)}
+                    className={inputClass} style={{ backgroundColor: "#FAFAFA" }} placeholder="yourupi@paytm" />
+                  <p className="text-[10px] text-[#999] mt-0.5">Earnings sent here every Friday</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">Password *</label>
                   <div className="relative">
                     <Input type={showPassword ? "text" : "password"} value={signUpPassword} onChange={(e) => setSignUpPassword(e.target.value)}
                       className={`${inputClass} pr-10`} style={{ backgroundColor: "#FAFAFA" }} placeholder="At least 6 characters" />
@@ -186,7 +204,7 @@ export default function StudioAuth() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5 text-[#1A1A1A]">Confirm Password</label>
+                  <label className="text-sm font-medium block mb-1 text-[#1A1A1A]">Confirm Password *</label>
                   <div className="relative">
                     <Input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                       className={`${inputClass} pr-10`} style={{ backgroundColor: "#FAFAFA" }} placeholder="Re-enter password" />
@@ -197,7 +215,7 @@ export default function StudioAuth() {
                   </div>
                 </div>
                 <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl text-white font-semibold bg-[#00C853] hover:bg-[#00A843]">
-                  {loading ? "Please wait..." : "Join Studio →"}
+                  {loading ? "Please wait..." : "Create Studio Account →"}
                 </Button>
               </motion.form>
             )}
