@@ -764,7 +764,7 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("coders") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
