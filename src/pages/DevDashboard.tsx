@@ -1143,10 +1143,28 @@ export default function DevDashboard() {
 
         {/* Available Build Requests */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold font-display mb-2">Available Build Requests 🔨</h2>
-          <p className="text-sm text-muted-foreground mb-4">Accept a request and start earning.</p>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-xl font-bold font-display">Build Requests 🏗️</h2>
+              <p className="text-sm text-muted-foreground">{buildRequests.length} waiting</p>
+            </div>
+          </div>
+
+          {/* Package Filter */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["all", ...WEBSITE_PACKAGES.map(p => p.id)].map((f) => {
+              const pkg = f === "all" ? null : getPackageById(f);
+              return (
+                <button key={f} onClick={() => setPackageFilter(f)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${packageFilter === f ? 'text-white' : 'text-[#666] bg-white border border-[#E0E0E0]'}`}
+                  style={packageFilter === f ? { backgroundColor: pkg?.color || "#00C853" } : {}}>
+                  {f === "all" ? "All" : pkg?.badge}
+                </button>
+              );
+            })}
+          </div>
           
-          {buildRequests.length === 0 ? (
+          {buildRequests.filter(r => packageFilter === "all" || (r as any).package_id === packageFilter).length === 0 ? (
             <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                 <Wrench size={24} style={{ color: "#00E676" }} />
