@@ -1230,7 +1230,7 @@ export default function DevDashboard() {
           <h2 className="text-xl font-bold font-display mb-4">My Deployed Sites</h2>
 
           {deployments.length === 0 ? (
-            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                 <ExternalLink size={24} style={{ color: "#00E676" }} />
               </div>
