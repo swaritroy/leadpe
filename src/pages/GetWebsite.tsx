@@ -268,7 +268,7 @@ export default function GetWebsite() {
                   <h3 className="font-bold text-[#1A1A1A] mb-3">Add Custom Domain?</h3>
                   <div className="space-y-3">
                     {[
-                      { id: "subdomain", label: "Use free subdomain", desc: `${form.businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.online`, price: "FREE" },
+                      { id: "subdomain", label: "Use free subdomain", desc: "Choose your own name", price: "FREE" },
                       { id: "own", label: "I have my own domain", desc: "Point your domain to us", price: "FREE" },
                       { id: "buy", label: "Buy domain for me", desc: "We buy and manage it", price: "+₹999/year" },
                     ].map((d) => (
@@ -280,6 +280,21 @@ export default function GetWebsite() {
                         </div>
                       </label>
                     ))}
+                    {domainOption === "subdomain" && (
+                      <div className="mt-2">
+                        <label className="text-xs font-medium text-[#1A1A1A] block mb-1">Your subdomain name</label>
+                        <div className="flex items-center gap-0">
+                          <Input 
+                            value={customSubdomain} 
+                            onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} 
+                            className="bg-white border-[#E0E0E0] h-10 rounded-l-xl rounded-r-none border-r-0 flex-1" 
+                            placeholder={form.businessName.toLowerCase().replace(/[^a-z0-9]/g, "") || "yourbusiness"} 
+                          />
+                          <span className="h-10 px-3 flex items-center bg-[#F5F5F5] border border-[#E0E0E0] rounded-r-xl text-xs text-[#666] whitespace-nowrap">.leadpe.online</span>
+                        </div>
+                        <p className="text-[10px] text-[#999] mt-1">Preview: <span className="font-medium text-[#00C853]">{(customSubdomain || form.businessName.toLowerCase().replace(/[^a-z0-9]/g, "") || "yourbusiness")}.leadpe.online</span></p>
+                      </div>
+                    )}
                     {domainOption === "own" && (
                       <Input value={ownDomain} onChange={(e) => setOwnDomain(e.target.value)} className="bg-white border-[#E0E0E0] h-10 rounded-xl mt-2" placeholder="Enter your domain" />
                     )}
