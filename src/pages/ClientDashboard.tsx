@@ -259,6 +259,46 @@ export default function ClientDashboard() {
           </div>
         </motion.div>
 
+        {/* SEO CARD */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}
+          className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-lg" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your SEO Setup 🔍</h3>
+            {seoData && <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>✅ SEO Ready</span>}
+          </div>
+          <p className="text-xs mb-4" style={{ color: "#666666" }}>AI generated for your business</p>
+
+          {seoLoading && !seoData ? (
+            <div className="text-center py-6">
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: "#00C853", borderTopColor: "transparent" }} />
+              <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>AI is generating your SEO...</p>
+              <p className="text-xs" style={{ color: "#666666" }}>Ready in 30 seconds</p>
+            </div>
+          ) : seoData ? (
+            <div className="space-y-3">
+              {[
+                { label: "📄 Page Title", value: seoData.page_title },
+                { label: "📝 Meta Description", value: seoData.meta_description },
+                { label: "🔑 Keywords", value: seoData.keywords },
+                { label: "📱 WhatsApp Bio", value: seoData.whatsapp_bio },
+              ].filter(item => item.value).map((item) => (
+                <div key={item.label} className="rounded-xl p-3" style={{ backgroundColor: "#F9F9F9" }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium" style={{ color: "#666666" }}>{item.label}</span>
+                    <button onClick={() => { navigator.clipboard.writeText(item.value || ""); setCopiedField(item.label); setTimeout(() => setCopiedField(""), 2000); }}
+                      className="text-xs flex items-center gap-1 px-2 py-0.5 rounded" style={{ color: "#00C853" }}>
+                      {copiedField === item.label ? "Copied! ✓" : <><Copy size={10} /> Copy</>}
+                    </button>
+                  </div>
+                  <p className="text-sm" style={{ color: "#1A1A1A" }}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-4" style={{ color: "#666666" }}>SEO will be generated after your site is built.</p>
+          )}
+        </motion.div>
+
         {/* SUPPORT */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
