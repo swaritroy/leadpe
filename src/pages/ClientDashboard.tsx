@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Check, Clock, MessageCircle, Lock, Copy, ExternalLink } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Clock, MessageCircle, Lock, Copy, ExternalLink, Phone, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
