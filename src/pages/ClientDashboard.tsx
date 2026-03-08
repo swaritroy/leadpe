@@ -1046,7 +1046,7 @@ export default function ClientDashboard() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-3">
                 {leads.map((lead) => (
-                  <div key={lead.id} className={`rounded-xl border border-border p-4 ${lead.id === "demo" ? "opacity-50" : ""}`} style={{ backgroundColor: "#101810" }}>
+                  <div key={lead.id} className={`rounded-xl border border-[#E0F2E9] p-4 ${lead.id === "demo" ? "opacity-50" : ""}`} style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold">{lead.customer_name}</span>
                       {lead.id === "demo" ? (
