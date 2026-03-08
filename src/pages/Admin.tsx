@@ -918,7 +918,7 @@ export default function Admin() {
                                   assignCoder(request.id, e.target.value);
                                 }
                               }}
-                              className="text-xs px-2 py-1 rounded border border-border bg-[#080C09] text-foreground"
+                              className="text-xs px-2 py-1 rounded border border-[#E0F2E9] bg-[#FAFAFA] text-foreground"
                               defaultValue=""
                             >
                               <option value="">Assign...</option>
