@@ -962,7 +962,7 @@ export default function ClientDashboard() {
             </>
           ) : leads.length === 0 ? (
             // Empty State
-            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="text-4xl mb-4">📭</div>
               <p className="font-medium mb-2">No inquiries yet.</p>
               <p className="text-sm text-muted-foreground mb-4">Your site is working hard. First leads usually arrive within 7 days of going live.</p>
