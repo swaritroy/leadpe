@@ -566,7 +566,7 @@ export default function DevDashboard() {
   }
 
   return (
-    <><div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
+    <div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
       {/* Top Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#E0F2E9] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
