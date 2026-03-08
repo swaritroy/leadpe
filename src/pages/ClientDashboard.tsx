@@ -1267,7 +1267,7 @@ export default function ClientDashboard() {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ delay: 0.45 }} 
           className="rounded-2xl border border-border p-5 mb-6" 
-          style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
