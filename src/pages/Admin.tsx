@@ -1019,7 +1019,7 @@ export default function Admin() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#E0F2E9" />
                     <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(val) => `₹${val}`} />
-                    <Tooltip contentStyle={{ backgroundColor: "#101810", border: "1px solid #1a1f1a", borderRadius: "8px" }} itemStyle={{ color: "#00E676" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #E0F2E9", borderRadius: "8px" }} itemStyle={{ color: "#00C853" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
                     <Bar dataKey="revenue" fill="#00E676" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
