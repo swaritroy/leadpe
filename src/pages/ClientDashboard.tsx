@@ -1427,7 +1427,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Payment Instructions */}
-              <div className="rounded-xl p-4 mb-4 border border-border" style={{ backgroundColor: "#080C09" }}>
+              <div className="rounded-xl p-4 mb-4 border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm font-medium mb-3">Pay via GPay/PhonePe:</p>
                 <div 
                   className="text-2xl font-bold text-center mb-3"
