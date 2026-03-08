@@ -4,7 +4,7 @@ import { ArrowRight, Check, ChevronDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
 
@@ -22,6 +22,8 @@ const languages = [
 
 export default function Business() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref") || "";
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -133,6 +135,7 @@ export default function Business() {
           trial_start_date: trialStart,
           trial_end_date: trialEnd,
           onboarding_complete: false,
+          referred_by: referralCode || null,
         }).eq("user_id", authData.user.id);
 
         // 4. Insert user role

@@ -656,6 +656,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           founding_member: boolean | null
+          free_months_earned: number | null
           full_name: string | null
           id: string
           monthly_capacity: string | null
@@ -665,6 +666,8 @@ export type Database = {
           plan_status: string | null
           preferred_fee: number | null
           preferred_language: string | null
+          referral_count: number | null
+          referred_by: string | null
           role: string | null
           site_url: string | null
           status: string | null
@@ -688,6 +691,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           founding_member?: boolean | null
+          free_months_earned?: number | null
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
@@ -697,6 +701,8 @@ export type Database = {
           plan_status?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
+          referral_count?: number | null
+          referred_by?: string | null
           role?: string | null
           site_url?: string | null
           status?: string | null
@@ -720,6 +726,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           founding_member?: boolean | null
+          free_months_earned?: number | null
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
@@ -729,6 +736,8 @@ export type Database = {
           plan_status?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
+          referral_count?: number | null
+          referred_by?: string | null
           role?: string | null
           site_url?: string | null
           status?: string | null

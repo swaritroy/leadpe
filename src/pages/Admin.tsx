@@ -165,7 +165,7 @@ export default function Admin() {
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
@@ -1335,6 +1335,87 @@ export default function Admin() {
                 )}
               </div>
             </>
+          )}
+        </motion.div>
+
+        {/* ── LEADS TAB ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("leads")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("leads") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            All Leads ({leads.length})
+          </button>
+
+          {expandedSections.has("leads") && (
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
+              {leads.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">No leads yet</div>
+              ) : (
+                <>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr style={{ backgroundColor: "#F0FFF4" }}>
+                          <th className="text-left p-4 text-sm font-medium">Customer</th>
+                          <th className="text-left p-4 text-sm font-medium">Phone</th>
+                          <th className="text-left p-4 text-sm font-medium">Message</th>
+                          <th className="text-left p-4 text-sm font-medium">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.slice(0, 100).map((l: any) => (
+                          <tr key={l.id} className="border-t border-border">
+                            <td className="p-4 font-medium text-sm">{l.customer_name}</td>
+                            <td className="p-4 text-sm text-muted-foreground">{l.phone || "-"}</td>
+                            <td className="p-4 text-sm text-muted-foreground truncate max-w-[200px]">{l.message || "-"}</td>
+                            <td className="p-4 text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString("en-IN")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="md:hidden p-4 space-y-3">
+                    {leads.slice(0, 30).map((l: any) => (
+                      <div key={l.id} className="p-3 rounded-xl border border-[#E0F2E9]">
+                        <div className="flex justify-between mb-1">
+                          <span className="font-semibold text-sm">{l.customer_name}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString("en-IN")}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{l.phone || "No phone"} • {l.message || "No message"}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </motion.div>
+
+        {/* ── PAYMENTS & ACTIVATION ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("payments")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("payments") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            💳 Activate Businesses
+          </button>
+
+          {expandedSections.has("payments") && (
+            <div className="rounded-2xl border border-[#E0F2E9] p-5" style={{ backgroundColor: "#FFFFFF" }}>
+              <h3 className="text-sm font-bold mb-3" style={{ color: "#1A1A1A" }}>Trial businesses — Click to activate Growth Plan</h3>
+              <div className="flex gap-2 flex-wrap">
+                {businesses.filter((b) => b.status === "trial").map((b) => (
+                  <Button key={b.id} size="sm" variant="outline" className="text-xs rounded-lg border-[#00C853] text-[#00C853] hover:bg-[#F0FFF4]"
+                    onClick={async () => {
+                      await (supabase as any).from("profiles").update({ status: "active", subscription_plan: "growth" }).eq("id", b.id);
+                      toast({ title: `✅ Activated ${b.business_name || b.full_name}` });
+                      fetchData();
+                    }}>
+                    ✅ {b.business_name || b.full_name}
+                  </Button>
+                ))}
+                {businesses.filter((b) => b.status === "trial").length === 0 && (
+                  <p className="text-xs text-muted-foreground">No trial businesses to activate</p>
+                )}
+              </div>
+            </div>
           )}
         </motion.div>
       </div>

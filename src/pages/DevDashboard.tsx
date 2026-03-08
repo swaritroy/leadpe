@@ -1724,6 +1724,28 @@ export default function DevDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E0E0E0] md:hidden z-40" style={{ boxShadow: "0 -2px 12px rgba(0,0,0,0.08)" }}>
+        <div className="flex items-center justify-around h-16">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex flex-col items-center gap-1 px-3 py-2">
+            <Rocket size={18} style={{ color: "#00C853" }} />
+            <span className="text-[10px] font-medium" style={{ color: "#00C853" }}>Home</span>
+          </button>
+          <button onClick={() => document.getElementById("available-builds")?.scrollIntoView({ behavior: "smooth" })} className="flex flex-col items-center gap-1 px-3 py-2">
+            <Code size={18} style={{ color: "#666" }} />
+            <span className="text-[10px] font-medium" style={{ color: "#666" }}>Builds</span>
+          </button>
+          <button onClick={() => document.getElementById("my-deployments")?.scrollIntoView({ behavior: "smooth" })} className="flex flex-col items-center gap-1 px-3 py-2">
+            <DollarSign size={18} style={{ color: "#666" }} />
+            <span className="text-[10px] font-medium" style={{ color: "#666" }}>Earnings</span>
+          </button>
+          <button onClick={() => navigate("/dev/onboarding")} className="flex flex-col items-center gap-1 px-3 py-2">
+            <Eye size={18} style={{ color: "#666" }} />
+            <span className="text-[10px] font-medium" style={{ color: "#666" }}>Profile</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
