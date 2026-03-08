@@ -45,6 +45,12 @@ interface BuildRequest {
   deadline: string;
   github_url: string;
   submitted_at: string;
+  package_id?: string;
+  package_price?: number;
+  coder_earning?: number;
+  website_purpose?: string;
+  reference_sites?: string;
+  special_requirements?: string;
 }
 
 interface Earning {
