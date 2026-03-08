@@ -732,7 +732,7 @@ export default function Admin() {
                   const businessLeads = leads.filter(l => l.business_id === b.id).length;
                   const deployment = deployments.find(d => d.owner_whatsapp === b.whatsapp_number);
                   return (
-                    <div key={b.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div key={b.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">{b.business_name || b.full_name}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${b.status === "active" ? "bg-green-500/20 text-green-400" : b.status === "trial" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>{b.status}</span>
