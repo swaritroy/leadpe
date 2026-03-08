@@ -59,6 +59,48 @@ export type Database = {
         }
         Relationships: []
       }
+      business_seo: {
+        Row: {
+          about_text: string | null
+          business_id: string | null
+          business_name: string | null
+          generated_at: string | null
+          google_description: string | null
+          h1_heading: string | null
+          id: string
+          keywords: string | null
+          meta_description: string | null
+          page_title: string | null
+          whatsapp_bio: string | null
+        }
+        Insert: {
+          about_text?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          generated_at?: string | null
+          google_description?: string | null
+          h1_heading?: string | null
+          id?: string
+          keywords?: string | null
+          meta_description?: string | null
+          page_title?: string | null
+          whatsapp_bio?: string | null
+        }
+        Update: {
+          about_text?: string | null
+          business_id?: string | null
+          business_name?: string | null
+          generated_at?: string | null
+          google_description?: string | null
+          h1_heading?: string | null
+          id?: string
+          keywords?: string | null
+          meta_description?: string | null
+          page_title?: string | null
+          whatsapp_bio?: string | null
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           addon_booking: boolean
@@ -566,6 +608,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scheduled_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: string | null
+          to: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: string | null
+          to: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: string | null
+          to?: string
+          type?: string | null
+        }
+        Relationships: []
       }
       signups: {
         Row: {

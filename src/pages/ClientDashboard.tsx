@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Check, Clock, MessageCircle, Lock } from "lucide-react";
+import { Check, Clock, MessageCircle, Lock, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +30,14 @@ interface Lead {
   source: string | null;
 }
 
+interface SEOData {
+  page_title: string | null;
+  meta_description: string | null;
+  keywords: string | null;
+  whatsapp_bio: string | null;
+  google_description: string | null;
+}
+
 export default function ClientDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +45,9 @@ export default function ClientDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [trial, setTrial] = useState<TrialStatus | null>(null);
+  const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const [seoLoading, setSeoLoading] = useState(true);
+  const [copiedField, setCopiedField] = useState("");
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await (supabase.from("profiles") as any)
@@ -53,14 +64,29 @@ export default function ClientDashboard() {
     if (!user) return;
     const init = async () => {
       await fetchProfile(user.id);
+      // Fetch SEO data
+      const { data: seo } = await (supabase.from("business_seo") as any)
+        .select("page_title, meta_description, keywords, whatsapp_bio, google_description")
+        .eq("business_id", user.id)
+        .maybeSingle();
+      if (seo) setSeoData(seo);
+      setSeoLoading(false);
       setLoading(false);
     };
     init();
 
-    // Poll every 30s for activation changes
     const interval = setInterval(() => fetchProfile(user.id), 30000);
-    return () => clearInterval(interval);
-  }, [user, fetchProfile]);
+    // Poll for SEO if not yet available
+    const seoInterval = setInterval(async () => {
+      if (seoData) return;
+      const { data: seo } = await (supabase.from("business_seo") as any)
+        .select("page_title, meta_description, keywords, whatsapp_bio, google_description")
+        .eq("business_id", user.id)
+        .maybeSingle();
+      if (seo) { setSeoData(seo); setSeoLoading(false); }
+    }, 10000);
+    return () => { clearInterval(interval); clearInterval(seoInterval); };
+  }, [user, fetchProfile, seoData]);
 
   // Realtime leads subscription
   useEffect(() => {
@@ -231,6 +257,46 @@ export default function ClientDashboard() {
           <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#E0E0E0" }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${trial?.percentage ?? 0}%`, backgroundColor: "#00C853" }} />
           </div>
+        </motion.div>
+
+        {/* SEO CARD */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}
+          className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-lg" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your SEO Setup 🔍</h3>
+            {seoData && <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>✅ SEO Ready</span>}
+          </div>
+          <p className="text-xs mb-4" style={{ color: "#666666" }}>AI generated for your business</p>
+
+          {seoLoading && !seoData ? (
+            <div className="text-center py-6">
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: "#00C853", borderTopColor: "transparent" }} />
+              <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>AI is generating your SEO...</p>
+              <p className="text-xs" style={{ color: "#666666" }}>Ready in 30 seconds</p>
+            </div>
+          ) : seoData ? (
+            <div className="space-y-3">
+              {[
+                { label: "📄 Page Title", value: seoData.page_title },
+                { label: "📝 Meta Description", value: seoData.meta_description },
+                { label: "🔑 Keywords", value: seoData.keywords },
+                { label: "📱 WhatsApp Bio", value: seoData.whatsapp_bio },
+              ].filter(item => item.value).map((item) => (
+                <div key={item.label} className="rounded-xl p-3" style={{ backgroundColor: "#F9F9F9" }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium" style={{ color: "#666666" }}>{item.label}</span>
+                    <button onClick={() => { navigator.clipboard.writeText(item.value || ""); setCopiedField(item.label); setTimeout(() => setCopiedField(""), 2000); }}
+                      className="text-xs flex items-center gap-1 px-2 py-0.5 rounded" style={{ color: "#00C853" }}>
+                      {copiedField === item.label ? "Copied! ✓" : <><Copy size={10} /> Copy</>}
+                    </button>
+                  </div>
+                  <p className="text-sm" style={{ color: "#1A1A1A" }}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-4" style={{ color: "#666666" }}>SEO will be generated after your site is built.</p>
+          )}
         </motion.div>
 
         {/* SUPPORT */}

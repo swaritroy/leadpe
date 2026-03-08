@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
 
 const businessTypes = [
   "Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon / Parlour",
@@ -150,6 +151,40 @@ export default function Business() {
 
       setTrialCode(code);
       setShowSuccess(true);
+
+      // AI generation in background — don't block UI
+      generateSEO({ name: form.businessName, type: form.businessType, city: form.city, ownerName: form.ownerName })
+        .then(async (seoData) => {
+          await (supabase.from("business_seo") as any).insert({
+            business_id: authData?.user?.id || "",
+            business_name: form.businessName,
+            page_title: seoData.pageTitle,
+            meta_description: seoData.metaDescription,
+            keywords: seoData.keywords.join(", "),
+            google_description: seoData.googleDescription,
+            whatsapp_bio: seoData.whatsappBio,
+            h1_heading: seoData.h1,
+            about_text: seoData.aboutText,
+          });
+          console.log("SEO generated:", seoData);
+        })
+        .catch((err) => console.log("SEO generation error:", err));
+
+      generateWelcomeMessage({
+        name: form.businessName, type: form.businessType, city: form.city,
+        ownerName: form.ownerName, plan: form.plan, trialCode: code, language: form.language,
+      })
+        .then(async (welcomeMsg) => {
+          await (supabase.from("scheduled_messages") as any).insert({
+            to: digits,
+            message: welcomeMsg,
+            type: "welcome",
+            status: "pending",
+          });
+          console.log("Welcome message ready:", welcomeMsg);
+        })
+        .catch((err) => console.log("Welcome message error:", err));
+
     } catch (err: any) {
       console.log("Error:", err);
       setError("Something went wrong: " + (err?.message || err));
