@@ -768,7 +768,7 @@ export default function Admin() {
               <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={coderSearch} onChange={(e) => setCoderSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#080C09" }} placeholder="Search coders..." />
+                  <Input value={coderSearch} onChange={(e) => setCoderSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#FAFAFA" }} placeholder="Search coders..." />
                 </div>
               </div>
               
