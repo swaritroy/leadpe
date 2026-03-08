@@ -747,7 +747,7 @@ export default function DevDashboard() {
 
                 {/* Auto-fix Summary */}
                 {autoFixes.length > 0 && (
-                  <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#101810" }}>
+                  <div className="rounded-xl border border-[#E0F2E9] p-4" style={{ backgroundColor: "#F0FFF4" }}>
                     <p className="text-sm font-medium mb-3">We automatically improved:</p>
                     <div className="space-y-2">
                       {autoFixes.map((fix, i) => (
