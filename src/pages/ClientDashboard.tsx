@@ -1404,7 +1404,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Week Results */}
-              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#080C09" }}>
+              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm text-muted-foreground mb-2">This week:</p>
                 <p className="text-lg font-bold mb-1">
                   {weeklyReport?.leadsThisWeek || realLeadsCount || 0} people tried to contact you
