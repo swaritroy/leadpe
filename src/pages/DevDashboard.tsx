@@ -1590,7 +1590,6 @@ export default function DevDashboard() {
         )}
       </AnimatePresence>
       </div>
-      <WhatsAppButton />
-    )
+    </div>
   );
 };

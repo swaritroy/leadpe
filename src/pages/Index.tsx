@@ -119,12 +119,13 @@ const pricingPlans = [
 const comparisonData = {
   headers: ["", "LeadPe", "Agency", "Fiverr", "DIY"],
   rows: [
-    { label: "Website", values: ["₹2K", "₹20K", "₹8K", "₹0"] },
-    { label: "Time", values: ["48hr", "2 week", "1 week", "Months"] },
-    { label: "Monthly", values: ["₹299", "₹5K", "None", "₹2K"] },
+    { label: "Website Cost", values: ["₹500-2K", "₹20K+", "₹5K+", "₹0"] },
+    { label: "Monthly", values: ["₹299", "₹5K+", "₹0", "₹2K+"] },
+    { label: "Delivery", values: ["48hrs", "2-4wks", "1-2wks", "Months"] },
     { label: "Leads", values: ["✅", "❌", "❌", "❌"] },
-    { label: "WhatsApp", values: ["✅", "❌", "❌", "❌"] },
-    { label: "SEO Auto", values: ["✅", "Maybe", "❌", "❌"] },
+    { label: "WhatsApp Ping", values: ["✅", "❌", "❌", "❌"] },
+    { label: "SEO", values: ["✅", "Maybe", "Basic", "❌"] },
+    { label: "Support", values: ["✅", "Paid", "None", "❌"] },
   ],
 };
 
