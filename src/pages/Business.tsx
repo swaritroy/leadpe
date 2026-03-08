@@ -340,8 +340,8 @@ export default function Business() {
           <Input
             value={formData.whatsappNumber}
             onChange={(e) => updateForm("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
-            className={`rounded-xl border h-12 ${errors.whatsappNumber ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.whatsappNumber ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="+91 98765 43210"
             type="tel"
           />
