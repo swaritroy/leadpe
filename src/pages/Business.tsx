@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
 
 const businessTypes = [
   "Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon / Parlour",
