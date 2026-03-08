@@ -73,12 +73,21 @@ export default function ClientDashboard() {
         .maybeSingle();
       if (seo) setSeoData(seo);
       setSeoLoading(false);
+
+      // Fetch build request
+      const { data: br } = await (supabase.from("build_requests") as any)
+        .select("*")
+        .eq("business_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (br) setBuildRequest(br);
+
       setLoading(false);
     };
     init();
 
     const interval = setInterval(() => fetchProfile(user.id), 30000);
-    // Poll for SEO if not yet available
     const seoInterval = setInterval(async () => {
       if (seoData) return;
       const { data: seo } = await (supabase.from("business_seo") as any)
@@ -87,7 +96,20 @@ export default function ClientDashboard() {
         .maybeSingle();
       if (seo) { setSeoData(seo); setSeoLoading(false); }
     }, 10000);
-    return () => { clearInterval(interval); clearInterval(seoInterval); };
+
+    // Realtime build status updates
+    const buildChannel = supabase
+      .channel("build-status")
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "build_requests",
+        filter: `business_id=eq.${user.id}`,
+      }, (payload) => {
+        setBuildRequest(payload.new);
+        if ((payload.new as any).status === "live") setShowCelebration(true);
+      })
+      .subscribe();
+
+    return () => { clearInterval(interval); clearInterval(seoInterval); supabase.removeChannel(buildChannel); };
   }, [user, fetchProfile, seoData]);
 
   // Realtime leads subscription
