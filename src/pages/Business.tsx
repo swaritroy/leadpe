@@ -325,8 +325,8 @@ export default function Business() {
           <Input
             value={formData.city}
             onChange={(e) => updateForm("city", e.target.value)}
-            className={`rounded-xl border h-12 ${errors.city ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
-            style={{ backgroundColor: "#FAFAFA" }}
+            className={`rounded-xl border h-12 text-[#1A1A1A] ${errors.city ? "border-red-500" : "border-[#E0E0E0]"} focus:border-[#00C853]`}
+            style={{ backgroundColor: "#FFFFFF" }}
             placeholder="e.g. Vaishali, Bihar"
           />
           {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
