@@ -75,7 +75,7 @@ export default function GetWebsite() {
       package_id: selectedPackage,
       package_price: pkg.price,
       domain_option: domainOption,
-      own_domain: domainOption === "own" ? ownDomain : null,
+      own_domain: domainOption === "subdomain" ? `${subdomainName}.leadpe.online` : domainOption === "own" ? ownDomain : null,
       domain_addon_price: domainAddon,
       total_price: totalPrice,
       color_preference: colorPref,
