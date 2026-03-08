@@ -785,7 +785,7 @@ export default function ClientDashboard() {
                 <div className="text-2xl font-bold" style={{ color: "#00E676" }}>{weeklyReport.leadsThisWeek}</div>
               </div>
               
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-3 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">📈</span>
                   <span className="text-xs text-muted-foreground">vs Last Week</span>
