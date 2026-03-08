@@ -966,9 +966,9 @@ export default function ClientDashboard() {
               <div className="text-4xl mb-4">📭</div>
               <p className="font-medium mb-2">No inquiries yet.</p>
               <p className="text-sm text-muted-foreground mb-4">Your site is working hard. First leads usually arrive within 7 days of going live.</p>
-              <div className="p-4 rounded-xl border border-dashed border-border mb-4" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-4 rounded-xl border border-dashed border-[#E0F2E9] mb-4" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm text-muted-foreground mb-3">💡 Tip: Share your site link in your WhatsApp groups to get leads faster!</p>
-                <Button onClick={handleCopyLink} className="h-10 rounded-lg border border-border" style={{ backgroundColor: "#101810" }}>
+                <Button onClick={handleCopyLink} className="h-10 rounded-lg border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                   <Copy size={16} className="mr-2" /> Copy Site Link
                 </Button>
               </div>
