@@ -502,6 +502,19 @@ export default function Admin() {
       });
     }
   };
+
+  const assignCoderToOrder = async (orderId: string, coderId: string) => {
+    const coder = availableCoders.find((c) => c.id === coderId);
+    await (supabase as any).from("orders").update({
+      status: "building",
+      assigned_coder_id: coderId,
+      assigned_coder_name: coder?.full_name || "Unknown",
+    }).eq("id", orderId);
+    const order = orders.find((o) => o.id === orderId);
+    if (order) await logEvent(order.order_id, ORDER_EVENTS.CODER_ASSIGNED, coder?.full_name);
+    toast({ title: "Coder assigned!", description: `${coder?.full_name} assigned` });
+    fetchData();
+  };
   
   const markAllPaid = async () => {
     for (const earning of unpaidEarnings) {
