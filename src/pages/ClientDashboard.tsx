@@ -1390,7 +1390,7 @@ export default function ClientDashboard() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-md rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
