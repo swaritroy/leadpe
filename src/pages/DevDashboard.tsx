@@ -1176,7 +1176,7 @@ export default function DevDashboard() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {buildRequests.map((request) => {
+              {buildRequests.filter(r => packageFilter === "all" || (r as any).package_id === packageFilter).map((request) => {
                 const brief = generateBrief({
                   business_name: request.business_name,
                   business_type: request.business_type,
