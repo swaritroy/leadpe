@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, Lock, Clock } from "lucide-react";
+import { Check, Lock, Clock, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import { ADMIN_WHATSAPP, UPI_ID } from "@/lib/constants";
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
@@ -17,8 +17,8 @@ export default function Payment() {
   const orderId = searchParams.get("order");
   const plan = searchParams.get("plan") || "growth";
   const amount = parseInt(searchParams.get("amount") || "299");
-  const [upiId, setUpiId] = useState("");
   const [showPending, setShowPending] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [order, setOrder] = useState<any>(null);
 
   const isOrderPayment = !!orderId;
@@ -31,13 +31,28 @@ export default function Payment() {
     }
   }, [orderId]);
 
+  // Poll for activation every 30s when pending
+  useEffect(() => {
+    if (!showPending || !user) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase.from("profiles").select("status").eq("user_id", user.id).single();
+      if (data?.status === "active") {
+        clearInterval(interval);
+        setShowPending(false);
+        setShowCelebration(true);
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [showPending, user]);
+
   const displayAmount = isOrderPayment ? (order?.total_price || amount) : amount;
+  const gstAmount = Math.round(displayAmount * 0.18);
   const displayTitle = isOrderPayment ? `Website Order ${orderId}` : "LeadPe Growth Plan";
   const displayDesc = isOrderPayment ? `${order?.business_name || ""} — ${order?.package_id || ""} package` : "Monthly Management";
 
   const handleUpiPay = () => {
     window.open(
-      `upi://pay?pa=9973383902@upi&pn=LeadPe&am=${displayAmount}&cu=INR&tn=LeadPe+${isOrderPayment ? orderId : "Growth+Plan"}`,
+      `upi://pay?pa=${UPI_ID}&pn=LeadPe&am=${displayAmount}&cu=INR&tn=LeadPe+${isOrderPayment ? orderId : "Growth+Plan"}`,
       "_blank"
     );
   };
@@ -47,7 +62,7 @@ export default function Payment() {
     const msg = isOrderPayment
       ? `💰 PAYMENT DONE\nOrder: ${orderId}\nAmount: ₹${displayAmount}\nBusiness: ${order?.business_name}\nCustomer: ${order?.customer_name}\nPhone: ${phone}`
       : `Hi LeadPe! I paid ₹${displayAmount} for Growth Plan. My WhatsApp: ${phone}. Please activate my account.`;
-    window.open(`https://wa.me/919973383902?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
 
     if (isOrderPayment && order) {
       await (supabase as any).from("orders").update({
@@ -58,8 +73,43 @@ export default function Payment() {
       await logEvent(orderId!, ORDER_EVENTS.PAYMENT_RECEIVED, `₹${displayAmount}`);
     }
 
+    // Insert payment record
+    await (supabase as any).from("payments").insert({
+      business_id: user?.id || null,
+      business_name: isOrderPayment ? order?.business_name : "Growth Plan",
+      amount: displayAmount,
+      gst: gstAmount,
+      total: displayAmount,
+      plan: isOrderPayment ? order?.package_id : plan,
+      method: "upi",
+      status: "pending",
+    });
+
     setShowPending(true);
   };
+
+  // Celebration screen
+  if (showCelebration) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-sm">
+          <motion.div
+            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }}
+            className="text-7xl mb-6">🎉</motion.div>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>
+            Plan Activated! 🚀
+          </h2>
+          <p className="text-sm mb-2" style={{ color: "#666" }}>Your Growth Plan is now active.</p>
+          <p className="text-sm mb-8" style={{ color: "#666" }}>All leads are now unlocked. Start growing!</p>
+          <Link to="/client/dashboard">
+            <Button className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+              Go to Dashboard →
+            </Button>
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (showPending) {
     return (
@@ -72,10 +122,13 @@ export default function Payment() {
           <h2 className="text-xl font-bold mb-3" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>
             {isOrderPayment ? "Payment Confirmed! 🎉" : "Activating your plan..."}
           </h2>
-          <p className="text-sm mb-6" style={{ color: "#666666" }}>
+          <p className="text-sm mb-2" style={{ color: "#666" }}>
             {isOrderPayment
               ? "Your website will go live within 2 hours. We'll WhatsApp you the link!"
               : "We will activate within 15 minutes and WhatsApp you."}
+          </p>
+          <p className="text-xs mb-6" style={{ color: "#999" }}>
+            This page auto-checks every 30 seconds ⏱️
           </p>
           <Link to={isOrderPayment ? "/" : "/client/dashboard"}>
             <Button className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
@@ -101,9 +154,12 @@ export default function Payment() {
           {/* ORDER SUMMARY */}
           <div className="rounded-xl p-5 mb-6" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
             <h2 className="font-bold text-lg mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>{displayTitle}</h2>
-            <p className="text-sm mb-2" style={{ color: "#666666" }}>{displayDesc}</p>
+            <p className="text-sm mb-2" style={{ color: "#666" }}>{displayDesc}</p>
             <p className="text-3xl font-bold mb-1" style={{ color: "#00C853", fontFamily: "Syne" }}>₹{displayAmount.toLocaleString()}</p>
-            {!isOrderPayment && <p className="text-xs" style={{ color: "#999999" }}>GST included • Cancel anytime</p>}
+            <p className="text-xs" style={{ color: "#999" }}>
+              {!isOrderPayment && <>Incl. GST (₹{gstAmount}) • Cancel anytime</>}
+              {isOrderPayment && "One-time payment • Pay only after seeing demo"}
+            </p>
           </div>
 
           {/* WHAT YOU GET */}
@@ -130,27 +186,28 @@ export default function Payment() {
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
-              <span className="text-xs" style={{ color: "#999999" }}>OR</span>
+              <span className="text-xs" style={{ color: "#999" }}>OR</span>
               <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
             </div>
 
             <div className="rounded-xl p-4" style={{ backgroundColor: "#F9F9F9" }}>
               <p className="text-sm font-medium mb-2" style={{ color: "#1A1A1A" }}>Pay directly to UPI:</p>
-              <p className="text-sm" style={{ color: "#666666" }}>📱 UPI ID: 9973383902@upi</p>
-              <p className="text-sm mb-3" style={{ color: "#666666" }}>💰 Amount: ₹{displayAmount.toLocaleString()}</p>
+              <p className="text-sm" style={{ color: "#666" }}>📱 UPI ID: {UPI_ID}</p>
+              <p className="text-sm mb-3" style={{ color: "#666" }}>💰 Amount: ₹{displayAmount.toLocaleString()}</p>
             </div>
           </div>
 
           {/* I HAVE PAID */}
           <div className="bg-white rounded-xl p-5 mb-6" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-            <p className="text-sm text-center mb-3" style={{ color: "#666666" }}>After payment, click below:</p>
+            <p className="text-sm text-center mb-3" style={{ color: "#666" }}>After payment, click below:</p>
             <Button onClick={handleIPaid} variant="outline" className="w-full h-12 rounded-xl font-semibold" style={{ borderColor: "#00C853", color: "#00C853" }}>
               I Have Paid ✅
             </Button>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 text-xs" style={{ color: "#666666" }}>
-            {["🔒 Safe", "↩️ Cancel anytime", "💬 Support", "🇮🇳 India"].map((t) => (
+          {/* TRUST BADGES */}
+          <div className="flex flex-wrap justify-center gap-3 text-xs" style={{ color: "#666" }}>
+            {["🔒 Safe & Secure", "↩️ Cancel anytime", "💬 WhatsApp support", "🇮🇳 Made in India"].map((t) => (
               <span key={t} className="px-3 py-1.5 rounded-full" style={{ backgroundColor: "#F0F0F0" }}>{t}</span>
             ))}
           </div>
