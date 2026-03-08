@@ -899,7 +899,7 @@ export default function DevDashboard() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="rounded-2xl border-2 p-6 text-center"
-                style={{ borderColor: "#ef4444", backgroundColor: "#101810" }}
+                style={{ borderColor: "#ef4444", backgroundColor: "#FFFFFF" }}
               >
                 <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
                   <XCircle size={32} style={{ color: "#ef4444" }} />
