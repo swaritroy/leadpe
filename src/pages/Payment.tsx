@@ -24,7 +24,7 @@ function loadRazorpayScript(): Promise<boolean> {
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
   const orderId = searchParams.get("order");
   const plan = searchParams.get("plan") || "growth";
@@ -147,6 +147,8 @@ export default function Payment() {
           }
 
           toast({ title: "Payment successful! ✅" });
+          // Refresh profile so dashboard shows updated plan
+          await refreshProfile();
           if (isOrderPayment) {
             setShowPending(true);
           } else {
