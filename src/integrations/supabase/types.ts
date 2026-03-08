@@ -624,6 +624,50 @@ export type Database = {
           },
         ]
       }
+      quality_reports: {
+        Row: {
+          ai_suggestions: string | null
+          build_request_id: string | null
+          checks: Json | null
+          created_at: string
+          fixes: Json | null
+          id: string
+          issues: Json | null
+          passed: boolean
+          score: number
+        }
+        Insert: {
+          ai_suggestions?: string | null
+          build_request_id?: string | null
+          checks?: Json | null
+          created_at?: string
+          fixes?: Json | null
+          id?: string
+          issues?: Json | null
+          passed?: boolean
+          score?: number
+        }
+        Update: {
+          ai_suggestions?: string | null
+          build_request_id?: string | null
+          checks?: Json | null
+          created_at?: string
+          fixes?: Json | null
+          id?: string
+          issues?: Json | null
+          passed?: boolean
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_reports_build_request_id_fkey"
+            columns: ["build_request_id"]
+            isOneToOne: false
+            referencedRelation: "build_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_messages: {
         Row: {
           created_at: string | null

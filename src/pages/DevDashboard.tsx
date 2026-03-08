@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check } from "lucide-react";
+import { Bell, LogOut, CheckCircle, XCircle, ExternalLink, MessageCircle, Copy, Rocket, Loader2, AlertCircle, Wrench, Eye, Clock, DollarSign, Code, Send, Check, Shield, ClipboardCopy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ import { generateSEO } from "@/lib/seoGenerator";
 import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 import { generateBrief, copyToClipboard, getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBrief";
 import { deployWebsite } from "@/lib/deployService";
+import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qualityChecker";
+import { generateLeadWidgetCode } from "@/lib/leadWidget";
 
 interface Deployment {
   id: string;
@@ -101,6 +103,9 @@ export default function DevDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<BuildRequest | null>(null);
   const [githubSubmitUrl, setGithubSubmitUrl] = useState("");
   const [submittingGithub, setSubmittingGithub] = useState(false);
+  const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [qualityChecking, setQualityChecking] = useState(false);
+  const [widgetCopied, setWidgetCopied] = useState(false);
 
   // Deploy flow states
   const [githubUrl, setGithubUrl] = useState("");
@@ -511,9 +516,46 @@ export default function DevDashboard() {
     }
     
     setSubmittingGithub(true);
+    setQualityChecking(true);
+    setQualityReport(null);
     
     try {
-      // 1. Update build request to review
+      // Step 1: Quality check
+      toast({ title: "🔍 Running quality check...", description: "Analyzing your website code" });
+      
+      const report = await checkWebsiteQuality(githubSubmitUrl, {
+        name: selectedRequest.business_name,
+        type: selectedRequest.business_type,
+        city: selectedRequest.city,
+      });
+      
+      setQualityReport(report);
+      setQualityChecking(false);
+      
+      // Save quality report
+      await (supabase as any).from("quality_reports").insert({
+        build_request_id: selectedRequest.id,
+        score: report.score,
+        passed: report.passed,
+        checks: report.checks,
+        issues: report.issues,
+        fixes: report.fixes,
+        ai_suggestions: report.aiSuggestions,
+      });
+      
+      if (!report.passed) {
+        toast({
+          title: `⚠️ Quality score: ${report.score}/100`,
+          description: "Fix the issues and resubmit. Score must be ≥ 70.",
+          variant: "destructive"
+        });
+        setSubmittingGithub(false);
+        return;
+      }
+      
+      // Step 2: Update build request to review
+      toast({ title: "✅ Quality passed!", description: `Score: ${report.score}/100 — Deploying...` });
+      
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "review",
@@ -524,9 +566,7 @@ export default function DevDashboard() {
       
       if (error) throw error;
       
-      // 2. Auto deploy via Vercel
-      toast({ title: "🚀 Auto deploying...", description: "Deploying to Vercel..." });
-      
+      // Step 3: Auto deploy via Vercel
       const deployResult = await deployWebsite({
         id: selectedRequest.id,
         businessName: selectedRequest.business_name,
@@ -537,7 +577,6 @@ export default function DevDashboard() {
       });
       
       if (deployResult.success && deployResult.deployUrl) {
-        // 3. Update build request to live
         await (supabase as any).from("build_requests")
           .update({
             status: "live",
@@ -546,7 +585,6 @@ export default function DevDashboard() {
           })
           .eq("id", selectedRequest.id);
         
-        // 4. Create earnings record
         await (supabase as any).from("earnings").insert({
           vibe_coder_id: user?.id,
           amount: 800,
@@ -556,33 +594,30 @@ export default function DevDashboard() {
           created_at: new Date().toISOString(),
         });
         
-        // 5. WhatsApp notifications
         const ownerPhone = selectedRequest.owner_whatsapp?.replace(/\D/g, "") || "";
         if (ownerPhone) {
           window.open(`https://wa.me/91${ownerPhone}?text=${encodeURIComponent(`🎉 Aapki website LIVE ho gayi!\n\n🌐 ${deployResult.deployUrl}\n\nAb customers seedhe WhatsApp pe message karenge!\n\nLeadPe 🌱`)}`, "_blank");
         }
         
-        // Admin notification
-        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nQuality: ${report.score}/100\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
         
         toast({
           title: "🚀 Website Live!",
           description: `${deployResult.deployUrl} — ₹800 earned!`
         });
       } else {
-        // Deploy failed — keep in review, notify admin
         toast({
           title: "⚠️ Auto deploy failed",
           description: deployResult.error || "Admin will deploy manually.",
           variant: "destructive"
         });
         
-        // Still notify admin about submission
-        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`📋 GITHUB SUBMITTED (deploy failed)\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\nError: ${deployResult.error}\n━━━━━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`📋 GITHUB SUBMITTED (deploy failed)\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\nQuality: ${report.score}/100\nError: ${deployResult.error}\n━━━━━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
       }
       
       setGithubSubmitUrl("");
       setShowBriefModal(false);
+      setQualityReport(null);
       fetchData();
       
     } catch (error) {
@@ -594,6 +629,7 @@ export default function DevDashboard() {
       });
     } finally {
       setSubmittingGithub(false);
+      setQualityChecking(false);
     }
   };
 
@@ -1529,13 +1565,122 @@ export default function DevDashboard() {
                 </div>
               </div>
 
+              {/* Lead Widget Code Section */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-lg font-semibold" style={{ color: "#1A1A1A" }}>LeadPe Lead Form (REQUIRED)</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#FFEBEE", color: "#ef4444" }}>Must Include</span>
+                </div>
+                <div className="rounded-xl p-3 text-xs font-mono max-h-48 overflow-y-auto" style={{ backgroundColor: "#F1F3F5", color: "#1A1A1A", border: "1px solid #E0E0E0" }}>
+                  <pre className="whitespace-pre-wrap break-all">{generateLeadWidgetCode({
+                    id: selectedRequest.business_id || selectedRequest.id,
+                    name: selectedRequest.business_name,
+                    whatsapp: selectedRequest.owner_whatsapp,
+                  })}</pre>
+                </div>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(generateLeadWidgetCode({
+                      id: selectedRequest.business_id || selectedRequest.id,
+                      name: selectedRequest.business_name,
+                      whatsapp: selectedRequest.owner_whatsapp,
+                    }));
+                    setWidgetCopied(true);
+                    setTimeout(() => setWidgetCopied(false), 2000);
+                    toast({ title: "✅ Widget copied!", description: "Paste before </body> in your website" });
+                  }}
+                  className="w-full h-10 rounded-xl text-white font-semibold mt-3"
+                  style={{ backgroundColor: "#00C853" }}
+                >
+                  <ClipboardCopy size={16} className="mr-2" /> {widgetCopied ? "Copied! ✅" : "Copy Widget Code 📋"}
+                </Button>
+                <div className="rounded-xl p-3 mt-3" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FF9800" }}>
+                  <p className="text-xs font-medium" style={{ color: "#E65100" }}>
+                    ⚠️ Without this widget, website will FAIL quality check. Include it to get approved.
+                  </p>
+                </div>
+              </div>
+
               {selectedRequest.status === "building" && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Submit for Review</h3>
                   <div className="space-y-3">
-                    <Input value={githubSubmitUrl} onChange={(e) => setGithubSubmitUrl(e.target.value)} placeholder="Enter GitHub repository URL" className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]" style={{ backgroundColor: "#FFFFFF" }} />
-                    <Button onClick={handleSubmitGithub} disabled={submittingGithub} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-                      {submittingGithub ? (<><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>) : (<><Send size={16} className="mr-2" /> Submit GitHub URL →</>)}
+                    <Input value={githubSubmitUrl} onChange={(e) => { setGithubSubmitUrl(e.target.value); setQualityReport(null); }} placeholder="Enter GitHub repository URL" className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]" style={{ backgroundColor: "#FFFFFF" }} />
+                    
+                    {/* Quality Report Display */}
+                    {qualityChecking && (
+                      <div className="rounded-xl p-4 text-center" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
+                        <Loader2 size={24} className="animate-spin mx-auto mb-2" style={{ color: "#00C853" }} />
+                        <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>Running AI quality check...</p>
+                        <p className="text-xs" style={{ color: "#666" }}>Analyzing code for 12 quality criteria</p>
+                      </div>
+                    )}
+                    
+                    {qualityReport && !qualityChecking && (
+                      <div className="rounded-xl p-4" style={{ 
+                        backgroundColor: qualityReport.passed ? "#F0FFF4" : "#FFF3E0", 
+                        border: `2px solid ${qualityReport.passed ? "#00C853" : "#FF6D00"}` 
+                      }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            {qualityReport.passed ? (
+                              <CheckCircle size={20} style={{ color: "#00C853" }} />
+                            ) : (
+                              <AlertCircle size={20} style={{ color: "#FF6D00" }} />
+                            )}
+                            <span className="font-bold text-lg">{qualityReport.score}/100</span>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${qualityReport.passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                            {qualityReport.passed ? "✅ Passed" : "⚠️ Needs Fixes"}
+                          </span>
+                        </div>
+                        
+                        {/* Checks grid */}
+                        <div className="grid grid-cols-2 gap-1 mb-3">
+                          {Object.entries(qualityReport.checks).map(([key, passed]) => (
+                            <div key={key} className="flex items-center gap-1 text-xs">
+                              {passed ? <CheckCircle size={12} style={{ color: "#00C853" }} /> : <XCircle size={12} style={{ color: "#ef4444" }} />}
+                              <span style={{ color: passed ? "#666" : "#ef4444" }}>
+                                {key.replace(/^has/, "").replace(/([A-Z])/g, " $1").trim()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Issues */}
+                        {qualityReport.issues.length > 0 && (
+                          <div className="space-y-1 mb-3">
+                            {qualityReport.issues.map((issue, i) => (
+                              <p key={i} className="text-xs" style={{ color: "#ef4444" }}>{issue}</p>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {!qualityReport.passed && (
+                          <Button
+                            onClick={() => {
+                              const prompt = generateFixPrompt(qualityReport, {
+                                name: selectedRequest.business_name,
+                                type: selectedRequest.business_type,
+                                city: selectedRequest.city,
+                              });
+                              navigator.clipboard.writeText(prompt);
+                              toast({ title: "✅ Fix prompt copied!", description: "Open Lovable and paste to fix issues" });
+                            }}
+                            variant="outline"
+                            className="w-full h-10 rounded-xl text-sm border-orange-400 text-orange-600 hover:bg-orange-50"
+                          >
+                            <Copy size={14} className="mr-2" /> Copy Fix Prompt for Lovable
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    
+                    <Button onClick={handleSubmitGithub} disabled={submittingGithub || qualityChecking} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                      {submittingGithub ? (
+                        qualityChecking ? (<><Loader2 size={16} className="mr-2 animate-spin" /> Checking quality...</>) :
+                        (<><Loader2 size={16} className="mr-2 animate-spin" /> Deploying...</>)
+                      ) : (<><Shield size={16} className="mr-2" /> Quality Check & Deploy →</>)}
                     </Button>
                   </div>
                 </div>
