@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { LogOut, Check, Clock, MessageCircle } from "lucide-react";
+import { Check, Clock, MessageCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import { getTrialStatus, TrialStatus } from "@/lib/trialManager";
 
 interface ProfileData {
   full_name: string | null;
@@ -17,25 +17,65 @@ interface ProfileData {
   trial_end_date: string | null;
   site_url: string | null;
   business_name: string | null;
+  business_type: string | null;
+  city: string | null;
+}
+
+interface Lead {
+  id: string;
+  customer_name: string;
+  phone: string | null;
+  message: string | null;
+  created_at: string;
+  source: string | null;
 }
 
 export default function ClientDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trial, setTrial] = useState<TrialStatus | null>(null);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await (supabase.from("profiles") as any)
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (data) {
+      setProfile(data);
+      setTrial(getTrialStatus(data));
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
-      const { data } = await (supabase.from("profiles") as any)
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setProfile(data);
+    const init = async () => {
+      await fetchProfile(user.id);
       setLoading(false);
     };
-    fetch();
+    init();
+
+    // Poll every 30s for activation changes
+    const interval = setInterval(() => fetchProfile(user.id), 30000);
+    return () => clearInterval(interval);
+  }, [user, fetchProfile]);
+
+  // Realtime leads subscription
+  useEffect(() => {
+    if (!user) return;
+
+    // Fetch leads (using profile as business_id won't work without a business, so we skip if no business)
+    // For now leads show empty state
+    const channel = supabase
+      .channel("client-leads")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, (payload) => {
+        setLeads((prev) => [payload.new as Lead, ...prev]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const handleSignOut = async () => {
@@ -54,13 +94,27 @@ export default function ClientDashboard() {
   const ownerName = profile?.full_name || "there";
   const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : new Date();
   const trialEnd = profile?.trial_end_date ? new Date(profile.trial_end_date) : new Date(Date.now() + 21 * 86400000);
-  const totalDays = Math.max(1, Math.ceil((trialEnd.getTime() - trialStart.getTime()) / 86400000));
-  const daysPassed = Math.max(0, Math.ceil((Date.now() - trialStart.getTime()) / 86400000));
-  const daysLeft = Math.max(0, totalDays - daysPassed);
-  const progress = Math.min(100, (daysPassed / totalDays) * 100);
-
   const startDateStr = trialStart.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   const endDateStr = trialEnd.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+  // Trial bar config
+  const getTrialBarConfig = () => {
+    if (trial?.isActive) {
+      return { bg: "#F0FFF4", border: "#00C853", text: "✅ Growth Plan — Active", textColor: "#00C853", btnText: "Manage →", btnBg: "#E0E0E0", btnColor: "#666" };
+    }
+    if (trial?.isExpired) {
+      return { bg: "#FFEBEE", border: "#ef4444", text: "⛔ Trial ended", textColor: "#ef4444", btnText: "See Waiting Customers →", btnBg: "#ef4444", btnColor: "#fff" };
+    }
+    if (trial?.isTrialEnding) {
+      return { bg: "#FFF3E0", border: "#FF6D00", text: `🔴 Trial ends in ${trial.daysLeft} days!`, textColor: "#FF6D00", btnText: "Upgrade Before It Ends →", btnBg: "#FF6D00", btnColor: "#fff" };
+    }
+    if (trial?.isWarning) {
+      return { bg: "#FFF8E1", border: "#FFA000", text: `⚠️ Trial ends in ${trial?.daysLeft} days`, textColor: "#FFA000", btnText: "Upgrade Now ₹299 →", btnBg: "#FFA000", btnColor: "#fff" };
+    }
+    return { bg: "#F0FFF4", border: "#00C853", text: `🟢 Free Trial — ${trial?.daysLeft ?? 21} days left`, textColor: "#1A1A1A", btnText: "Upgrade ₹299 →", btnBg: "#00C853", btnColor: "#fff" };
+  };
+
+  const barCfg = getTrialBarConfig();
 
   return (
     <div className="min-h-screen pb-20" style={{ backgroundColor: "#F5FFF7" }}>
@@ -75,12 +129,13 @@ export default function ClientDashboard() {
         </div>
       </nav>
 
-      {/* TRIAL STATUS BAR */}
-      <div className="border-b" style={{ backgroundColor: "#F0FFF4", borderColor: "#00C853", borderBottomWidth: "2px", padding: "12px 0" }}>
+      {/* DYNAMIC TRIAL STATUS BAR */}
+      <div style={{ backgroundColor: barCfg.bg, borderBottom: `2px solid ${barCfg.border}`, padding: "12px 0" }}>
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <span className="text-sm font-medium" style={{ color: "#1A1A1A" }}>🟢 Free Trial — {daysLeft} days left</span>
-          <Button onClick={() => navigate("/payment?plan=growth&amount=299")} size="sm" className="rounded-lg text-white text-xs" style={{ backgroundColor: "#00C853" }}>
-            Upgrade ₹299 →
+          <span className="text-sm font-medium" style={{ color: barCfg.textColor }}>{barCfg.text}</span>
+          <Button onClick={() => navigate("/payment?plan=growth&amount=299")} size="sm" className="rounded-lg text-xs"
+            style={{ backgroundColor: barCfg.btnBg, color: barCfg.btnColor }}>
+            {barCfg.btnText}
           </Button>
         </div>
       </div>
@@ -95,7 +150,7 @@ export default function ClientDashboard() {
         {/* WEBSITE STATUS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A" }}>Your Website 🏗️</h3>
+          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Website 🏗️</h3>
           <div className="space-y-4">
             {[
               { done: true, label: "Request received", sub: "We have your details" },
@@ -120,39 +175,68 @@ export default function ClientDashboard() {
 
         {/* LEADS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A" }}>Your Leads 📊</h3>
-          <div className="text-center py-6">
-            <div className="text-4xl mb-3">📭</div>
-            <p className="font-bold text-lg mb-2" style={{ color: "#1A1A1A" }}>No leads yet</p>
-            <p className="text-sm mb-4" style={{ color: "#666666" }}>Once your site goes live, leads will appear here automatically.</p>
-            <div className="rounded-xl p-4" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
-              <p className="text-sm" style={{ color: "#1A1A1A" }}>💡 Pro Tip: Share your site link in local WhatsApp groups to get first lead faster!</p>
+          className="bg-white rounded-2xl p-6 mb-4 relative" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Leads 📊</h3>
+
+          {leads.length === 0 ? (
+            <div className="text-center py-6">
+              <div className="text-4xl mb-3">📭</div>
+              <p className="font-bold text-lg mb-2" style={{ color: "#1A1A1A" }}>No leads yet</p>
+              <p className="text-sm mb-4" style={{ color: "#666666" }}>Once your site goes live, leads will appear here automatically.</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
+                <p className="text-sm" style={{ color: "#1A1A1A" }}>💡 Pro Tip: Share your site link in local WhatsApp groups to get first lead faster!</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative">
+              {/* Blur leads if trial expired */}
+              <div style={trial?.isExpired ? { filter: "blur(6px)", pointerEvents: "none" } : {}}>
+                {leads.slice(0, 5).map((lead) => (
+                  <div key={lead.id} className="border-b py-3" style={{ borderColor: "#E0E0E0" }}>
+                    <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>{lead.customer_name}</p>
+                    <p className="text-xs" style={{ color: "#666" }}>{lead.phone} • {new Date(lead.created_at).toLocaleDateString("en-IN")}</p>
+                  </div>
+                ))}
+              </div>
+
+              {trial?.isExpired && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white rounded-xl p-6 text-center" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
+                    <Lock size={32} style={{ color: "#ef4444" }} className="mx-auto mb-3" />
+                    <p className="font-bold text-lg mb-1" style={{ color: "#1A1A1A" }}>🔒 {leads.length} customers waiting</p>
+                    <p className="text-sm mb-1" style={{ color: "#666" }}>They searched for {profile?.business_type} in {profile?.city}</p>
+                    <p className="text-sm mb-4" style={{ color: "#666" }}>Don't let them go to a competitor.</p>
+                    <Button onClick={() => navigate("/payment?plan=growth&amount=299")} className="w-full h-10 rounded-xl text-white font-semibold" style={{ backgroundColor: "#ef4444" }}>
+                      See Their Details — ₹299 →
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* TRIAL INFO */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-3" style={{ color: "#1A1A1A" }}>Free Trial 🎁</h3>
+          <h3 className="font-bold text-lg mb-3" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Free Trial 🎁</h3>
           <div className="text-sm space-y-1 mb-3" style={{ color: "#666666" }}>
             <p>Started: {startDateStr}</p>
             <p>Ends: {endDateStr}</p>
           </div>
           <div className="flex items-center justify-between text-xs mb-1" style={{ color: "#666666" }}>
-            <span>Day {daysPassed} of {totalDays}</span>
-            <span>{daysLeft} days left</span>
+            <span>Day {trial?.daysUsed ?? 1} of {trial?.totalDays ?? 21}</span>
+            <span>{trial?.daysLeft ?? 21} days left</span>
           </div>
           <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#E0E0E0" }}>
-            <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: "#00C853" }} />
+            <div className="h-full rounded-full transition-all" style={{ width: `${trial?.percentage ?? 0}%`, backgroundColor: "#00C853" }} />
           </div>
         </motion.div>
 
         {/* SUPPORT */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-2" style={{ color: "#1A1A1A" }}>Need Help? 💬</h3>
+          <h3 className="font-bold text-lg mb-2" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Need Help? 💬</h3>
           <p className="text-sm mb-4" style={{ color: "#666666" }}>We're available on WhatsApp</p>
           <Button onClick={() => window.open("https://wa.me/919973383902", "_blank")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
             <MessageCircle size={16} className="mr-2" /> WhatsApp Support →
@@ -160,14 +244,26 @@ export default function ClientDashboard() {
         </motion.div>
 
         {/* UPGRADE */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="rounded-2xl p-6 mb-4" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
-          <h3 className="font-bold text-lg mb-2" style={{ color: "#1A1A1A" }}>Upgrade to Growth Plan 💚</h3>
-          <p className="text-sm mb-4" style={{ color: "#666666" }}>Get unlimited leads forever for just ₹299/month</p>
-          <Button onClick={() => navigate("/payment?plan=growth&amount=299")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-            Upgrade Now →
-          </Button>
-        </motion.div>
+        {!trial?.isActive && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="rounded-2xl p-6 mb-4" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
+            <h3 className="font-bold text-lg mb-2" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Upgrade to Growth Plan 💚</h3>
+            <p className="text-sm mb-4" style={{ color: "#666666" }}>Get unlimited leads forever for just ₹299/month</p>
+            <Button onClick={() => navigate("/payment?plan=growth&amount=299")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+              Upgrade Now →
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Plan activated celebration */}
+        {trial?.isActive && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="rounded-2xl p-6 mb-4 text-center" style={{ backgroundColor: "#F0FFF4", border: "2px solid #00C853" }}>
+            <div className="text-3xl mb-2">🎉</div>
+            <h3 className="font-bold text-lg mb-1" style={{ color: "#00C853", fontFamily: "Syne" }}>Growth Plan Active!</h3>
+            <p className="text-sm" style={{ color: "#666666" }}>Unlimited leads. You're all set.</p>
+          </motion.div>
+        )}
       </div>
     </div>
   );
