@@ -1010,7 +1010,7 @@ export default function Index() {
                         value={bizForm.whatsappNumber}
                         onChange={(e) => updateBizForm("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                         className={`rounded-xl border h-12 text-base ${bizErrors.whatsappNumber ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="e.g. 9876543210"
                         type="tel"
                       />
