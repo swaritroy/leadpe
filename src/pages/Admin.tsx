@@ -1427,6 +1427,84 @@ export default function Admin() {
             </div>
           )}
         </motion.div>
+        {/* ── MESSAGE LOG ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("messagelog")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("messagelog") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            <Send size={20} className="text-[#00C853]" /> WhatsApp Message Log
+            <span className="text-xs font-normal text-muted-foreground ml-2">({messageLog.length} messages)</span>
+          </button>
+
+          {expandedSections.has("messagelog") && (
+            <div className="rounded-2xl border border-[#E0F2E9] p-5 bg-white overflow-x-auto">
+              {/* Stats row */}
+              <div className="flex gap-4 mb-4 flex-wrap">
+                {["sent", "failed", "queued"].map((s) => {
+                  const count = messageLog.filter((m: any) => (s === "sent" ? m.status === "sent" : s === "failed" ? m.status === "failed" : m.delivery_status === "queued")).length;
+                  return (
+                    <div key={s} className="px-3 py-1 rounded-lg text-xs font-bold" style={{
+                      backgroundColor: s === "sent" ? "#E8F5E9" : s === "failed" ? "#FFEBEE" : "#FFF3E0",
+                      color: s === "sent" ? "#2E7D32" : s === "failed" ? "#C62828" : "#E65100"
+                    }}>
+                      {s.toUpperCase()}: {count}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Table */}
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-[#E0F2E9]">
+                    <th className="text-left py-2 px-2 text-muted-foreground">To</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Type</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Status</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Delivery</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Sent At</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Message</th>
+                    <th className="text-left py-2 px-2 text-muted-foreground">Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {messageLog.map((msg: any) => (
+                    <tr key={msg.id} className="border-b border-[#F0F0F0] hover:bg-[#F5FFF7]">
+                      <td className="py-2 px-2 font-mono">{msg.to_number}</td>
+                      <td className="py-2 px-2">
+                        <span className="px-2 py-0.5 rounded bg-[#E0F2E9] text-[#00C853] font-bold">
+                          {msg.message_type || "—"}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2">
+                        <span className={`px-2 py-0.5 rounded font-bold ${
+                          msg.status === "sent" ? "bg-[#E8F5E9] text-[#2E7D32]" : 
+                          msg.status === "failed" ? "bg-[#FFEBEE] text-[#C62828]" : 
+                          "bg-[#FFF3E0] text-[#E65100]"
+                        }`}>
+                          {msg.status}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2 text-muted-foreground">{msg.delivery_status || "—"}</td>
+                      <td className="py-2 px-2 text-muted-foreground">
+                        {msg.sent_at ? new Date(msg.sent_at).toLocaleString("en-IN", { 
+                          day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" 
+                        }) : "—"}
+                      </td>
+                      <td className="py-2 px-2 max-w-[200px] truncate" title={msg.message}>
+                        {msg.message?.slice(0, 50)}...
+                      </td>
+                      <td className="py-2 px-2 text-red-500 max-w-[150px] truncate" title={msg.error_message}>
+                        {msg.error_message || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                  {messageLog.length === 0 && (
+                    <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">No messages yet</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
