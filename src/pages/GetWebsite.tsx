@@ -42,6 +42,7 @@ export default function GetWebsite() {
   const [selectedPackage, setSelectedPackage] = useState("standard");
   const [domainOption, setDomainOption] = useState("subdomain");
   const [ownDomain, setOwnDomain] = useState("");
+  const [customSubdomain, setCustomSubdomain] = useState("");
   const [colorPref, setColorPref] = useState("green");
   const [referenceSite, setReferenceSite] = useState("");
   const [specialReqs, setSpecialReqs] = useState("");
