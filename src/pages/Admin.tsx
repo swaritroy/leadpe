@@ -852,7 +852,7 @@ export default function Admin() {
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead style={{ backgroundColor: "#080C09" }}>
+                  <thead style={{ backgroundColor: "#F0FFF4" }}>
                     <tr>
                       <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Business</th>
                       <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type | City</th>
