@@ -977,7 +977,7 @@ export default function ClientDashboard() {
             // ACTIVE STATE - Full Lead Display
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+              <div className="hidden md:block rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
                 <table className="w-full">
                   <thead>
                     <tr style={{ backgroundColor: "#080C09" }}>
