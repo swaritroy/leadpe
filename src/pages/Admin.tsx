@@ -1121,7 +1121,7 @@ export default function Admin() {
                 <div className="text-xs text-muted-foreground">Trigger all Day 4 reports</div>
               </button>
               
-              <button onClick={() => toast({ title: "Trial Status", description: `${businesses.filter(b => b.status === "trial").length} businesses on trial` })} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={() => toast({ title: "Trial Status", description: `${businesses.filter(b => b.status === "trial").length} businesses on trial` })} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <AlertCircle size={24} style={{ color: "#00E676" }} />
                 </div>
