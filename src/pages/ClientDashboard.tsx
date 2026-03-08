@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Check, Clock, MessageCircle, Lock, Copy } from "lucide-react";
+import { Check, Clock, MessageCircle, Lock, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,8 @@ export default function ClientDashboard() {
   const [seoData, setSeoData] = useState<SEOData | null>(null);
   const [seoLoading, setSeoLoading] = useState(true);
   const [copiedField, setCopiedField] = useState("");
+  const [buildRequest, setBuildRequest] = useState<any>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await (supabase.from("profiles") as any)
@@ -71,12 +73,21 @@ export default function ClientDashboard() {
         .maybeSingle();
       if (seo) setSeoData(seo);
       setSeoLoading(false);
+
+      // Fetch build request
+      const { data: br } = await (supabase.from("build_requests") as any)
+        .select("*")
+        .eq("business_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (br) setBuildRequest(br);
+
       setLoading(false);
     };
     init();
 
     const interval = setInterval(() => fetchProfile(user.id), 30000);
-    // Poll for SEO if not yet available
     const seoInterval = setInterval(async () => {
       if (seoData) return;
       const { data: seo } = await (supabase.from("business_seo") as any)
@@ -85,7 +96,20 @@ export default function ClientDashboard() {
         .maybeSingle();
       if (seo) { setSeoData(seo); setSeoLoading(false); }
     }, 10000);
-    return () => { clearInterval(interval); clearInterval(seoInterval); };
+
+    // Realtime build status updates
+    const buildChannel = supabase
+      .channel("build-status")
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "build_requests",
+        filter: `business_id=eq.${user.id}`,
+      }, (payload) => {
+        setBuildRequest(payload.new);
+        if ((payload.new as any).status === "live") setShowCelebration(true);
+      })
+      .subscribe();
+
+    return () => { clearInterval(interval); clearInterval(seoInterval); supabase.removeChannel(buildChannel); };
   }, [user, fetchProfile, seoData]);
 
   // Realtime leads subscription
@@ -173,31 +197,74 @@ export default function ClientDashboard() {
           <p className="text-sm" style={{ color: "#666666" }}>Your website is being set up. Sit back and relax.</p>
         </motion.div>
 
-        {/* WEBSITE STATUS */}
+        {/* WEBSITE STATUS — DYNAMIC */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Website 🏗️</h3>
+          <h3 className="font-bold text-lg mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>
+            {buildRequest?.status === "live" ? "Your Website 🌐" : "Your Website 🏗️"}
+          </h3>
           <div className="space-y-4">
-            {[
-              { done: true, label: "Request received", sub: "We have your details" },
-              { done: false, label: "Builder being assigned", sub: "Within 2-4 hours" },
-              { done: false, label: "Building your site", sub: "48 hours" },
-              { done: false, label: "Going live!", sub: "Your site will be live" },
-            ].map((s, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: s.done ? "#00C853" : "#E0E0E0" }}>
-                  {s.done ? <Check size={14} className="text-white" /> : <Clock size={14} style={{ color: "#999999" }} />}
+            {(() => {
+              const status = buildRequest?.status || "pending";
+              const steps = [
+                { done: true, label: "Request received", sub: "We have your details" },
+                { done: ["building", "review", "deploying", "live"].includes(status), label: "Builder assigned", sub: buildRequest?.assigned_coder_name ? `Builder: ${buildRequest.assigned_coder_name}` : "Within 2-4 hours" },
+                { done: ["review", "deploying", "live"].includes(status), label: status === "building" ? "Building now..." : "Site built!", sub: status === "building" ? "In progress ⚙️" : "48 hours" },
+                { done: status === "live", label: status === "live" ? "LIVE! 🎉" : "Going live!", sub: status === "live" ? buildRequest?.deploy_url || "Your site is live" : "Final step" },
+              ];
+              return steps.map((s, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: s.done ? "#00C853" : "#E0E0E0" }}>
+                    {s.done ? <Check size={14} className="text-white" /> : <Clock size={14} style={{ color: "#999999" }} />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: s.done ? "#1A1A1A" : "#999999" }}>{s.label}</p>
+                    <p className="text-xs" style={{ color: "#999999" }}>{s.sub}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: s.done ? "#1A1A1A" : "#999999" }}>{s.label}</p>
-                  <p className="text-xs" style={{ color: "#999999" }}>{s.sub}</p>
-                </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
-          <p className="text-sm mt-4 font-medium" style={{ color: "#00C853" }}>Expected: Live in 48 hours 🚀</p>
+
+          {buildRequest?.status === "live" && buildRequest?.deploy_url && (
+            <div className="mt-4 rounded-xl p-4" style={{ backgroundColor: "#F0FFF4", border: "2px solid #00C853" }}>
+              <p className="text-sm font-bold mb-2" style={{ color: "#00C853" }}>🌐 Your Website is LIVE!</p>
+              <p className="text-sm mb-3 break-all" style={{ color: "#1A1A1A" }}>{buildRequest.deploy_url}</p>
+              <Button onClick={() => window.open(buildRequest.deploy_url, "_blank")} className="w-full h-10 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                <ExternalLink size={14} className="mr-2" /> Visit Your Website →
+              </Button>
+            </div>
+          )}
+
+          {buildRequest?.status !== "live" && (
+            <p className="text-sm mt-4 font-medium" style={{ color: "#00C853" }}>Expected: Live in 48 hours 🚀</p>
+          )}
         </motion.div>
+
+        {/* CELEBRATION MODAL */}
+        {showCelebration && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+            onClick={() => setShowCelebration(false)}>
+            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
+              className="bg-white rounded-2xl p-8 max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
+              <div className="text-5xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>Your Website is LIVE!</h2>
+              <p className="text-sm mb-4" style={{ color: "#666666" }}>Share it with your customers!</p>
+              {buildRequest?.deploy_url && (
+                <p className="text-sm mb-4 font-medium break-all" style={{ color: "#00C853" }}>{buildRequest.deploy_url}</p>
+              )}
+              <Button onClick={() => {
+                const url = buildRequest?.deploy_url || "";
+                window.open(`https://wa.me/?text=${encodeURIComponent(`Meri website ab live hai! 🎉\n\n${url}\n\nPowered by LeadPe 🌱`)}`, "_blank");
+              }} className="w-full h-12 rounded-xl text-white font-semibold mb-3" style={{ backgroundColor: "#25D366" }}>
+                Share on WhatsApp →
+              </Button>
+              <button onClick={() => setShowCelebration(false)} className="text-sm" style={{ color: "#666666" }}>Close</button>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* LEADS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}

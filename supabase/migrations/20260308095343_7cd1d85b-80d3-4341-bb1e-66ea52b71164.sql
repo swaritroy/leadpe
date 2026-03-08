@@ -1,0 +1,7 @@
+
+ALTER TABLE build_requests
+  ADD COLUMN IF NOT EXISTS assigned_coder_name TEXT,
+  ADD COLUMN IF NOT EXISTS github_url TEXT,
+  ADD COLUMN IF NOT EXISTS deploy_url TEXT,
+  ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS deployed_at TIMESTAMPTZ;

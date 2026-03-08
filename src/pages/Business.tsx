@@ -145,7 +145,21 @@ export default function Business() {
         await supabase.auth.signInWithPassword({ email, password: code });
       }
 
-      // 6. WhatsApp admin notification
+      // 6. Auto create build request
+      await (supabase.from("build_requests") as any).insert({
+        business_id: authData?.user?.id || null,
+        business_name: form.businessName,
+        business_type: form.businessType,
+        city: form.city,
+        owner_name: form.ownerName,
+        owner_whatsapp: digits,
+        plan_selected: form.plan,
+        status: "pending",
+        deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      });
+      console.log("Build request created!");
+
+      // 7. WhatsApp admin notification
       const msg = `🔔 NEW LEADPE SIGNUP\n━━━━━━━━━━━━\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nWhatsApp: ${digits}\nOwner: ${form.ownerName}\nPlan: ${form.plan}\nCode: ${code}\nLogin: ${email}\nPassword: ${code}\n━━━━━━━━━━━━\nLeadPe ⚡`;
       window.open(`https://wa.me/919973383902?text=${encodeURIComponent(msg)}`, "_blank");
 
