@@ -1373,7 +1373,7 @@ export default function DevDashboard() {
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl p-6 border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Payout Status</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
