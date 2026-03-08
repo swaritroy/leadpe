@@ -48,6 +48,7 @@ const AppContent = () => {
           <Route path="/studio" element={<Studio />} />
           <Route path="/studio/auth" element={<StudioAuth />} />
           <Route path="/get-website" element={<GetWebsite />} />
+          <Route path="/demo/:orderId" element={<DemoPreview />} />
 
           {/* Protected business routes */}
           <Route path="/client/dashboard" element={
