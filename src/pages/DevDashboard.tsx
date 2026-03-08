@@ -516,9 +516,46 @@ export default function DevDashboard() {
     }
     
     setSubmittingGithub(true);
+    setQualityChecking(true);
+    setQualityReport(null);
     
     try {
-      // 1. Update build request to review
+      // Step 1: Quality check
+      toast({ title: "🔍 Running quality check...", description: "Analyzing your website code" });
+      
+      const report = await checkWebsiteQuality(githubSubmitUrl, {
+        name: selectedRequest.business_name,
+        type: selectedRequest.business_type,
+        city: selectedRequest.city,
+      });
+      
+      setQualityReport(report);
+      setQualityChecking(false);
+      
+      // Save quality report
+      await (supabase as any).from("quality_reports").insert({
+        build_request_id: selectedRequest.id,
+        score: report.score,
+        passed: report.passed,
+        checks: report.checks,
+        issues: report.issues,
+        fixes: report.fixes,
+        ai_suggestions: report.aiSuggestions,
+      });
+      
+      if (!report.passed) {
+        toast({
+          title: `⚠️ Quality score: ${report.score}/100`,
+          description: "Fix the issues and resubmit. Score must be ≥ 70.",
+          variant: "destructive"
+        });
+        setSubmittingGithub(false);
+        return;
+      }
+      
+      // Step 2: Update build request to review
+      toast({ title: "✅ Quality passed!", description: `Score: ${report.score}/100 — Deploying...` });
+      
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "review",
@@ -529,9 +566,7 @@ export default function DevDashboard() {
       
       if (error) throw error;
       
-      // 2. Auto deploy via Vercel
-      toast({ title: "🚀 Auto deploying...", description: "Deploying to Vercel..." });
-      
+      // Step 3: Auto deploy via Vercel
       const deployResult = await deployWebsite({
         id: selectedRequest.id,
         businessName: selectedRequest.business_name,
@@ -542,7 +577,6 @@ export default function DevDashboard() {
       });
       
       if (deployResult.success && deployResult.deployUrl) {
-        // 3. Update build request to live
         await (supabase as any).from("build_requests")
           .update({
             status: "live",
@@ -551,7 +585,6 @@ export default function DevDashboard() {
           })
           .eq("id", selectedRequest.id);
         
-        // 4. Create earnings record
         await (supabase as any).from("earnings").insert({
           vibe_coder_id: user?.id,
           amount: 800,
@@ -561,33 +594,30 @@ export default function DevDashboard() {
           created_at: new Date().toISOString(),
         });
         
-        // 5. WhatsApp notifications
         const ownerPhone = selectedRequest.owner_whatsapp?.replace(/\D/g, "") || "";
         if (ownerPhone) {
           window.open(`https://wa.me/91${ownerPhone}?text=${encodeURIComponent(`🎉 Aapki website LIVE ho gayi!\n\n🌐 ${deployResult.deployUrl}\n\nAb customers seedhe WhatsApp pe message karenge!\n\nLeadPe 🌱`)}`, "_blank");
         }
         
-        // Admin notification
-        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nQuality: ${report.score}/100\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
         
         toast({
           title: "🚀 Website Live!",
           description: `${deployResult.deployUrl} — ₹800 earned!`
         });
       } else {
-        // Deploy failed — keep in review, notify admin
         toast({
           title: "⚠️ Auto deploy failed",
           description: deployResult.error || "Admin will deploy manually.",
           variant: "destructive"
         });
         
-        // Still notify admin about submission
-        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`📋 GITHUB SUBMITTED (deploy failed)\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\nError: ${deployResult.error}\n━━━━━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`📋 GITHUB SUBMITTED (deploy failed)\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\nQuality: ${report.score}/100\nError: ${deployResult.error}\n━━━━━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
       }
       
       setGithubSubmitUrl("");
       setShowBriefModal(false);
+      setQualityReport(null);
       fetchData();
       
     } catch (error) {
@@ -599,6 +629,7 @@ export default function DevDashboard() {
       });
     } finally {
       setSubmittingGithub(false);
+      setQualityChecking(false);
     }
   };
 
