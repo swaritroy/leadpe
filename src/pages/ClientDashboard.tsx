@@ -1181,7 +1181,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Google Search Status */}
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-3">
                   <span className="text-yellow-500">⏳</span>
                   <span className="text-sm font-medium">Google Search</span>
