@@ -17,45 +17,60 @@ export type Database = {
       build_requests: {
         Row: {
           assigned_coder_id: string | null
+          assigned_coder_name: string | null
           business_id: string | null
           business_name: string | null
           business_type: string | null
           city: string | null
           created_at: string | null
           deadline: string | null
+          deploy_url: string | null
+          deployed_at: string | null
+          github_url: string | null
           id: string
           owner_name: string | null
           owner_whatsapp: string | null
           plan_selected: string | null
           status: string | null
+          submitted_at: string | null
         }
         Insert: {
           assigned_coder_id?: string | null
+          assigned_coder_name?: string | null
           business_id?: string | null
           business_name?: string | null
           business_type?: string | null
           city?: string | null
           created_at?: string | null
           deadline?: string | null
+          deploy_url?: string | null
+          deployed_at?: string | null
+          github_url?: string | null
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
           plan_selected?: string | null
           status?: string | null
+          submitted_at?: string | null
         }
         Update: {
           assigned_coder_id?: string | null
+          assigned_coder_name?: string | null
           business_id?: string | null
           business_name?: string | null
           business_type?: string | null
           city?: string | null
           created_at?: string | null
           deadline?: string | null
+          deploy_url?: string | null
+          deployed_at?: string | null
+          github_url?: string | null
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
           plan_selected?: string | null
           status?: string | null
+          submitted_at?: string | null
         }
         Relationships: []
       }
