@@ -921,7 +921,7 @@ export default function ClientDashboard() {
               </motion.div>
 
               {/* Blurred Lead Table Preview */}
-              <div className="hidden md:block rounded-2xl border border-border overflow-hidden opacity-50" style={{ backgroundColor: "#101810", filter: "blur(2px)" }}>
+              <div className="hidden md:block rounded-2xl border border-[#E0F2E9] overflow-hidden opacity-50" style={{ backgroundColor: "#FFFFFF", filter: "blur(2px)" }}>
                 <table className="w-full">
                   <thead>
                     <tr style={{ backgroundColor: "#080C09" }}>
