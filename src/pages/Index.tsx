@@ -1023,7 +1023,7 @@ export default function Index() {
                         value={bizForm.ownerName}
                         onChange={(e) => updateBizForm("ownerName", e.target.value)}
                         className={`rounded-xl border h-12 text-base ${bizErrors.ownerName ? "border-red-500" : "border-[#E8F5E9]"} focus:border-[#00C853]`}
-                        style={{ backgroundColor: "#000000" }}
+                        style={{ backgroundColor: "#FFFFFF" }}
                         placeholder="Your full name"
                       />
                       {bizErrors.ownerName && <p className="text-xs text-red-500 mt-1">{bizErrors.ownerName}</p>}
