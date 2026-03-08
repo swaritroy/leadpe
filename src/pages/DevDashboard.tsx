@@ -1247,7 +1247,7 @@ export default function DevDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               {/* Desktop Table */}
               <div className="hidden md:block">
                 <table className="w-full">
