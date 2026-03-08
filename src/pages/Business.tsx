@@ -24,52 +24,36 @@ const businessTypes = [
 
 const pricingPlans = [
   {
-    name: "Basic — FREE",
+    name: "Free Trial",
     price: "₹0",
-    period: "7 day trial",
-    desc: "Website building: ₹500-2000 (separate)",
+    period: "",
+    desc: "21 days — no credit card",
     featured: false,
     features: [
-      "✓ Website included",
-      "✓ 5 leads/month",
-      "✓ LeadPe subdomain"
+      "✓ Website built in 48 hours",
+      "✓ All leads visible",
+      "✓ WhatsApp ping active",
+      "✓ Full dashboard access",
     ],
-    cta: "Choose Basic",
-    value: "basic"
+    cta: "Choose Free Trial",
+    value: "trial"
   },
   {
-    name: "Growth — ₹299/mo",
+    name: "Growth Plan",
     price: "₹299",
     period: "/month",
-    desc: "Most Popular",
+    desc: "Unlimited leads + WhatsApp ping",
     featured: true,
     badge: "Most Popular",
     features: [
-      "✓ Everything in Basic",
-      "✓ Unlimited leads",
-      "✓ WhatsApp ping 🔔",
-      "✓ Weekly report",
-      "✓ Custom domain"
+      "✓ Everything in Free Trial",
+      "✓ Unlimited leads forever",
+      "✓ Instant WhatsApp ping",
+      "✓ Custom domain",
+      "✓ Weekly Monday report",
     ],
     cta: "Choose Growth",
     value: "growth"
-  },
-  {
-    name: "Pro — ₹999/mo",
-    price: "₹999",
-    period: "/month",
-    desc: "All Inclusive",
-    badge: "Founding Member Offer",
-    features: [
-      "✓ Website FREE included",
-      "✓ Everything in Growth",
-      "✓ AI booking",
-      "✓ Google Review auto",
-      "✓ Priority support",
-      "✓ Lock in price forever"
-    ],
-    cta: "Choose Pro",
-    value: "pro"
   }
 ];
 
