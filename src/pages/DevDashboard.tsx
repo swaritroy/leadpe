@@ -114,7 +114,7 @@ export default function DevDashboard() {
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [qualityChecking, setQualityChecking] = useState(false);
   const [widgetCopied, setWidgetCopied] = useState(false);
-
+  const [packageFilter, setPackageFilter] = useState("all");
   // Deploy flow states
   const [githubUrl, setGithubUrl] = useState("");
   const [urlError, setUrlError] = useState("");
