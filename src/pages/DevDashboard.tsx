@@ -1008,7 +1008,7 @@ export default function DevDashboard() {
                 </div>
 
                 {/* Your Earning */}
-                <div className="rounded-xl border border-border p-5 mb-6 mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-xl border border-[#E0F2E9] p-5 mb-6 mx-auto max-w-md" style={{ backgroundColor: "#F0FFF4" }}>
                   <p className="font-medium mb-3">Your earning from this site:</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
