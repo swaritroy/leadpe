@@ -608,9 +608,10 @@ export default function DevDashboard() {
         
         window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nQuality: ${report.score}/100\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
         
+        const earnedAmt = selectedRequest.coder_earning || 640;
         toast({
           title: "🚀 Website Live!",
-          description: `${deployResult.deployUrl} — ₹800 earned!`
+          description: `${deployResult.deployUrl} — ₹${earnedAmt} earned!`
         });
       } else {
         toast({
