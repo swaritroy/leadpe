@@ -818,7 +818,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.16 }}
             className="rounded-2xl border border-border p-5 mb-6"
-            style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <button 
               onClick={() => setShowPastReports(!showPastReports)}
