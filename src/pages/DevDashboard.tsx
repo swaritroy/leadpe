@@ -1352,7 +1352,7 @@ export default function DevDashboard() {
         <section className="mb-8">
           <h2 className="text-xl font-bold font-display mb-4">Your Earnings</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl p-6 border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">This Month</h3>
               <div className="text-3xl font-extrabold font-display mb-4" style={{ color: "#00E676" }}>
                 ₹{thisMonthEarned.toLocaleString()}
