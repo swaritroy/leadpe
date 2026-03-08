@@ -156,6 +156,8 @@ export default function Admin() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<any[]>([]);
+  const [copiedMsgId, setCopiedMsgId] = useState("");
   
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
