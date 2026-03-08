@@ -165,7 +165,7 @@ export default function Admin() {
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
