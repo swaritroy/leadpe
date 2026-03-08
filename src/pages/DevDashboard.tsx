@@ -1565,13 +1565,122 @@ export default function DevDashboard() {
                 </div>
               </div>
 
+              {/* Lead Widget Code Section */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-lg font-semibold" style={{ color: "#1A1A1A" }}>LeadPe Lead Form (REQUIRED)</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#FFEBEE", color: "#ef4444" }}>Must Include</span>
+                </div>
+                <div className="rounded-xl p-3 text-xs font-mono max-h-48 overflow-y-auto" style={{ backgroundColor: "#F1F3F5", color: "#1A1A1A", border: "1px solid #E0E0E0" }}>
+                  <pre className="whitespace-pre-wrap break-all">{generateLeadWidgetCode({
+                    id: selectedRequest.business_id || selectedRequest.id,
+                    name: selectedRequest.business_name,
+                    whatsapp: selectedRequest.owner_whatsapp,
+                  })}</pre>
+                </div>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(generateLeadWidgetCode({
+                      id: selectedRequest.business_id || selectedRequest.id,
+                      name: selectedRequest.business_name,
+                      whatsapp: selectedRequest.owner_whatsapp,
+                    }));
+                    setWidgetCopied(true);
+                    setTimeout(() => setWidgetCopied(false), 2000);
+                    toast({ title: "✅ Widget copied!", description: "Paste before </body> in your website" });
+                  }}
+                  className="w-full h-10 rounded-xl text-white font-semibold mt-3"
+                  style={{ backgroundColor: "#00C853" }}
+                >
+                  <ClipboardCopy size={16} className="mr-2" /> {widgetCopied ? "Copied! ✅" : "Copy Widget Code 📋"}
+                </Button>
+                <div className="rounded-xl p-3 mt-3" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FF9800" }}>
+                  <p className="text-xs font-medium" style={{ color: "#E65100" }}>
+                    ⚠️ Without this widget, website will FAIL quality check. Include it to get approved.
+                  </p>
+                </div>
+              </div>
+
               {selectedRequest.status === "building" && (
                 <div>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Submit for Review</h3>
                   <div className="space-y-3">
-                    <Input value={githubSubmitUrl} onChange={(e) => setGithubSubmitUrl(e.target.value)} placeholder="Enter GitHub repository URL" className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]" style={{ backgroundColor: "#FFFFFF" }} />
-                    <Button onClick={handleSubmitGithub} disabled={submittingGithub} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-                      {submittingGithub ? (<><Loader2 size={16} className="mr-2 animate-spin" /> Submitting...</>) : (<><Send size={16} className="mr-2" /> Submit GitHub URL →</>)}
+                    <Input value={githubSubmitUrl} onChange={(e) => { setGithubSubmitUrl(e.target.value); setQualityReport(null); }} placeholder="Enter GitHub repository URL" className="h-12 rounded-xl border-[#E0E0E0] focus:border-[#00C853]" style={{ backgroundColor: "#FFFFFF" }} />
+                    
+                    {/* Quality Report Display */}
+                    {qualityChecking && (
+                      <div className="rounded-xl p-4 text-center" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
+                        <Loader2 size={24} className="animate-spin mx-auto mb-2" style={{ color: "#00C853" }} />
+                        <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>Running AI quality check...</p>
+                        <p className="text-xs" style={{ color: "#666" }}>Analyzing code for 12 quality criteria</p>
+                      </div>
+                    )}
+                    
+                    {qualityReport && !qualityChecking && (
+                      <div className="rounded-xl p-4" style={{ 
+                        backgroundColor: qualityReport.passed ? "#F0FFF4" : "#FFF3E0", 
+                        border: `2px solid ${qualityReport.passed ? "#00C853" : "#FF6D00"}` 
+                      }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            {qualityReport.passed ? (
+                              <CheckCircle size={20} style={{ color: "#00C853" }} />
+                            ) : (
+                              <AlertCircle size={20} style={{ color: "#FF6D00" }} />
+                            )}
+                            <span className="font-bold text-lg">{qualityReport.score}/100</span>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${qualityReport.passed ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                            {qualityReport.passed ? "✅ Passed" : "⚠️ Needs Fixes"}
+                          </span>
+                        </div>
+                        
+                        {/* Checks grid */}
+                        <div className="grid grid-cols-2 gap-1 mb-3">
+                          {Object.entries(qualityReport.checks).map(([key, passed]) => (
+                            <div key={key} className="flex items-center gap-1 text-xs">
+                              {passed ? <CheckCircle size={12} style={{ color: "#00C853" }} /> : <XCircle size={12} style={{ color: "#ef4444" }} />}
+                              <span style={{ color: passed ? "#666" : "#ef4444" }}>
+                                {key.replace(/^has/, "").replace(/([A-Z])/g, " $1").trim()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Issues */}
+                        {qualityReport.issues.length > 0 && (
+                          <div className="space-y-1 mb-3">
+                            {qualityReport.issues.map((issue, i) => (
+                              <p key={i} className="text-xs" style={{ color: "#ef4444" }}>{issue}</p>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {!qualityReport.passed && (
+                          <Button
+                            onClick={() => {
+                              const prompt = generateFixPrompt(qualityReport, {
+                                name: selectedRequest.business_name,
+                                type: selectedRequest.business_type,
+                                city: selectedRequest.city,
+                              });
+                              navigator.clipboard.writeText(prompt);
+                              toast({ title: "✅ Fix prompt copied!", description: "Open Lovable and paste to fix issues" });
+                            }}
+                            variant="outline"
+                            className="w-full h-10 rounded-xl text-sm border-orange-400 text-orange-600 hover:bg-orange-50"
+                          >
+                            <Copy size={14} className="mr-2" /> Copy Fix Prompt for Lovable
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    
+                    <Button onClick={handleSubmitGithub} disabled={submittingGithub || qualityChecking} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                      {submittingGithub ? (
+                        qualityChecking ? (<><Loader2 size={16} className="mr-2 animate-spin" /> Checking quality...</>) :
+                        (<><Loader2 size={16} className="mr-2 animate-spin" /> Deploying...</>)
+                      ) : (<><Shield size={16} className="mr-2" /> Quality Check & Deploy →</>)}
                     </Button>
                   </div>
                 </div>
