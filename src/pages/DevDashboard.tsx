@@ -593,13 +593,12 @@ export default function DevDashboard() {
           })
           .eq("id", selectedRequest.id);
         
-        await (supabase as any).from("earnings").insert({
-          vibe_coder_id: user?.id,
-          amount: 800,
-          type: "building",
-          month: new Date().toISOString().slice(0, 7),
-          paid: false,
-          created_at: new Date().toISOString(),
+        const coderEarn = selectedRequest.coder_earning || 640;
+        
+        await updateCoderEarnings(user!.id, {
+          id: selectedRequest.id,
+          coder_earning: coderEarn,
+          business_name: selectedRequest.business_name,
         });
         
         const ownerPhone = selectedRequest.owner_whatsapp?.replace(/\D/g, "") || "";
