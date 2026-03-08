@@ -96,9 +96,12 @@ const ClientSettings = () => {
                 <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="rounded-xl bg-secondary border-border" />
               </div>
               <div>
-                <label className="text-sm font-medium block mb-1">URL Slug</label>
-                <span className="text-xs text-muted-foreground block mb-2">leadpe.online/view/your-slug</span>
-                <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} className="rounded-xl bg-secondary border-border" />
+                <label className="text-sm font-medium block mb-1">Subdomain</label>
+                <span className="text-xs text-muted-foreground block mb-2">Aapka website ka address — {form.slug || "yourname"}.leadpe.online</span>
+                <div className="flex items-center gap-0">
+                  <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} className="rounded-l-xl rounded-r-none border-r-0 bg-secondary border-border flex-1" placeholder="yourbusiness" />
+                  <span className="h-10 px-3 flex items-center bg-muted border border-border rounded-r-xl text-xs text-muted-foreground whitespace-nowrap">.leadpe.online</span>
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">Phone</label>

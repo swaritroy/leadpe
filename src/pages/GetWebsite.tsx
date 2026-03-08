@@ -42,6 +42,7 @@ export default function GetWebsite() {
   const [selectedPackage, setSelectedPackage] = useState("standard");
   const [domainOption, setDomainOption] = useState("subdomain");
   const [ownDomain, setOwnDomain] = useState("");
+  const [customSubdomain, setCustomSubdomain] = useState("");
   const [colorPref, setColorPref] = useState("green");
   const [referenceSite, setReferenceSite] = useState("");
   const [specialReqs, setSpecialReqs] = useState("");
@@ -60,7 +61,8 @@ export default function GetWebsite() {
     setLoading(true);
     const phone = form.whatsapp.replace(/\D/g, "");
 
-    const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${form.name}\nWhatsApp: ${phone} ✅\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nPackage: ${pkg.name} — ₹${pkg.price}\nDomain: ${domainOption === "subdomain" ? `${form.businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.online` : domainOption === "own" ? ownDomain : "We'll buy for you"}\nTotal: ₹${totalPrice}\n━━━━━━━━━━━━━━━━━━━━\nWhat you'll receive:\n${pkg.features.map((f) => `✅ ${f}`).join("\n")}\n━━━━━━━━━━━━━━━━━━━━\nTimeline:\nDemo ready: ${new Date(Date.now() + pkg.deliveryDays * 86400000).toLocaleDateString("en-IN")}\nPayment: Only after approval\n━━━━━━━━━━━━━━━━━━━━`;
+    const subdomainName = customSubdomain.trim() || form.businessName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${form.name}\nWhatsApp: ${phone} ✅\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nPackage: ${pkg.name} — ₹${pkg.price}\nDomain: ${domainOption === "subdomain" ? `${subdomainName}.leadpe.online` : domainOption === "own" ? ownDomain : "We'll buy for you"}\nTotal: ₹${totalPrice}\n━━━━━━━━━━━━━━━━━━━━\nWhat you'll receive:\n${pkg.features.map((f) => `✅ ${f}`).join("\n")}\n━━━━━━━━━━━━━━━━━━━━\nTimeline:\nDemo ready: ${new Date(Date.now() + pkg.deliveryDays * 86400000).toLocaleDateString("en-IN")}\nPayment: Only after approval\n━━━━━━━━━━━━━━━━━━━━`;
 
     const { data, error } = await (supabase as any).from("orders").insert({
       customer_name: form.name,
@@ -73,7 +75,7 @@ export default function GetWebsite() {
       package_id: selectedPackage,
       package_price: pkg.price,
       domain_option: domainOption,
-      own_domain: domainOption === "own" ? ownDomain : null,
+      own_domain: domainOption === "subdomain" ? `${subdomainName}.leadpe.online` : domainOption === "own" ? ownDomain : null,
       domain_addon_price: domainAddon,
       total_price: totalPrice,
       color_preference: colorPref,
@@ -266,7 +268,7 @@ export default function GetWebsite() {
                   <h3 className="font-bold text-[#1A1A1A] mb-3">Add Custom Domain?</h3>
                   <div className="space-y-3">
                     {[
-                      { id: "subdomain", label: "Use free subdomain", desc: `${form.businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.online`, price: "FREE" },
+                      { id: "subdomain", label: "Use free subdomain", desc: "Choose your own name", price: "FREE" },
                       { id: "own", label: "I have my own domain", desc: "Point your domain to us", price: "FREE" },
                       { id: "buy", label: "Buy domain for me", desc: "We buy and manage it", price: "+₹999/year" },
                     ].map((d) => (
@@ -278,6 +280,21 @@ export default function GetWebsite() {
                         </div>
                       </label>
                     ))}
+                    {domainOption === "subdomain" && (
+                      <div className="mt-2">
+                        <label className="text-xs font-medium text-[#1A1A1A] block mb-1">Your subdomain name</label>
+                        <div className="flex items-center gap-0">
+                          <Input 
+                            value={customSubdomain} 
+                            onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} 
+                            className="bg-white border-[#E0E0E0] h-10 rounded-l-xl rounded-r-none border-r-0 flex-1" 
+                            placeholder={form.businessName.toLowerCase().replace(/[^a-z0-9]/g, "") || "yourbusiness"} 
+                          />
+                          <span className="h-10 px-3 flex items-center bg-[#F5F5F5] border border-[#E0E0E0] rounded-r-xl text-xs text-[#666] whitespace-nowrap">.leadpe.online</span>
+                        </div>
+                        <p className="text-[10px] text-[#999] mt-1">Preview: <span className="font-medium text-[#00C853]">{(customSubdomain || form.businessName.toLowerCase().replace(/[^a-z0-9]/g, "") || "yourbusiness")}.leadpe.online</span></p>
+                      </div>
+                    )}
                     {domainOption === "own" && (
                       <Input value={ownDomain} onChange={(e) => setOwnDomain(e.target.value)} className="bg-white border-[#E0E0E0] h-10 rounded-xl mt-2" placeholder="Enter your domain" />
                     )}
