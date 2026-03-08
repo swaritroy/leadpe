@@ -818,76 +818,25 @@ export default function Index() {
         </div>
       </section>
 
-      {/* SECTION 9 — LAUNCH OFFER */}
-      <section className="py-16 bg-gradient-to-r from-[#00C853] to-[#00A843]">
+      {/* SECTION 9 — VIBE CODER BAR */}
+      <section className="py-10 md:py-12" style={{ backgroundColor: "#1A1A1A" }}>
         <div className="container px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-8"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-4">
-              <span className="text-white text-sm font-medium">🔥 LAUNCH OFFER — First 30 days only</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="text-sm text-[#999] mb-2">Are you a web developer or AI builder?</p>
+              <h3 className="text-xl md:text-2xl font-bold text-white leading-snug">
+                Join LeadPe Studio.<br />
+                Build websites.<br />
+                Earn ₹30/month per client.
+              </h3>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              "Founding Member" Badge
-            </h2>
-            <p className="text-xl text-white/90 mb-6">
-              Get ₹999 Pro plan with your website FREE
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
+            <Link
+              to="/studio"
+              className="w-full md:w-auto px-8 py-4 rounded-xl text-white font-semibold text-center"
+              style={{ backgroundColor: "#00C853" }}
             >
-              <h3 className="text-xl font-bold mb-4 text-white">What You Get:</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3 text-white/90">
-                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
-                  <span>Get your website FREE (worth ₹500-2000)</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
-                  <span>Priority onboarding with our team</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
-                  <span>Direct WhatsApp with founder</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <Check size={20} className="text-white flex-shrink-0 mt-1" />
-                  <span>Lock in ₹999 forever (price goes up later)</span>
-                </li>
-              </ul>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
-            >
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
-                  <span className="text-2xl font-bold text-white">50</span>
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-white">Limited Spots</h3>
-                <p className="text-white/90 mb-6">
-                  First 50 businesses only
-                </p>
-                <Button
-                  onClick={scrollToSignup}
-                  className="w-full h-12 rounded-xl bg-white text-[#00C853] font-semibold hover:bg-white/90 transition-all duration-300"
-                >
-                  Claim Your Spot Now
-                </Button>
-              </div>
-            </motion.div>
+              Join as Vibe Coder →
+            </Link>
           </div>
         </div>
       </section>
