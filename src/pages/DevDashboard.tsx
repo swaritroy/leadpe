@@ -11,6 +11,7 @@ import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO } from "@/lib/seoGenerator";
 import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 import { generateBrief, copyToClipboard, getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBrief";
+import { deployWebsite } from "@/lib/deployService";
 
 interface Deployment {
   id: string;
