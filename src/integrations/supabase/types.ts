@@ -425,6 +425,8 @@ export type Database = {
         Row: {
           business_id: string | null
           channel: string | null
+          delivery_status: string | null
+          error_message: string | null
           id: string
           language: string | null
           message: string | null
@@ -432,10 +434,13 @@ export type Database = {
           sent_at: string | null
           status: string | null
           to_number: string | null
+          twilio_sid: string | null
         }
         Insert: {
           business_id?: string | null
           channel?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
           id?: string
           language?: string | null
           message?: string | null
@@ -443,10 +448,13 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           to_number?: string | null
+          twilio_sid?: string | null
         }
         Update: {
           business_id?: string | null
           channel?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
           id?: string
           language?: string | null
           message?: string | null
@@ -454,6 +462,7 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           to_number?: string | null
+          twilio_sid?: string | null
         }
         Relationships: []
       }

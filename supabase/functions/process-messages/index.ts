@@ -70,25 +70,66 @@ Deno.serve(async (req) => {
       const data = await res.json();
 
       if (res.ok) {
+        // Update scheduled message
         await supabase
           .from("scheduled_messages")
           .update({ status: "sent", sent_at: new Date().toISOString() })
           .eq("id", msg.id);
+
+        // Log to message_log with tracking
+        await supabase.from("message_log").insert({
+          to_number: toNumber,
+          message: msg.message,
+          message_type: msg.type || "general",
+          channel: "whatsapp",
+          status: "sent",
+          delivery_status: data.status || "queued",
+          twilio_sid: data.sid,
+          sent_at: new Date().toISOString(),
+        });
+
         sent++;
-        console.log(`✅ Sent to ${toNumber}: ${data.sid}`);
+        console.log(`✅ Sent to ${toNumber}: ${data.sid} (status: ${data.status})`);
       } else {
+        const errorMsg = data.message || data.more_info || "Unknown Twilio error";
+        
         await supabase
           .from("scheduled_messages")
           .update({ status: "failed" })
           .eq("id", msg.id);
+
+        // Log failure to message_log
+        await supabase.from("message_log").insert({
+          to_number: toNumber,
+          message: msg.message,
+          message_type: msg.type || "general",
+          channel: "whatsapp",
+          status: "failed",
+          delivery_status: "failed",
+          error_message: errorMsg,
+          sent_at: new Date().toISOString(),
+        });
+
         failed++;
-        console.error(`❌ Failed ${toNumber}:`, data.message);
+        console.error(`❌ Failed ${toNumber}: ${errorMsg}`);
       }
     } catch (e) {
       await supabase
         .from("scheduled_messages")
         .update({ status: "failed" })
         .eq("id", msg.id);
+
+      await supabase.from("message_log").insert({
+        to_number: msg.to,
+        message: msg.message,
+        message_type: msg.type || "general",
+        channel: "whatsapp",
+        status: "failed",
+        delivery_status: "error",
+        error_message: e.message,
+        sent_at: new Date().toISOString(),
+      });
+
       failed++;
       console.error(`❌ Error for ${msg.id}:`, e.message);
     }
