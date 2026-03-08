@@ -505,9 +505,15 @@ export default function DevDashboard() {
       return;
     }
     
+    if (!githubSubmitUrl.includes("github.com")) {
+      toast({ title: "Invalid URL", description: "Please enter a valid GitHub URL", variant: "destructive" });
+      return;
+    }
+    
     setSubmittingGithub(true);
     
     try {
+      // 1. Update build request to review
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "review",
@@ -518,19 +524,62 @@ export default function DevDashboard() {
       
       if (error) throw error;
       
-      // Send WhatsApp to admin
-      await sendWhatsApp(
-        "919973383902",
-        `📋 GITHUB SUBMITTED\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\n━━━━━━━━━━━━━━\nLeadPe ⚡`,
-        selectedRequest.id,
-        'githubSubmitted',
-        'hinglish'
-      );
+      // 2. Auto deploy via Vercel
+      toast({ title: "🚀 Auto deploying...", description: "Deploying to Vercel..." });
       
-      toast({
-        title: "✅ Submitted for Review!",
-        description: "Your build has been submitted for quality check."
+      const deployResult = await deployWebsite({
+        id: selectedRequest.id,
+        businessName: selectedRequest.business_name,
+        businessType: selectedRequest.business_type,
+        city: selectedRequest.city,
+        githubUrl: githubSubmitUrl,
+        trialCode: "",
       });
+      
+      if (deployResult.success && deployResult.deployUrl) {
+        // 3. Update build request to live
+        await (supabase as any).from("build_requests")
+          .update({
+            status: "live",
+            deploy_url: deployResult.deployUrl,
+            deployed_at: new Date().toISOString()
+          })
+          .eq("id", selectedRequest.id);
+        
+        // 4. Create earnings record
+        await (supabase as any).from("earnings").insert({
+          vibe_coder_id: user?.id,
+          amount: 800,
+          type: "building",
+          month: new Date().toISOString().slice(0, 7),
+          paid: false,
+          created_at: new Date().toISOString(),
+        });
+        
+        // 5. WhatsApp notifications
+        const ownerPhone = selectedRequest.owner_whatsapp?.replace(/\D/g, "") || "";
+        if (ownerPhone) {
+          window.open(`https://wa.me/91${ownerPhone}?text=${encodeURIComponent(`🎉 Aapki website LIVE ho gayi!\n\n🌐 ${deployResult.deployUrl}\n\nAb customers seedhe WhatsApp pe message karenge!\n\nLeadPe 🌱`)}`, "_blank");
+        }
+        
+        // Admin notification
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ WEBSITE LIVE\n━━━━━━━━━━\nBusiness: ${selectedRequest.business_name}\nURL: ${deployResult.deployUrl}\nCoder: ${profile?.full_name}\n━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+        
+        toast({
+          title: "🚀 Website Live!",
+          description: `${deployResult.deployUrl} — ₹800 earned!`
+        });
+      } else {
+        // Deploy failed — keep in review, notify admin
+        toast({
+          title: "⚠️ Auto deploy failed",
+          description: deployResult.error || "Admin will deploy manually.",
+          variant: "destructive"
+        });
+        
+        // Still notify admin about submission
+        window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`📋 GITHUB SUBMITTED (deploy failed)\n━━━━━━━━━━━━━━\nCoder: ${profile?.full_name}\nBusiness: ${selectedRequest.business_name}\nGitHub: ${githubSubmitUrl}\nError: ${deployResult.error}\n━━━━━━━━━━━━━━\nLeadPe ⚡`)}`, "_blank");
+      }
       
       setGithubSubmitUrl("");
       setShowBriefModal(false);
