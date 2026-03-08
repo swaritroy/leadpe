@@ -679,7 +679,7 @@ export default function Admin() {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Business</th>
                       <th className="text-left p-4 text-sm font-medium">City</th>
                       <th className="text-left p-4 text-sm font-medium">Type</th>
@@ -732,7 +732,7 @@ export default function Admin() {
                   const businessLeads = leads.filter(l => l.business_id === b.id).length;
                   const deployment = deployments.find(d => d.owner_whatsapp === b.whatsapp_number);
                   return (
-                    <div key={b.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div key={b.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">{b.business_name || b.full_name}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${b.status === "active" ? "bg-green-500/20 text-green-400" : b.status === "trial" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>{b.status}</span>
@@ -764,18 +764,18 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("coders") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={coderSearch} onChange={(e) => setCoderSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#080C09" }} placeholder="Search coders..." />
+                  <Input value={coderSearch} onChange={(e) => setCoderSearch(e.target.value)} className="pl-9 h-10 rounded-lg border-border" style={{ backgroundColor: "#FAFAFA" }} placeholder="Search coders..." />
                 </div>
               </div>
               
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
                       <th className="text-left p-4 text-sm font-medium">WhatsApp</th>
                       <th className="text-left p-4 text-sm font-medium">Sites Built</th>
@@ -820,7 +820,7 @@ export default function Admin() {
                   const coderEarnings = earnings.filter(e => e.vibe_coder_id === c.id);
                   const unpaid = coderEarnings.filter(e => !e.paid).reduce((sum, e) => sum + e.amount, 0);
                   return (
-                    <div key={c.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                    <div key={c.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold">{c.full_name}</span>
                         <span className="font-bold" style={{ color: "#00E676" }}>₹{unpaid.toLocaleString()}</span>
@@ -848,11 +848,11 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("buildRequests") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead style={{ backgroundColor: "#080C09" }}>
+                  <thead style={{ backgroundColor: "#F0FFF4" }}>
                     <tr>
                       <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Business</th>
                       <th className="p-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type | City</th>
@@ -918,7 +918,7 @@ export default function Admin() {
                                   assignCoder(request.id, e.target.value);
                                 }
                               }}
-                              className="text-xs px-2 py-1 rounded border border-border bg-[#080C09] text-foreground"
+                              className="text-xs px-2 py-1 rounded border border-[#E0F2E9] bg-[#FAFAFA] text-foreground"
                               defaultValue=""
                             >
                               <option value="">Assign...</option>
@@ -945,7 +945,7 @@ export default function Admin() {
               {/* Mobile Cards */}
               <div className="md:hidden p-4 space-y-3">
                 {buildRequests.map((request) => (
-                  <div key={request.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                  <div key={request.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getBusinessIcon(request.business_type)}</span>
@@ -978,7 +978,7 @@ export default function Admin() {
                             assignCoder(request.id, e.target.value);
                           }
                         }}
-                        className="w-full text-xs px-2 py-1 rounded border border-border bg-[#080C09] text-foreground"
+                        className="w-full text-xs px-2 py-1 rounded border border-[#E0F2E9] bg-[#FAFAFA] text-foreground"
                         defaultValue=""
                       >
                         <option value="">Assign coder...</option>
@@ -1012,15 +1012,15 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("revenue") && (
-            <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-6" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1f1a" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0F2E9" />
                     <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(val) => `₹${val}`} />
-                    <Tooltip contentStyle={{ backgroundColor: "#101810", border: "1px solid #1a1f1a", borderRadius: "8px" }} itemStyle={{ color: "#00E676" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
-                    <Bar dataKey="revenue" fill="#00E676" radius={[4, 4, 0, 0]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #E0F2E9", borderRadius: "8px" }} itemStyle={{ color: "#00C853" }} formatter={(val: number) => [`₹${val.toLocaleString()}`, "Revenue"]} />
+                    <Bar dataKey="revenue" fill="#00C853" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1039,7 +1039,7 @@ export default function Admin() {
           </div>
           
           {expandedSections.has("payouts") && (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               {payouts.length === 0 ? (
                 <div className="p-8 text-center">
                   <DollarSign size={32} className="mx-auto mb-2 text-muted-foreground" />
@@ -1055,7 +1055,7 @@ export default function Admin() {
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr style={{ backgroundColor: "#080C09" }}>
+                        <tr style={{ backgroundColor: "#F0FFF4" }}>
                           <th className="text-left p-4 text-sm font-medium">Vibe Coder</th>
                           <th className="text-left p-4 text-sm font-medium">Active Sites</th>
                           <th className="text-left p-4 text-sm font-medium">Monthly Passive</th>
@@ -1083,7 +1083,7 @@ export default function Admin() {
                   
                   <div className="md:hidden p-4 space-y-3">
                     {payouts.map((p) => (
-                      <div key={p.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                      <div key={p.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-semibold">{p.name}</span>
                           <span className="font-bold" style={{ color: "#00E676" }}>₹{p.total.toLocaleString()}</span>
@@ -1113,7 +1113,7 @@ export default function Admin() {
           
           {expandedSections.has("quick") && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button onClick={() => toast({ title: "Reports", description: "Weekly reports triggered" })} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={() => toast({ title: "Reports", description: "Weekly reports triggered" })} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <TrendingUp size={24} style={{ color: "#00E676" }} />
                 </div>
@@ -1121,7 +1121,7 @@ export default function Admin() {
                 <div className="text-xs text-muted-foreground">Trigger all Day 4 reports</div>
               </button>
               
-              <button onClick={() => toast({ title: "Trial Status", description: `${businesses.filter(b => b.status === "trial").length} businesses on trial` })} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={() => toast({ title: "Trial Status", description: `${businesses.filter(b => b.status === "trial").length} businesses on trial` })} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <AlertCircle size={24} style={{ color: "#00E676" }} />
                 </div>
@@ -1129,7 +1129,7 @@ export default function Admin() {
                 <div className="text-xs text-muted-foreground">View trial day statuses</div>
               </button>
               
-              <button onClick={exportCSV} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={exportCSV} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <FileSpreadsheet size={24} style={{ color: "#00E676" }} />
                 </div>
@@ -1137,7 +1137,7 @@ export default function Admin() {
                 <div className="text-xs text-muted-foreground">Download all business data</div>
               </button>
               
-              <button onClick={() => toast({ title: "Platform Health", description: "All systems operational" })} className="p-6 rounded-2xl border border-border text-left hover:border-[#00E676]/50 transition-colors" style={{ backgroundColor: "#101810" }}>
+              <button onClick={() => toast({ title: "Platform Health", description: "All systems operational" })} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                   <Zap size={24} style={{ color: "#00E676" }} />
                 </div>

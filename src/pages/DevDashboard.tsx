@@ -735,7 +735,7 @@ export default function DevDashboard() {
                 {/* Score Card */}
                 <div
                   className="rounded-2xl border-2 p-6 text-center"
-                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                  style={{ borderColor: "#00C853", backgroundColor: "#FFFFFF" }}
                 >
                   <div className="text-5xl font-extrabold font-display mb-2" style={{ color: "#00E676" }}>
                     {finalScore}/100
@@ -747,7 +747,7 @@ export default function DevDashboard() {
 
                 {/* Auto-fix Summary */}
                 {autoFixes.length > 0 && (
-                  <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#101810" }}>
+                  <div className="rounded-xl border border-[#E0F2E9] p-4" style={{ backgroundColor: "#F0FFF4" }}>
                     <p className="text-sm font-medium mb-3">We automatically improved:</p>
                     <div className="space-y-2">
                       {autoFixes.map((fix, i) => (
@@ -762,7 +762,7 @@ export default function DevDashboard() {
                 )}
 
                 {/* Business Details Form */}
-                <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-2xl border border-[#E0F2E9] p-6" style={{ backgroundColor: "#FFFFFF" }}>
                   <h3 className="text-xl font-bold font-display mb-2">Almost Live! 🎉</h3>
                   <p className="text-muted-foreground mb-6">Tell us about this business to complete deployment.</p>
 
@@ -899,7 +899,7 @@ export default function DevDashboard() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="rounded-2xl border-2 p-6 text-center"
-                style={{ borderColor: "#ef4444", backgroundColor: "#101810" }}
+                style={{ borderColor: "#ef4444", backgroundColor: "#FFFFFF" }}
               >
                 <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
                   <XCircle size={32} style={{ color: "#ef4444" }} />
@@ -959,7 +959,7 @@ export default function DevDashboard() {
                 {/* Green Card */}
                 <div
                   className="rounded-2xl border-2 p-6 mb-6 mx-auto max-w-md"
-                  style={{ borderColor: "#00E676", backgroundColor: "#101810" }}
+                  style={{ borderColor: "#00C853", backgroundColor: "#FFFFFF" }}
                 >
                   <p className="text-lg font-medium mb-4" style={{ color: "#00E676" }}>
                     {deployedSubdomain}
@@ -985,7 +985,7 @@ export default function DevDashboard() {
                 </div>
 
                 {/* What Happens Next */}
-                <div className="rounded-xl border border-border p-5 mb-6 text-left mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-xl border border-[#E0F2E9] p-5 mb-6 text-left mx-auto max-w-md" style={{ backgroundColor: "#F0FFF4" }}>
                   <p className="font-medium mb-3">What happens next:</p>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <p className="flex items-start gap-2">
@@ -1008,7 +1008,7 @@ export default function DevDashboard() {
                 </div>
 
                 {/* Your Earning */}
-                <div className="rounded-xl border border-border p-5 mb-6 mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-xl border border-[#E0F2E9] p-5 mb-6 mx-auto max-w-md" style={{ backgroundColor: "#F0FFF4" }}>
                   <p className="font-medium mb-3">Your earning from this site:</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -1053,7 +1053,7 @@ export default function DevDashboard() {
           <p className="text-sm text-muted-foreground mb-4">Accept a request and start earning.</p>
           
           {buildRequests.length === 0 ? (
-            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                 <Wrench size={24} style={{ color: "#00E676" }} />
               </div>
@@ -1230,7 +1230,7 @@ export default function DevDashboard() {
           <h2 className="text-xl font-bold font-display mb-4">My Deployed Sites</h2>
 
           {deployments.length === 0 ? (
-            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
                 <ExternalLink size={24} style={{ color: "#00E676" }} />
               </div>
@@ -1247,12 +1247,12 @@ export default function DevDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
               {/* Desktop Table */}
               <div className="hidden md:block">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Business Name</th>
                       <th className="text-left p-4 text-sm font-medium">Type</th>
                       <th className="text-left p-4 text-sm font-medium">City</th>
@@ -1308,7 +1308,7 @@ export default function DevDashboard() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-4 p-4">
                 {deployments.map((site) => (
-                  <div key={site.id} className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+                  <div key={site.id} className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold">{site.business_name}</span>
                       <span
@@ -1352,7 +1352,7 @@ export default function DevDashboard() {
         <section className="mb-8">
           <h2 className="text-xl font-bold font-display mb-4">Your Earnings</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl p-6 border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">This Month</h3>
               <div className="text-3xl font-extrabold font-display mb-4" style={{ color: "#00E676" }}>
                 ₹{thisMonthEarned.toLocaleString()}
@@ -1373,7 +1373,7 @@ export default function DevDashboard() {
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl p-6 border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Payout Status</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
@@ -1392,7 +1392,7 @@ export default function DevDashboard() {
                   disabled={thisMonthEarned < 200}
                   className="w-full h-12 rounded-xl font-semibold"
                   style={{
-                    backgroundColor: thisMonthEarned >= 200 ? "#00E676" : "#1a1f1a",
+                    backgroundColor: thisMonthEarned >= 200 ? "#00C853" : "#E0E0E0",
                     color: thisMonthEarned >= 200 ? "#000" : "#666",
                   }}
                 >

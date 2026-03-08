@@ -769,7 +769,7 @@ export default function ClientDashboard() {
             
             {/* 2x2 Grid Metrics */}
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-3 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">👁</span>
                   <span className="text-xs text-muted-foreground">Visitors</span>
@@ -777,7 +777,7 @@ export default function ClientDashboard() {
                 <div className="text-2xl font-bold">{weeklyReport.visitors}</div>
               </div>
               
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-3 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">📋</span>
                   <span className="text-xs text-muted-foreground">Inquiries</span>
@@ -785,7 +785,7 @@ export default function ClientDashboard() {
                 <div className="text-2xl font-bold" style={{ color: "#00E676" }}>{weeklyReport.leadsThisWeek}</div>
               </div>
               
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-3 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">📈</span>
                   <span className="text-xs text-muted-foreground">vs Last Week</span>
@@ -795,7 +795,7 @@ export default function ClientDashboard() {
                 </div>
               </div>
               
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-3 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">⚡</span>
                   <span className="text-xs text-muted-foreground">Site Health</span>
@@ -805,7 +805,7 @@ export default function ClientDashboard() {
             </div>
             
             {/* Auto Tip */}
-            <div className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+            <div className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
               <p className="text-sm">{weeklyReport.tip}</p>
             </div>
           </motion.div>
@@ -818,7 +818,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.16 }}
             className="rounded-2xl border border-border p-5 mb-6"
-            style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <button 
               onClick={() => setShowPastReports(!showPastReports)}
@@ -921,10 +921,10 @@ export default function ClientDashboard() {
               </motion.div>
 
               {/* Blurred Lead Table Preview */}
-              <div className="hidden md:block rounded-2xl border border-border overflow-hidden opacity-50" style={{ backgroundColor: "#101810", filter: "blur(2px)" }}>
+              <div className="hidden md:block rounded-2xl border border-[#E0F2E9] overflow-hidden opacity-50" style={{ backgroundColor: "#FFFFFF", filter: "blur(2px)" }}>
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
                       <th className="text-left p-4 text-sm font-medium">Interest</th>
                       <th className="text-left p-4 text-sm font-medium">Number</th>
@@ -947,7 +947,7 @@ export default function ClientDashboard() {
               {/* Mobile Blurred Cards */}
               <div className="md:hidden space-y-3 opacity-50">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-xl border border-border p-4" style={{ backgroundColor: "#101810", filter: "blur(2px)" }}>
+                  <div key={i} className="rounded-xl border border-[#E0F2E9] p-4" style={{ backgroundColor: "#FFFFFF", filter: "blur(2px)" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold" style={{ filter: "blur(6px)" }}>███████</span>
                     </div>
@@ -962,13 +962,13 @@ export default function ClientDashboard() {
             </>
           ) : leads.length === 0 ? (
             // Empty State
-            <div className="rounded-2xl border border-border p-8 text-center" style={{ backgroundColor: "#101810" }}>
+            <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center" style={{ backgroundColor: "#FFFFFF" }}>
               <div className="text-4xl mb-4">📭</div>
               <p className="font-medium mb-2">No inquiries yet.</p>
               <p className="text-sm text-muted-foreground mb-4">Your site is working hard. First leads usually arrive within 7 days of going live.</p>
-              <div className="p-4 rounded-xl border border-dashed border-border mb-4" style={{ backgroundColor: "#080C09" }}>
+              <div className="p-4 rounded-xl border border-dashed border-[#E0F2E9] mb-4" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm text-muted-foreground mb-3">💡 Tip: Share your site link in your WhatsApp groups to get leads faster!</p>
-                <Button onClick={handleCopyLink} className="h-10 rounded-lg border border-border" style={{ backgroundColor: "#101810" }}>
+                <Button onClick={handleCopyLink} className="h-10 rounded-lg border border-[#E0F2E9]" style={{ backgroundColor: "#FFFFFF" }}>
                   <Copy size={16} className="mr-2" /> Copy Site Link
                 </Button>
               </div>
@@ -977,10 +977,10 @@ export default function ClientDashboard() {
             // ACTIVE STATE - Full Lead Display
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block rounded-2xl border border-border overflow-hidden" style={{ backgroundColor: "#101810" }}>
+              <div className="hidden md:block rounded-2xl border border-[#E0F2E9] overflow-hidden" style={{ backgroundColor: "#FFFFFF" }}>
                 <table className="w-full">
                   <thead>
-                    <tr style={{ backgroundColor: "#080C09" }}>
+                    <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
                       <th className="text-left p-4 text-sm font-medium">Interest</th>
                       <th className="text-left p-4 text-sm font-medium">Number</th>
@@ -1046,7 +1046,7 @@ export default function ClientDashboard() {
               {/* Mobile Cards */}
               <div className="md:hidden space-y-3">
                 {leads.map((lead) => (
-                  <div key={lead.id} className={`rounded-xl border border-border p-4 ${lead.id === "demo" ? "opacity-50" : ""}`} style={{ backgroundColor: "#101810" }}>
+                  <div key={lead.id} className={`rounded-xl border border-[#E0F2E9] p-4 ${lead.id === "demo" ? "opacity-50" : ""}`} style={{ backgroundColor: "#FFFFFF" }}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold">{lead.customer_name}</span>
                       {lead.id === "demo" ? (
@@ -1103,7 +1103,7 @@ export default function ClientDashboard() {
         </section>
 
         {/* Weekly Report */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-2xl border border-border p-5 mb-6" style={{ backgroundColor: "#101810" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-2xl border border-[#E0F2E9] p-5 mb-6" style={{ backgroundColor: "#FFFFFF" }}>
           <h2 className="text-lg font-bold font-display mb-4">This Week's Performance</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
@@ -1127,13 +1127,13 @@ export default function ClientDashboard() {
               <div className="text-xs text-muted-foreground">Site Speed</div>
             </div>
           </div>
-          <div className="p-4 rounded-xl border border-border" style={{ backgroundColor: "#080C09" }}>
+          <div className="p-4 rounded-xl border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
             <p className="text-sm">💡 <span className="font-medium">Tip of the week:</span> {getTip()}</p>
           </div>
         </motion.div>
 
         {/* Plan & Wallet */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border p-5 mb-6" style={{ backgroundColor: "#101810" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-[#E0F2E9] p-5 mb-6" style={{ backgroundColor: "#FFFFFF" }}>
           <h2 className="text-lg font-bold font-display mb-4">Your Plan</h2>
           <div className="flex items-center gap-3 mb-4">
             <span className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)", color: "#00E676" }}>
@@ -1142,7 +1142,7 @@ export default function ClientDashboard() {
             {isTrial && <span className="text-sm text-muted-foreground">Trial ends in {trialDaysLeft} days</span>}
           </div>
           {plan === "basic" && isActive && (
-            <div className="p-4 rounded-xl border border-dashed border-border mb-4" style={{ backgroundColor: "#080C09" }}>
+            <div className="p-4 rounded-xl border border-dashed border-[#E0F2E9] mb-4" style={{ backgroundColor: "#F0FFF4" }}>
               <p className="text-sm text-muted-foreground mb-3">More customers are waiting. Growth plan gives you unlimited leads and WhatsApp notifications.</p>
               <Button 
                 onClick={() => setShowRenewModal(true)}
@@ -1162,7 +1162,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.35 }} 
             className="rounded-2xl border border-border p-5 mb-6" 
-            style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">🗺️</span>
@@ -1172,7 +1172,7 @@ export default function ClientDashboard() {
             {/* Three Simple Status Items */}
             <div className="space-y-3">
               {/* Website Status */}
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-3">
                   <span className="text-green-500">✅</span>
                   <span className="text-sm font-medium">Website</span>
@@ -1181,7 +1181,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Google Search Status */}
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-3">
                   <span className="text-yellow-500">⏳</span>
                   <span className="text-sm font-medium">Google Search</span>
@@ -1193,7 +1193,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Google Maps Status */}
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#080C09" }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F0FFF4" }}>
                 <div className="flex items-center gap-3">
                   <span className="text-yellow-500">⏳</span>
                   <span className="text-sm font-medium">Google Maps</span>
@@ -1218,7 +1218,7 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.4 }} 
             className="rounded-2xl border border-border p-5 mb-6" 
-            style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
@@ -1252,7 +1252,7 @@ export default function ClientDashboard() {
                 key={action.id}
                 onClick={() => setActiveModal(action.id)}
                 className="p-4 rounded-xl border border-border text-left hover:border-[#00E676]/30 transition-colors"
-                style={{ backgroundColor: "#101810" }}
+                style={{ backgroundColor: "#FFFFFF" }}
               >
                 <action.icon size={20} className="mb-2" style={{ color: "#00E676" }} />
                 <span className="text-sm font-medium">{action.label}</span>
@@ -1267,7 +1267,7 @@ export default function ClientDashboard() {
           animate={{ opacity: 1, y: 0 }} 
           transition={{ delay: 0.45 }} 
           className="rounded-2xl border border-border p-5 mb-6" 
-          style={{ backgroundColor: "#101810" }}
+            style={{ backgroundColor: "#FFFFFF" }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1282,7 +1282,7 @@ export default function ClientDashboard() {
             <button
               onClick={() => setShowLanguageSelector(true)}
               className="px-4 py-2 rounded-lg text-sm font-medium border border-border hover:border-[#00E676] transition-colors"
-              style={{ backgroundColor: "#080C09" }}
+              style={{ backgroundColor: "#F0FFF4" }}
             >
               {languageLabels[profile?.preferred_language || "hinglish"].flag} {languageLabels[profile?.preferred_language || "hinglish"].label}
             </button>
@@ -1319,7 +1319,7 @@ export default function ClientDashboard() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-sm rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold">
@@ -1390,7 +1390,7 @@ export default function ClientDashboard() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-md rounded-2xl border border-border p-6"
-              style={{ backgroundColor: "#101810" }}
+              style={{ backgroundColor: "#FFFFFF" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -1404,7 +1404,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Week Results */}
-              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#080C09" }}>
+              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm text-muted-foreground mb-2">This week:</p>
                 <p className="text-lg font-bold mb-1">
                   {weeklyReport?.leadsThisWeek || realLeadsCount || 0} people tried to contact you
@@ -1427,7 +1427,7 @@ export default function ClientDashboard() {
               </div>
 
               {/* Payment Instructions */}
-              <div className="rounded-xl p-4 mb-4 border border-border" style={{ backgroundColor: "#080C09" }}>
+              <div className="rounded-xl p-4 mb-4 border border-[#E0F2E9]" style={{ backgroundColor: "#F0FFF4" }}>
                 <p className="text-sm font-medium mb-3">Pay via GPay/PhonePe:</p>
                 <div 
                   className="text-2xl font-bold text-center mb-3"

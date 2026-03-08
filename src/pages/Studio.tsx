@@ -351,7 +351,7 @@ export default function Studio() {
                 value={clientCount}
                 onChange={(e) => setClientCount(parseInt(e.target.value))}
                 className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                style={{ backgroundColor: "#1a1f1a", accentColor: "#00E676" }}
+                style={{ backgroundColor: "#E0F2E9", accentColor: "#00C853" }}
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-2">
                 <span>1</span>
