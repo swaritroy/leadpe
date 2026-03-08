@@ -985,7 +985,7 @@ export default function DevDashboard() {
                 </div>
 
                 {/* What Happens Next */}
-                <div className="rounded-xl border border-border p-5 mb-6 text-left mx-auto max-w-md" style={{ backgroundColor: "#101810" }}>
+                <div className="rounded-xl border border-[#E0F2E9] p-5 mb-6 text-left mx-auto max-w-md" style={{ backgroundColor: "#F0FFF4" }}>
                   <p className="font-medium mb-3">What happens next:</p>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <p className="flex items-start gap-2">
