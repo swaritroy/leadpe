@@ -117,16 +117,42 @@ export default function ClientDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch leads (using profile as business_id won't work without a business, so we skip if no business)
-    // For now leads show empty state
-    const channel = supabase
-      .channel("client-leads")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, (payload) => {
-        setLeads((prev) => [payload.new as Lead, ...prev]);
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    // Fetch leads for this business
+    const fetchLeads = async () => {
+      const { data: businessData } = await (supabase.from("businesses") as any)
+        .select("id")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+      
+      if (businessData) {
+        const { data: leadsData } = await (supabase.from("leads") as any)
+          .select("*")
+          .eq("business_id", businessData.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        setLeads(leadsData || []);
+        
+        // Realtime leads for this business
+        const channel = supabase
+          .channel("client-leads")
+          .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "leads",
+            filter: `business_id=eq.${businessData.id}`,
+          }, (payload) => {
+            const newLead = payload.new as Lead;
+            setLeads((prev) => [newLead, ...prev]);
+            setNewLeadAlert(newLead);
+            setTimeout(() => setNewLeadAlert(null), 5000);
+          })
+          .subscribe();
+        
+        return () => { supabase.removeChannel(channel); };
+      }
+    };
+    
+    fetchLeads();
   }, [user]);
 
   const handleSignOut = async () => {
