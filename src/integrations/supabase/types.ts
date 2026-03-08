@@ -457,6 +457,150 @@ export type Database = {
         }
         Relationships: []
       }
+      order_timeline: {
+        Row: {
+          details: string | null
+          event: string
+          id: string
+          order_id: string
+          timestamp: string | null
+        }
+        Insert: {
+          details?: string | null
+          event: string
+          id?: string
+          order_id: string
+          timestamp?: string | null
+        }
+        Update: {
+          details?: string | null
+          event?: string
+          id?: string
+          order_id?: string
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          assigned_coder_id: string | null
+          assigned_coder_name: string | null
+          build_record: string | null
+          business_description: string | null
+          business_name: string
+          business_since: string | null
+          business_type: string | null
+          city: string | null
+          color_preference: string | null
+          created_at: string | null
+          customer_name: string
+          customer_whatsapp: string
+          demo_approved_at: string | null
+          demo_sent_at: string | null
+          demo_url: string | null
+          demo_viewed_at: string | null
+          domain_addon_price: number | null
+          domain_option: string | null
+          id: string
+          live_url: string | null
+          logo_url: string | null
+          order_id: string | null
+          own_domain: string | null
+          package_id: string
+          package_price: number
+          payment_amount: number | null
+          payment_received_at: string | null
+          payment_status: string | null
+          photos_urls: string[] | null
+          reference_site: string | null
+          revision_count: number | null
+          revision_requests: Json | null
+          special_requirements: string | null
+          status: string | null
+          total_price: number
+          went_live_at: string | null
+          whatsapp_verified: boolean | null
+        }
+        Insert: {
+          assigned_coder_id?: string | null
+          assigned_coder_name?: string | null
+          build_record?: string | null
+          business_description?: string | null
+          business_name: string
+          business_since?: string | null
+          business_type?: string | null
+          city?: string | null
+          color_preference?: string | null
+          created_at?: string | null
+          customer_name: string
+          customer_whatsapp: string
+          demo_approved_at?: string | null
+          demo_sent_at?: string | null
+          demo_url?: string | null
+          demo_viewed_at?: string | null
+          domain_addon_price?: number | null
+          domain_option?: string | null
+          id?: string
+          live_url?: string | null
+          logo_url?: string | null
+          order_id?: string | null
+          own_domain?: string | null
+          package_id?: string
+          package_price?: number
+          payment_amount?: number | null
+          payment_received_at?: string | null
+          payment_status?: string | null
+          photos_urls?: string[] | null
+          reference_site?: string | null
+          revision_count?: number | null
+          revision_requests?: Json | null
+          special_requirements?: string | null
+          status?: string | null
+          total_price?: number
+          went_live_at?: string | null
+          whatsapp_verified?: boolean | null
+        }
+        Update: {
+          assigned_coder_id?: string | null
+          assigned_coder_name?: string | null
+          build_record?: string | null
+          business_description?: string | null
+          business_name?: string
+          business_since?: string | null
+          business_type?: string | null
+          city?: string | null
+          color_preference?: string | null
+          created_at?: string | null
+          customer_name?: string
+          customer_whatsapp?: string
+          demo_approved_at?: string | null
+          demo_sent_at?: string | null
+          demo_url?: string | null
+          demo_viewed_at?: string | null
+          domain_addon_price?: number | null
+          domain_option?: string | null
+          id?: string
+          live_url?: string | null
+          logo_url?: string | null
+          order_id?: string | null
+          own_domain?: string | null
+          package_id?: string
+          package_price?: number
+          payment_amount?: number | null
+          payment_received_at?: string | null
+          payment_status?: string | null
+          photos_urls?: string[] | null
+          reference_site?: string | null
+          revision_count?: number | null
+          revision_requests?: Json | null
+          special_requirements?: string | null
+          status?: string | null
+          total_price?: number
+          went_live_at?: string | null
+          whatsapp_verified?: boolean | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           activated_at: string | null
