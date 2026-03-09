@@ -307,17 +307,17 @@ export default function Index() {
 
             {/* GROWTH */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
-              className="rounded-2xl p-8 relative" style={{ backgroundColor: "#1A1A1A", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+              className="rounded-2xl p-8 relative border-2" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4" style={{ backgroundColor: "#00C853" }}>Most Popular</span>
               <div className="mb-1">
-                <span className="text-5xl font-bold text-white" style={{ fontFamily: "Syne" }}>₹299</span>
-                <span className="text-base ml-1" style={{ color: "#999999" }}>/month</span>
+                <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹299</span>
+                <span className="text-base ml-1" style={{ color: "#666666" }}>/month</span>
               </div>
               <p className="text-xs mb-1" style={{ color: "#666666" }}>GST included</p>
               <p className="text-xs mb-6" style={{ color: "#666666" }}>Cancel anytime</p>
               <ul className="space-y-2.5 mb-4">
                 {["Everything in Free Trial", "Unlimited leads forever", "Instant WhatsApp ping 🔔", "Custom domain", "Weekly Monday report", "Priority support"].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white"><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
+                  <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
               <p className="text-xs mb-6" style={{ color: "#00C853" }}>1 customer = ₹1,500+ • LeadPe = ₹299/mo</p>
