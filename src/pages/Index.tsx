@@ -309,7 +309,9 @@ export default function Index() {
 
             {/* GROWTH */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
-              className="rounded-2xl p-8 relative border-2" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
+              whileHover={{ y: -8, boxShadow: "0 24px 80px rgba(0,200,83,0.25)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="rounded-2xl p-8 relative border-2 cursor-pointer" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4" style={{ backgroundColor: "#00C853" }}>Most Popular</span>
               <div className="mb-1">
                 <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹299</span>
