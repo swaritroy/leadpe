@@ -289,7 +289,9 @@ export default function Index() {
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start mb-8">
             {/* FREE TRIAL */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
-              className="rounded-2xl p-8 bg-white border" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+              whileHover={{ y: -8, boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="rounded-2xl p-8 bg-white border cursor-pointer" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Try Free</span>
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
               <p className="text-sm mb-1" style={{ color: "#1A1A1A" }}>21 days free</p>
@@ -307,7 +309,9 @@ export default function Index() {
 
             {/* GROWTH */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
-              className="rounded-2xl p-8 relative border-2" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
+              whileHover={{ y: -8, boxShadow: "0 24px 80px rgba(0,200,83,0.25)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="rounded-2xl p-8 relative border-2 cursor-pointer" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4" style={{ backgroundColor: "#00C853" }}>Most Popular</span>
               <div className="mb-1">
                 <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹299</span>
