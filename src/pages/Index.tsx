@@ -116,7 +116,7 @@ export default function Index() {
               </>
             ) : (
               <>
-                <Link to="/auth" className="text-sm hidden sm:block" style={{ color: "#666666" }}>Sign In</Link>
+                <Link to="/auth" className="text-sm font-medium" style={{ color: "#1A1A1A" }}>Sign In</Link>
                 <Button onClick={() => navigate("/business")} className="h-9 px-4 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
                   Start Free →
                 </Button>
