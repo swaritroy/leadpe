@@ -116,7 +116,7 @@ export default function Index() {
               </>
             ) : (
               <>
-                <Link to="/auth" className="text-sm hidden sm:block" style={{ color: "#666666" }}>Sign In</Link>
+                <Link to="/auth" className="text-sm font-medium" style={{ color: "#1A1A1A" }}>Sign In</Link>
                 <Button onClick={() => navigate("/business")} className="h-9 px-4 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
                   Start Free →
                 </Button>
@@ -139,9 +139,14 @@ export default function Index() {
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
             </p>
-            <Button onClick={() => navigate("/business")} className="h-14 px-8 rounded-xl text-lg font-semibold text-white mb-8 hover:-translate-y-0.5 transition-all" style={{ backgroundColor: "#00C853", boxShadow: "0 4px 16px rgba(0,200,83,0.3)" }}>
-              Start Free — 21 Days → <ArrowRight className="ml-2" size={20} />
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
+              <Button onClick={() => navigate("/business")} className="h-14 px-8 rounded-xl text-lg font-semibold text-white hover:-translate-y-0.5 transition-all w-full sm:w-auto" style={{ backgroundColor: "#00C853", boxShadow: "0 4px 16px rgba(0,200,83,0.3)" }}>
+                Start Free — 21 Days → <ArrowRight className="ml-2" size={20} />
+              </Button>
+              <Button onClick={() => navigate("/auth")} variant="outline" className="h-14 px-8 rounded-xl text-lg font-semibold hover:-translate-y-0.5 transition-all w-full sm:w-auto" style={{ color: "#1A1A1A", borderColor: "#E0E0E0" }}>
+                Already a member? Sign In
+              </Button>
+            </div>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm" style={{ color: "#666666" }}>
               {[
                 { icon: Lock, text: "No credit card" },
