@@ -1529,20 +1529,13 @@ export default function DevDashboard() {
       {/* Brief Modal */}
       <AnimatePresence>
         {showBriefModal && selectedRequest && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={() => setShowBriefModal(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
+          <BriefModal
+            request={selectedRequest}
+            profile={profile}
+            userId={user?.id || ""}
+            onClose={() => { setShowBriefModal(false); setSelectedRequest(null); setGithubSubmitUrl(""); setQualityReport(null); }}
+            onRefresh={fetchData}
+          />
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>
                   Build Brief — {selectedRequest.business_name}
