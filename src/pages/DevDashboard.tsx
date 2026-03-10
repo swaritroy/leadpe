@@ -16,6 +16,7 @@ import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qua
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 import { WEBSITE_PACKAGES, getPackageById } from "@/lib/packages";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
+import BriefModal from "@/components/BriefModal";
 
 interface Deployment {
   id: string;
