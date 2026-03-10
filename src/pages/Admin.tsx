@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ActivationPanel from "@/components/admin/ActivationPanel";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
