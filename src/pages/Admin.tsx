@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import ActivationPanel from "@/components/admin/ActivationPanel";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -1399,32 +1400,24 @@ export default function Admin() {
           )}
         </motion.div>
 
-        {/* ── PAYMENTS & ACTIVATION ── */}
+        {/* ── ACTIVATION PANEL ── */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <button onClick={() => toggleSection("payments")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
             {expandedSections.has("payments") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            💳 Activate Businesses
+            🚀 Activate Businesses
+            {buildRequests.filter((r: any) => r.status === "demo_ready" || r.status === "approved").length > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: "#ef4444" }}>
+                {buildRequests.filter((r: any) => r.status === "demo_ready" || r.status === "approved").length}
+              </span>
+            )}
           </button>
 
           {expandedSections.has("payments") && (
-            <div className="rounded-2xl border border-[#E0F2E9] p-5" style={{ backgroundColor: "#FFFFFF" }}>
-              <h3 className="text-sm font-bold mb-3" style={{ color: "#1A1A1A" }}>Trial businesses — Click to activate Growth Plan</h3>
-              <div className="flex gap-2 flex-wrap">
-                {businesses.filter((b) => b.status === "trial").map((b) => (
-                  <Button key={b.id} size="sm" variant="outline" className="text-xs rounded-lg border-[#00C853] text-[#00C853] hover:bg-[#F0FFF4]"
-                    onClick={async () => {
-                      await (supabase as any).from("profiles").update({ status: "active", subscription_plan: "growth" }).eq("id", b.id);
-                      toast({ title: `✅ Activated ${b.business_name || b.full_name}` });
-                      fetchData();
-                    }}>
-                    ✅ {b.business_name || b.full_name}
-                  </Button>
-                ))}
-                {businesses.filter((b) => b.status === "trial").length === 0 && (
-                  <p className="text-xs text-muted-foreground">No trial businesses to activate</p>
-                )}
-              </div>
-            </div>
+            <ActivationPanel
+              buildRequests={buildRequests}
+              profiles={profiles}
+              onRefresh={fetchData}
+            />
           )}
         </motion.div>
         {/* ── MESSAGE LOG ── */}
