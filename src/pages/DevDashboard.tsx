@@ -521,8 +521,8 @@ export default function DevDashboard() {
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
-                          Accept ✓
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
                         </Button>
                       </div>
                     </div>
