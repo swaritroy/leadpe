@@ -182,11 +182,11 @@ export default function DevDashboard() {
     }
 
     const { data: activeData } = await supabase.from("build_requests")
-      .select("*, change_requests(*)" as any)
+      .select("*")
       .eq("assigned_coder_id", user.id)
       .in("status", ["building", "review"])
       .order("created_at", { ascending: false });
-    setActiveBuilds(activeData || []);
+    setActiveBuilds((activeData as BuildRequest[]) || []);
 
     setLoading(false);
   };
