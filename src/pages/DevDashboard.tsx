@@ -16,10 +16,8 @@ import { getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBri
 import { checkWebsiteQuality, QualityReport } from "@/lib/qualityChecker";
 import { deployWebsite } from "@/lib/deployService";
 import { getPackageById } from "@/lib/packages";
-import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import BriefModal from "@/components/BriefModal";
-import { copyToClipboard } from "@/lib/clientBrief";
 import { copyToClipboard } from "@/lib/clientBrief";
 
 interface BuildRequest {
