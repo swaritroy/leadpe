@@ -102,7 +102,7 @@ export type Database = {
           business_name: string | null
           generated_at: string | null
           google_description: string | null
-          h1_heaing: string | null
+          h1_heading: string | null
           id: string
           keywords: string | null
           meta_description: string | null
@@ -115,7 +115,7 @@ export type Database = {
           business_name?: string | null
           generated_at?: string | null
           google_description?: string | null
-          h1_heaing?: string | null
+          h1_heading?: string | null
           id?: string
           keywords?: string | null
           meta_description?: string | null
@@ -128,7 +128,7 @@ export type Database = {
           business_name?: string | null
           generated_at?: string | null
           google_description?: string | null
-          h1_heaing?: string | null
+          h1_heading?: string | null
           id?: string
           keywords?: string | null
           meta_description?: string | null
@@ -664,7 +664,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
-          founing_member: boolean | null
+          founding_member: boolean | null
           free_months_earned: number | null
           full_name: string | null
           id: string
@@ -699,7 +699,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
-          founing_member?: boolean | null
+          founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
           id?: string
@@ -734,7 +734,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
-          founing_member?: boolean | null
+          founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
           id?: string
