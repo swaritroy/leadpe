@@ -10,7 +10,7 @@ interface Props {
   businessName: string;
 }
 
-export default function StateBBuiling({ buildRequest, businessName }: Props) {
+export default function StateBBuilding({ buildRequest, businessName }: Props) {
   const navigate = useNavigate();
   const [showChangeSheet, setShowChangeSheet] = useState(false);
   const status = buildRequest?.status || "pending";
@@ -21,14 +21,14 @@ export default function StateBBuiling({ buildRequest, businessName }: Props) {
 
   // Status badge
   const badgeMap: Record<string, { bg: string; color: string; text: string }> = {
-    pending: { bg: "#FFF8E1", color: "#F57F17", text: "Fining builder..." },
+    pending: { bg: "#FFF8E1", color: "#F57F17", text: "Finding builder..." },
     building: { bg: "#E3F2FD", color: "#1565C0", text: "Being built ⚡" },
     demo_ready: { bg: "#E8F5E9", color: "#00C853", text: "Ready to see! 👀" },
   };
   const badge = badgeMap[status] || badgeMap.pending;
 
   // Progress labels
-  const labels = ["Received", "Builing", "Preview", "Live"];
+  const labels = ["Received", "Building", "Preview", "Live"];
   const activeIndex = status === "pending" ? 0 : status === "building" ? 1 : status === "demo_ready" ? 2 : 3;
 
   const coderFirstName = buildRequest?.assigned_coder_name?.split(" ")[0];

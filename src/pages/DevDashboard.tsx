@@ -620,7 +620,7 @@ export default function DevDashboard() {
                   <h3 className="text-lg font-bold mb-4 text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>Earnings Breakdown</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-[#666] flex items-center gap-2"><Wrench size={14}/> Builing Fees</span>
+                      <span className="text-[#666] flex items-center gap-2"><Wrench size={14}/> Building Fees</span>
                       <span className="font-bold">₹{buildingFees}</span>
                     </div>
                     <div className="flex justify-between items-center">

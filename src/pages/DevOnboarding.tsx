@@ -7,14 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-export default function DevOnboaring() {
+export default function DevOnboarding() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [pendingRequests, setPeningRequests] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   // Form Fields
   const [fullName, setFullName] = useState("");
@@ -33,15 +33,15 @@ export default function DevOnboaring() {
 
   useEffect(() => {
     // Pre-fetch the pending requests early so it's ready for Step 3
-    const fetchPening = async () => {
+    const fetchPending = async () => {
       const { count } = await supabase
         .from("build_requests")
         .select("*", { count: 'exact', head: true })
         .eq("status", "pending")
         .is("assigned_coder_id", null);
-      if (count !== null) setPeningRequests(count);
+      if (count !== null) setPendingRequests(count);
     };
-    fetchPening();
+    fetchPending();
   }, []);
 
   const handleNextStep1 = () => {

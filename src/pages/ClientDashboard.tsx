@@ -8,7 +8,7 @@ import { getTrialStatus, TrialStatus } from "@/lib/trialManager";
 import { useToast } from "@/hooks/use-toast";
 
 import StateANoWebsite from "@/components/dashboard/StateANoWebsite";
-import StateBBuiling from "@/components/dashboard/StateBBuiling";
+import StateBBuilding from "@/components/dashboard/StateBBuilding";
 import StateCLive from "@/components/dashboard/StateCLive";
 
 interface Lead {
@@ -123,7 +123,7 @@ export default function ClientDashboard() {
   // Determine dashboard state
   const status = buildRequest?.status || null;
   const isLive = status === "live";
-  const isBuiling = status === "pending" || status === "building" || status === "demo_ready";
+  const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
   const hasNoWebsite = !buildRequest;
 
   const isExpired = trial?.isExpired;
@@ -222,8 +222,8 @@ export default function ClientDashboard() {
         />
       )}
 
-      {isBuiling && (
-        <StateBBuiling
+      {isBuilding && (
+        <StateBBuilding
           buildRequest={buildRequest}
           businessName={profile?.business_name || profile?.full_name || "Business"}
         />

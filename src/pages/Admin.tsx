@@ -15,8 +15,8 @@ import {
   Users,
   Globe,
   Zap,
-  TreningUp,
-  Builing2,
+  TrendingUp,
+  Building2,
   Code2,
   FileSpreadsheet,
   AlertCircle,
@@ -159,7 +159,7 @@ export default function Admin() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
-  const [pendingMessages, setPeningMessages] = useState<any[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<any[]>([]);
   const [messageLog, setMessageLog] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
@@ -170,7 +170,7 @@ export default function Admin() {
   const [coderSearch, setCoderSearch] = useState("");
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments"]));
   
-  const [seningReports, setSeningReports] = useState(false);
+  const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
   
   // Check admin access
@@ -248,7 +248,7 @@ export default function Admin() {
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
-      setPeningMessages(msgsData || []);
+      setPendingMessages(msgsData || []);
 
       // Fetch orders
       const { data: ordersData } = await (supabase as any).from("orders")
@@ -1110,7 +1110,7 @@ export default function Admin() {
                           <th className="text-left p-4 text-sm font-medium">Vibe Coder</th>
                           <th className="text-left p-4 text-sm font-medium">Active Sites</th>
                           <th className="text-left p-4 text-sm font-medium">Monthly Passive</th>
-                          <th className="text-left p-4 text-sm font-medium">Builing Fees</th>
+                          <th className="text-left p-4 text-sm font-medium">Building Fees</th>
                           <th className="text-left p-4 text-sm font-medium">Total Due</th>
                           <th className="text-left p-4 text-sm font-medium">Actions</th>
                         </tr>
@@ -1139,7 +1139,7 @@ export default function Admin() {
                           <span className="font-semibold">{p.name}</span>
                           <span className="font-bold" style={{ color: "#00E676" }}>₹{p.total.toLocaleString()}</span>
                         </div>
-                        <div className="text-xs text-muted-foreground mb-3">{p.activeSites} sites • Passive: ₹{p.passive} • Builing: ₹{p.building}</div>
+                        <div className="text-xs text-muted-foreground mb-3">{p.activeSites} sites • Passive: ₹{p.passive} • Building: ₹{p.building}</div>
                         <div className="flex gap-2">
                           <button onClick={() => sendWhatsApp(p.whatsapp, `Hi ${p.name}! Your LeadPe payout of ₹${p.total} has been processed.`)} className="flex-1 py-2 rounded-lg text-xs border border-border text-center">Notify</button>
                           <button onClick={() => markPayoutPaid(p.id)} className="flex-1 py-2 rounded-lg text-xs text-black font-medium text-center" style={{ backgroundColor: "#00E676" }}>Mark Paid</button>
@@ -1166,7 +1166,7 @@ export default function Admin() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button onClick={() => toast({ title: "Reports", description: "Weekly reports triggered" })} className="p-6 rounded-2xl border border-[#E0F2E9] text-left hover:border-[#00C853]/50 transition-colors" style={{ backgroundColor: "#FFFFFF" }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(0, 230, 118, 0.1)" }}>
-                  <TreningUp size={24} style={{ color: "#00E676" }} />
+                  <TrendingUp size={24} style={{ color: "#00E676" }} />
                 </div>
                 <div className="font-semibold mb-1">Send Weekly Reports</div>
                 <div className="text-xs text-muted-foreground">Trigger all Day 4 reports</div>
@@ -1204,7 +1204,7 @@ export default function Admin() {
           className="rounded-2xl border p-6 mb-6" style={{ backgroundColor: "#FFFFFF", borderColor: "#E0E0E0" }}>
           <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => toggleSection("messages")}>
             <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>
-              <MessageCircle size={20} style={{ color: "#00C853" }} /> Pening WhatsApp Messages
+              <MessageCircle size={20} style={{ color: "#00C853" }} /> Pending WhatsApp Messages
               <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F0FFF4", color: "#00C853" }}>{pendingMessages.length}</span>
             </h2>
             {expandedSections.has("messages") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -1233,7 +1233,7 @@ export default function Admin() {
                     <Button size="sm" className="text-xs rounded-lg text-white" style={{ backgroundColor: "#00C853" }}
                       onClick={async () => {
                         await (supabase.from("scheduled_messages") as any).update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", msg.id);
-                        setPeningMessages((prev) => prev.filter((m) => m.id !== msg.id));
+                        setPendingMessages((prev) => prev.filter((m) => m.id !== msg.id));
                         toast({ title: "Marked as sent ✅" });
                       }}>
                       Mark Sent ✅

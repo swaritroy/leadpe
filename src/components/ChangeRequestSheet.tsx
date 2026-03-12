@@ -82,7 +82,7 @@ export default function ChangeRequestSheet({ open, onClose, buildRequest, busine
                 marginTop: 16, opacity: !feedback.trim() ? 0.5 : 1,
               }}
             >
-              {submitting ? "Sening..." : "Send Request →"}
+              {submitting ? "Sending..." : "Send Request →"}
             </button>
           </motion.div>
         </motion.div>

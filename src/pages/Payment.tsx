@@ -31,7 +31,7 @@ export default function Payment() {
   const orderId = searchParams.get("order");
   const plan = searchParams.get("plan") || "growth";
   const amount = parseInt(searchParams.get("amount") || MONTHLY_PRICE.toString());
-  const [showPening, setShowPening] = useState(false);
+  const [showPending, setShowPending] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [paying, setPaying] = useState(false);
@@ -64,7 +64,7 @@ export default function Payment() {
 
   // Realtime subscription for UPI payment activation (replaces setInterval polling)
   useEffect(() => {
-    if (!showPening || !user) return;
+    if (!showPending || !user) return;
 
     const channel = supabase
       .channel("payment-activation")
@@ -78,7 +78,7 @@ export default function Payment() {
         },
         (payload: any) => {
           if (payload.new?.status === "paid") {
-            setShowPening(false);
+            setShowPending(false);
             setShowCelebration(true);
             toast({ title: "Payment confirmed! 🎉" });
             refreshProfile();
@@ -100,7 +100,7 @@ export default function Payment() {
         },
         (payload: any) => {
           if (payload.new?.status === "active") {
-            setShowPening(false);
+            setShowPending(false);
             setShowCelebration(true);
             toast({ title: "Account activated! 🎉" });
             refreshProfile();
@@ -113,7 +113,7 @@ export default function Payment() {
       supabase.removeChannel(channel);
       supabase.removeChannel(profileChannel);
     };
-  }, [showPening, user, toast, refreshProfile]);
+  }, [showPending, user, toast, refreshProfile]);
 
   const displayAmount = isOrderPayment ? (order?.total_price || amount) : amount;
   const gstAmount = Math.round(displayAmount * 0.18);
@@ -183,7 +183,7 @@ export default function Payment() {
       amount: displayAmount, gst: gstAmount, total: displayAmount,
       plan, method: "upi", status: "pending",
     });
-    setShowPening(true);
+    setShowPending(true);
   };
 
   if (!gateChecked) return null;
@@ -203,7 +203,7 @@ export default function Payment() {
     );
   }
 
-  if (showPening) {
+  if (showPending) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-sm">

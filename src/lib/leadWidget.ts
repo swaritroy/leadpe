@@ -26,7 +26,7 @@ async function submitLeadPeLead(){
   if(!n||!p){alert('Please fill name and phone');return}
   if(p.replace(/\\D/g,'').length!==10){alert('Enter 10 digit number');return}
   var btn=document.querySelector('#leadpe-widget button');
-  btn.textContent='Sening...';btn.disabled=true;
+  btn.textContent='Sending...';btn.disabled=true;
   try{
     var res=await fetch('${supabaseUrl}/rest/v1/leads',{
       method:'POST',

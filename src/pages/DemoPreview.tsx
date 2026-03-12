@@ -164,7 +164,7 @@ export default function DemoPreview() {
                 disabled={submitting || !revisionText.trim()}
                 className="flex-1 h-11 rounded-xl bg-[#00C853] hover:bg-[#00A843] text-white font-semibold"
               >
-                {submitting ? "Sening..." : "Submit Changes"}
+                {submitting ? "Sending..." : "Submit Changes"}
               </Button>
             </div>
             {(order.revision_count || 0) >= 1 && (

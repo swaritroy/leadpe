@@ -25,7 +25,7 @@ const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const ClientSettings = lazy(() => import("./pages/ClientSettings"));
 const Payment = lazy(() => import("./pages/Payment"));
 const DevDashboard = lazy(() => import("./pages/DevDashboard"));
-const DevOnboaring = lazy(() => import("./pages/DevOnboaring"));
+const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 const queryClient = new QueryClient();
@@ -88,7 +88,7 @@ const AppContent = () => {
             } />
             <Route path="/dev/onboarding" element={
               <ProtectedRoute allowedRoles={["developer", "vibe_coder"]}>
-                <DevOnboaring />
+                <DevOnboarding />
               </ProtectedRoute>
             } />
 
