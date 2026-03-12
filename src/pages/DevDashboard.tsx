@@ -91,6 +91,11 @@ export default function DevDashboard() {
   const [submittingGithub, setSubmittingGithub] = useState(false);
   const [qualityChecking, setQualityChecking] = useState(false);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  // Notifications
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: string; text: string; time: string; type: string }>>([]);
 
   // Payout 
   const [showPayoutModal, setShowPayoutModal] = useState(false);
@@ -104,7 +109,7 @@ export default function DevDashboard() {
   const [editNumberValue, setEditNumberValue] = useState("");
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   
-  const [completedBuilds, setCompletedBuilds] = useState<any[]>([]) // eslint-disable-line;
+  const [completedBuilds, setCompletedBuilds] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState<number>(0);
   const [totalCompleted, setTotalCompleted] = useState<number>(0);
 
