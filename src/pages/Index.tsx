@@ -133,7 +133,7 @@ export default function Index() {
               🇮🇳 Built for Indian Businesses
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leaing-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-              Professional Website.<br />Under ₹2,000.<br />Customers on WhatsApp.
+              Professional Website.<br />Under ₹4,000.<br />Customers on WhatsApp.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
@@ -168,7 +168,7 @@ export default function Index() {
           <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
             {[
               { value: "48 Hours", label: "Website live time" },
-              { value: "₹2,000", label: "Max website cost" },
+              { value: "₹4,000", label: "Max website cost" },
               { value: `₹${MONTHLY_PRICE}`, label: "per month" },
             ].map((s, i) => (
               <motion.div key={s.label} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center">
