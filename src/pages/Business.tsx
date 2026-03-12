@@ -35,7 +35,7 @@ export default function Business() {
 
   const [form, setForm] = useState({
     businessName: "", businessType: "", city: "", whatsappPhone: "", ownerName: "",
-    plan: "growth", language: "hinglish",
+    plan: "growth", language: "hinglish", whatsappNumber: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 

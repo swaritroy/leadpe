@@ -80,14 +80,14 @@ LeadPe ⚡`;
 // Save message to log
 export async function logMessage(
   businessId: string,
-  dayPhone: number,
+  dayNum: number,
   messageType: "owner" | "admin",
   message: string,
   language: Language = "hinglish"
 ): Promise<void> {
   await (supabase as any).from("message_log").insert({
     business_id: businessId,
-    day_number: dayNumber,
+    day_number: dayNum,
     message_type: messageType,
     message: message,
     language: language,

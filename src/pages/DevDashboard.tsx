@@ -16,10 +16,8 @@ import { getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBri
 import { checkWebsiteQuality, QualityReport } from "@/lib/qualityChecker";
 import { deployWebsite } from "@/lib/deployService";
 import { getPackageById } from "@/lib/packages";
-import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import BriefModal from "@/components/BriefModal";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { copyToClipboard } from "@/lib/clientBrief";
 
 interface BuildRequest {
@@ -91,6 +89,11 @@ export default function DevDashboard() {
   const [submittingGithub, setSubmittingGithub] = useState(false);
   const [qualityChecking, setQualityChecking] = useState(false);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  // Notifications
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: string; text: string; time: string; type: string }>>([]);
 
   // Payout 
   const [showPayoutModal, setShowPayoutModal] = useState(false);
@@ -104,7 +107,7 @@ export default function DevDashboard() {
   const [editNumberValue, setEditNumberValue] = useState("");
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   
-  const [completedBuilds, setCompletedBuilds] = useState<any[]>([]) // eslint-disable-line;
+  const [completedBuilds, setCompletedBuilds] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState<number>(0);
   const [totalCompleted, setTotalCompleted] = useState<number>(0);
 
@@ -182,11 +185,11 @@ export default function DevDashboard() {
     }
 
     const { data: activeData } = await supabase.from("build_requests")
-      .select("*, change_requests(*)" as any)
+      .select("*")
       .eq("assigned_coder_id", user.id)
       .in("status", ["building", "review"])
       .order("created_at", { ascending: false });
-    setActiveBuilds(activeData || []);
+    setActiveBuilds((activeData as BuildRequest[]) || []);
 
     setLoading(false);
   };
@@ -260,57 +263,39 @@ export default function DevDashboard() {
   };
 
   const handleAcceptRequest = async (request: BuildRequest) => {
-    if (!user) return;
+    if (!user || acceptingId) return;
+    setAcceptingId(request.id);
     try {
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "building",
           assigned_coder_id: user.id,
           assigned_coder_name: profile?.full_name || "Unknown",
-          accepted_at: new Date().toISOString()
         })
-        .eq("id", request.id);
+        .eq("id", request.id)
+        .is("assigned_coder_id", null);
       
       if (error) throw error;
       
+      // Immediately remove from local state
       setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-      
-      await sendWhatsApp(
-        "919973383902",
-        getMessage('requestAccepted', 'hinglish', {
-          coderName: profile?.full_name || "Unknown",
-          businessName: request.business_name,
-          city: request.city
-        }),
-        request.id,
-        'requestAccepted',
-        'hinglish'
-      );
-      
-      await sendWhatsApp(
-        request.owner_whatsapp,
-        getMessage('buildStarted', request.preferred_language as any, {
-          ownerName: request.owner_name,
-          coderName: profile?.full_name || "Unknown"
-        }),
-        request.id,
-        'buildStarted',
-        request.preferred_language
-      );
+      setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
       
       toast({
         title: "✅ Request Accepted!",
         description: `You're now building ${request.business_name}`,
       });
       
-      fetchData();
-      
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to accept request. Please try again.",
+        title: "Already taken",
+        description: "Another builder accepted this request.",
         variant: "destructive"
       });
+      // Refresh to get accurate state
+      fetchData();
+    } finally {
+      setAcceptingId(null);
     }
   };
   
@@ -431,14 +416,48 @@ export default function DevDashboard() {
             <span className="font-bold text-lg text-[#00C853]" style={{ fontFamily: "Syne, sans-serif" }}>Studio</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative">
+            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative"
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                // Build notifications from build requests and earnings
+                const notifs: Array<{ id: string; text: string; time: string; type: string }> = [];
+                buildRequests.slice(0, 3).forEach(r => notifs.push({ id: r.id, text: `New build request: ${r.business_name}`, time: r.created_at, type: "request" }));
+                activeBuilds.forEach(b => {
+                  if ((b as any).status === "revision_requested") notifs.push({ id: b.id, text: `Client requested changes: ${b.business_name}`, time: b.created_at, type: "revision" });
+                });
+                earnings.filter(e => e.type === "building_fee").slice(0, 3).forEach(e => notifs.push({ id: e.id, text: `Payment received — ₹${e.amount} earned`, time: "", type: "payment" }));
+                if (notifs.length === 0) notifs.push({ id: "none", text: "No new notifications", time: "", type: "empty" });
+                setNotifications(notifs.slice(0, 10));
+              }}>
               <Bell size={18} className="text-[#666]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00C853]" />
+              {buildRequests.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00C853]" />}
             </button>
+            {showNotifications && (
+              <div className="absolute right-12 top-12 w-72 bg-white rounded-xl shadow-lg border z-50 overflow-hidden" style={{ borderColor: "#E0E0E0" }}>
+                <div className="px-4 py-3 border-b font-bold text-sm" style={{ borderColor: "#F0F0F0", color: "#1A1A1A" }}>Notifications</div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.map(n => (
+                    <div key={n.id} className="px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-[#F0FFF4] transition-colors"
+                      style={{ borderColor: "#F5F5F5" }}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        if (n.type === "request") setActiveTab("home");
+                        else if (n.type === "revision") setActiveTab("builds");
+                        else if (n.type === "payment") setActiveTab("earnings");
+                      }}>
+                      <p className="text-sm" style={{ color: "#1A1A1A" }}>
+                        {n.type === "request" && "🔔 "}{n.type === "revision" && "🔄 "}{n.type === "payment" && "💰 "}{n.type === "empty" && "📭 "}
+                        {n.text}
+                      </p>
+                      {n.time && <p className="text-xs mt-1" style={{ color: "#999" }}>{new Date(n.time).toLocaleDateString()}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-[#00C853] text-white">
               {user?.email?.[0].toUpperCase() || "U"}
             </div>
-            
           </div>
         </div>
       </nav>
@@ -500,8 +519,8 @@ export default function DevDashboard() {
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
-                          Accept ✓
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
                         </Button>
                       </div>
                     </div>
