@@ -418,14 +418,48 @@ export default function DevDashboard() {
             <span className="font-bold text-lg text-[#00C853]" style={{ fontFamily: "Syne, sans-serif" }}>Studio</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative">
+            <button className="p-2 rounded-full hover:bg-[#F0FFF4] transition-colors relative"
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                // Build notifications from build requests and earnings
+                const notifs: Array<{ id: string; text: string; time: string; type: string }> = [];
+                buildRequests.slice(0, 3).forEach(r => notifs.push({ id: r.id, text: `New build request: ${r.business_name}`, time: r.created_at, type: "request" }));
+                activeBuilds.forEach(b => {
+                  if ((b as any).status === "revision_requested") notifs.push({ id: b.id, text: `Client requested changes: ${b.business_name}`, time: b.created_at, type: "revision" });
+                });
+                earnings.filter(e => e.type === "building_fee").slice(0, 3).forEach(e => notifs.push({ id: e.id, text: `Payment received — ₹${e.amount} earned`, time: "", type: "payment" }));
+                if (notifs.length === 0) notifs.push({ id: "none", text: "No new notifications", time: "", type: "empty" });
+                setNotifications(notifs.slice(0, 10));
+              }}>
               <Bell size={18} className="text-[#666]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00C853]" />
+              {buildRequests.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00C853]" />}
             </button>
+            {showNotifications && (
+              <div className="absolute right-12 top-12 w-72 bg-white rounded-xl shadow-lg border z-50 overflow-hidden" style={{ borderColor: "#E0E0E0" }}>
+                <div className="px-4 py-3 border-b font-bold text-sm" style={{ borderColor: "#F0F0F0", color: "#1A1A1A" }}>Notifications</div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.map(n => (
+                    <div key={n.id} className="px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-[#F0FFF4] transition-colors"
+                      style={{ borderColor: "#F5F5F5" }}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        if (n.type === "request") setActiveTab("home");
+                        else if (n.type === "revision") setActiveTab("builds");
+                        else if (n.type === "payment") setActiveTab("earnings");
+                      }}>
+                      <p className="text-sm" style={{ color: "#1A1A1A" }}>
+                        {n.type === "request" && "🔔 "}{n.type === "revision" && "🔄 "}{n.type === "payment" && "💰 "}{n.type === "empty" && "📭 "}
+                        {n.text}
+                      </p>
+                      {n.time && <p className="text-xs mt-1" style={{ color: "#999" }}>{new Date(n.time).toLocaleDateString()}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-[#00C853] text-white">
               {user?.email?.[0].toUpperCase() || "U"}
             </div>
-            
           </div>
         </div>
       </nav>
