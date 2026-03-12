@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
         failed++;
         console.error(`❌ Failed ${toNumber}: ${errorMsg}`);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       await supabase
         .from("scheduled_messages")
         .update({ status: "failed" })
@@ -126,12 +126,12 @@ Deno.serve(async (req) => {
         channel: "whatsapp",
         status: "failed",
         delivery_status: "error",
-        error_message: e.message,
+        error_message: (e as Error).message,
         sent_at: new Date().toISOString(),
       });
 
       failed++;
-      console.error(`❌ Error for ${msg.id}:`, e.message);
+      console.error(`❌ Error for ${msg.id}:`, (e as Error).message);
     }
   }
 
