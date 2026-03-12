@@ -265,57 +265,39 @@ export default function DevDashboard() {
   };
 
   const handleAcceptRequest = async (request: BuildRequest) => {
-    if (!user) return;
+    if (!user || acceptingId) return;
+    setAcceptingId(request.id);
     try {
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "building",
           assigned_coder_id: user.id,
           assigned_coder_name: profile?.full_name || "Unknown",
-          accepted_at: new Date().toISOString()
         })
-        .eq("id", request.id);
+        .eq("id", request.id)
+        .is("assigned_coder_id", null);
       
       if (error) throw error;
       
+      // Immediately remove from local state
       setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-      
-      await sendWhatsApp(
-        "919973383902",
-        getMessage('requestAccepted', 'hinglish', {
-          coderName: profile?.full_name || "Unknown",
-          businessName: request.business_name,
-          city: request.city
-        }),
-        request.id,
-        'requestAccepted',
-        'hinglish'
-      );
-      
-      await sendWhatsApp(
-        request.owner_whatsapp,
-        getMessage('buildStarted', request.preferred_language as any, {
-          ownerName: request.owner_name,
-          coderName: profile?.full_name || "Unknown"
-        }),
-        request.id,
-        'buildStarted',
-        request.preferred_language
-      );
+      setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
       
       toast({
         title: "✅ Request Accepted!",
         description: `You're now building ${request.business_name}`,
       });
       
-      fetchData();
-      
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to accept request. Please try again.",
+        title: "Already taken",
+        description: "Another builder accepted this request.",
         variant: "destructive"
       });
+      // Refresh to get accurate state
+      fetchData();
+    } finally {
+      setAcceptingId(null);
     }
   };
   
