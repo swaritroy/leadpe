@@ -22,7 +22,7 @@ const businessTypes = [
 
 const howItWorks = [
   { number: "1", icon: "📝", title: "Sign Up Free", desc: "Tell us about your business. 2 minutes. Zero tech knowledge." },
-  { number: "2", icon: "🤖", title: "We Build Your Website", desc: "Our website builders build your professional website in 48 hours. Under ₹4,000." },
+  { number: "2", icon: "🤖", title: "We Build Your Website", desc: "Our website builders build your professional website in 48 hours. Starts at ₹800." },
   { number: "3", icon: "💼", title: "Appear on Google", desc: "Your site goes live and appears on Google. Customers in your city find you first." },
   { number: "4", icon: "📥", title: "Get Customers on WhatsApp", desc: "Every inquiry lands on your WhatsApp instantly. You call. You close." },
 ];
@@ -39,7 +39,7 @@ const testimonials = [
 const comparisonData = {
   headers: ["", "LeadPe", "Agency", "Fiverr", "DIY"],
   rows: [
-    { label: "Website Cost", values: ["₹500-4K", "₹20K+", "₹5K+", "₹0"] },
+    { label: "Website Cost", values: ["₹800-4K", "₹20K+", "₹5K+", "₹0"] },
     { label: "Monthly", values: ["₹299", "₹5K+", "₹0", "₹2K+"] },
     { label: "Delivery", values: ["48 hours", "2-4 weeks", "1-2 weeks", "Months"] },
     { label: "Customers", values: ["✅", "❌", "❌", "❌"] },
@@ -133,7 +133,7 @@ export default function Index() {
               🇮🇳 Built for Indian Businesses
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leaing-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-              Professional Website.<br />Under ₹4,000.<br />Customers on WhatsApp.
+              Professional Website.<br />Starts at ₹800.<br />Customers on WhatsApp.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
@@ -168,7 +168,7 @@ export default function Index() {
           <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
             {[
               { value: "48 Hours", label: "Website live time" },
-              { value: "₹4,000", label: "Max website cost" },
+              { value: "₹800", label: "Starts at" },
               { value: `₹${MONTHLY_PRICE}`, label: "per month" },
             ].map((s, i) => (
               <motion.div key={s.label} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center">
