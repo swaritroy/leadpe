@@ -118,7 +118,7 @@ export default function DemoPreview() {
 
       {/* Bottom bar */}
       <div className="sticky bottom-0 bg-white border-t border-[#E0E0E0] px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-        <p className="text-center text-sm text-[#666] mb-3">Pasand aaya apni website?</p>
+        <p className="text-center text-sm text-[#666] mb-3">Do you like your website?</p>
         <div className="flex gap-3 max-w-md mx-auto">
           <Button
             onClick={() => setShowRevisionModal(true)}
@@ -164,7 +164,7 @@ export default function DemoPreview() {
                 disabled={submitting || !revisionText.trim()}
                 className="flex-1 h-11 rounded-xl bg-[#00C853] hover:bg-[#00A843] text-white font-semibold"
               >
-                {submitting ? "Sending..." : "Submit Changes"}
+                {submitting ? "Sening..." : "Submit Changes"}
               </Button>
             </div>
             {(order.revision_count || 0) >= 1 && (

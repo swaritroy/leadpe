@@ -50,7 +50,7 @@ function getFallbackReport(): QualityReport {
     },
     issues: [],
     fixes: [],
-    aiSuggestions: "Unable to run quality check. Proceeding with deployment.",
+    aiSuggestions: "Unable to run quality check. Proceeing with deployment.",
   };
 }
 

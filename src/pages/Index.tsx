@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
 import LeadPeLogo from "@/components/LeadPeLogo";
 
 const businessTypes = [
@@ -21,8 +22,8 @@ const businessTypes = [
 
 const howItWorks = [
   { number: "1", icon: "📝", title: "Sign Up Free", desc: "Tell us about your business. 2 minutes. Zero tech knowledge." },
-  { number: "2", icon: "🤖", title: "We Build Your Website", desc: "Our AI-powered vibe coders build your professional website in 48 hours. Under ₹2,000." },
-  { number: "3", icon: "💼", title: "Appear on Google", desc: "Your site goes live with full SEO. Customers in your city find you first." },
+  { number: "2", icon: "🤖", title: "We Build Your Website", desc: "Our website builders build your professional website in 48 hours. Under ₹4,000." },
+  { number: "3", icon: "💼", title: "Appear on Google", desc: "Your site goes live and appears on Google. Customers in your city find you first." },
   { number: "4", icon: "📥", title: "Get Customers on WhatsApp", desc: "Every inquiry lands on your WhatsApp instantly. You call. You close." },
 ];
 
@@ -33,19 +34,17 @@ const testimonials = [
     name: "Mr. Sanjay Singhania",
     business: "Shiva Study Centre, Vaishali, Bihar",
   },
-  { stars: 0, text: "Be our next success story.", name: "Coming Soon", business: "Join LeadPe today.", cta: "Start Free Trial →" },
-  { stars: 0, text: "Your business could be here.", name: "Coming Soon", business: "First 10 businesses get personal support.", cta: "Get Started Free →" },
 ];
 
 const comparisonData = {
   headers: ["", "LeadPe", "Agency", "Fiverr", "DIY"],
   rows: [
-    { label: "Website Cost", values: ["₹500-2K", "₹20K+", "₹5K+", "₹0"] },
+    { label: "Website Cost", values: ["₹500-4K", "₹20K+", "₹5K+", "₹0"] },
     { label: "Monthly", values: ["₹299", "₹5K+", "₹0", "₹2K+"] },
     { label: "Delivery", values: ["48 hours", "2-4 weeks", "1-2 weeks", "Months"] },
-    { label: "Leads", values: ["✅", "❌", "❌", "❌"] },
-    { label: "WhatsApp Ping", values: ["✅", "❌", "❌", "❌"] },
-    { label: "SEO", values: ["✅ Full", "Maybe", "Basic", "❌"] },
+    { label: "Customers", values: ["✅", "❌", "❌", "❌"] },
+    { label: "WhatsApp Alert", values: ["✅", "❌", "❌", "❌"] },
+    { label: "Appear on Google", values: ["✅ Full", "Maybe", "Basic", "❌"] },
     { label: "Support", values: ["✅ Always", "Paid", "None", "❌"] },
   ],
 };
@@ -133,15 +132,15 @@ export default function Index() {
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ backgroundColor: "#E8F5E9", color: "#00C853" }}>
               🇮🇳 Built for Indian Businesses
             </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leaing-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
               Professional Website.<br />Under ₹2,000.<br />Customers on WhatsApp.
             </h1>
-            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed" style={{ color: "#666666" }}>
+            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
               <Button onClick={() => navigate("/business")} className="h-14 px-8 rounded-xl text-lg font-semibold text-white hover:-translate-y-0.5 transition-all w-full sm:w-auto" style={{ backgroundColor: "#00C853", boxShadow: "0 4px 16px rgba(0,200,83,0.3)" }}>
-                Start Free — 21 Days → <ArrowRight className="ml-2" size={20} />
+                Start Free — {TRIAL_DAYS} Days → <ArrowRight className="ml-2" size={20} />
               </Button>
               <Button onClick={() => navigate("/auth")} variant="outline" className="h-14 px-8 rounded-xl text-lg font-semibold hover:-translate-y-0.5 transition-all w-full sm:w-auto" style={{ color: "#1A1A1A", borderColor: "#E0E0E0" }}>
                 Already a member? Sign In
@@ -170,7 +169,7 @@ export default function Index() {
             {[
               { value: "48 Hours", label: "Website live time" },
               { value: "₹2,000", label: "Max website cost" },
-              { value: "₹299", label: "Monthly management" },
+              { value: `₹${MONTHLY_PRICE}`, label: "per month" },
             ].map((s, i) => (
               <motion.div key={s.label} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold" style={{ color: "#00C853" }}>{s.value}</div>
@@ -189,10 +188,9 @@ export default function Index() {
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-white rounded-2xl p-6 border" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
                 {t.stars > 0 && <div className="flex gap-1 mb-4">{[...Array(t.stars)].map((_, j) => <Star key={j} size={16} className="fill-[#FFB800] text-[#FFB800]" />)}</div>}
-                <p className="mb-4 leading-relaxed" style={{ color: "#1A1A1A" }}>&ldquo;{t.text}&rdquo;</p>
+                <p className="mb-4 leaing-relaxed" style={{ color: "#1A1A1A" }}>&ldquo;{t.text}&rdquo;</p>
                 <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>— {t.name}</p>
                 <p className="text-sm" style={{ color: "#666666" }}>{t.business}</p>
-                {t.cta && <Button onClick={() => navigate("/business")} className="w-full mt-4 h-10 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>{t.cta}</Button>}
               </motion.div>
             ))}
           </div>
@@ -213,7 +211,7 @@ export default function Index() {
                 <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm mb-4" style={{ backgroundColor: "#00C853" }}>{item.number}</div>
                 <div className="text-3xl mb-3">{item.icon}</div>
                 <h3 className="font-bold mb-2" style={{ color: "#1A1A1A" }}>{item.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#666666" }}>{item.desc}</p>
+                <p className="text-sm leaing-relaxed" style={{ color: "#666666" }}>{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -226,7 +224,7 @@ export default function Index() {
           <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#1A1A1A" }}>Your Phone Buzzes.<br />You Get the Customer.</h2>
-              <p className="mb-6 leading-relaxed" style={{ color: "#666666" }}>Real-time WhatsApp notifications for every new inquiry. 24/7.</p>
+              <p className="mb-6 leaing-relaxed" style={{ color: "#666666" }}>Real-time WhatsApp notifications for every new inquiry. 24/7.</p>
               <div className="rounded-xl p-4 border" style={{ backgroundColor: "#F0FFF4", borderColor: "#E0E0E0" }}>
                 <div className="flex items-start gap-3">
                   <Smartphone style={{ color: "#00C853" }} size={20} className="mt-0.5" />
@@ -250,7 +248,7 @@ export default function Index() {
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span style={{ color: "#666666" }}>Name:</span><span className="font-medium" style={{ color: "#1A1A1A" }}>Priya Sharma</span></div>
                         <div className="flex justify-between"><span style={{ color: "#666666" }}>Interest:</span><span style={{ color: "#1A1A1A" }}>Class 10 Maths</span></div>
-                        <div className="flex justify-between"><span style={{ color: "#666666" }}>Number:</span><span className="font-medium" style={{ color: "#00C853" }}>98XXXXXX</span></div>
+                        <div className="flex justify-between"><span style={{ color: "#666666" }}>Phone:</span><span className="font-medium" style={{ color: "#00C853" }}>98XXXXXX</span></div>
                         <div className="pt-2 mt-2 border-t flex justify-between" style={{ borderColor: "#E0E0E0" }}>
                           <span className="text-xs" style={{ color: "#666666" }}>Just now</span>
                           <span className="text-xs font-medium" style={{ color: "#00C853" }}>Call Now →</span>
@@ -288,7 +286,7 @@ export default function Index() {
         <div className="container px-4">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#1A1A1A" }}>Simple, Honest Pricing</h2>
-            <p style={{ color: "#666666" }}>Try free for 21 days. No credit card needed.</p>
+            <p style={{ color: "#666666" }}>Try free for {TRIAL_DAYS} days. No credit card needed.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start mb-8">
@@ -299,14 +297,14 @@ export default function Index() {
               className="rounded-2xl p-8 bg-white border cursor-pointer" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Try Free</span>
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
-              <p className="text-sm mb-1" style={{ color: "#1A1A1A" }}>21 days free</p>
+              <p className="text-sm mb-1" style={{ color: "#1A1A1A" }}>{TRIAL_DAYS} days free</p>
               <p className="text-xs mb-6" style={{ color: "#999999" }}>No credit card needed</p>
               <ul className="space-y-2.5 mb-6">
-                {["Website built in 48 hours", "All leads visible", "WhatsApp ping active", "Full dashboard", "SEO + Google Maps", "Cancel anytime"].map((f) => (
+                {["Website built in 48 hours", "All customers visible", "WhatsApp alert active", "Full account", "Appear on Google + Google Maps", "Cancel anytime"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#999999" }}>After 21 days — upgrade to keep leads</p>
+              <p className="text-xs mb-6" style={{ color: "#999999" }}>After {TRIAL_DAYS} days — continue to keep customers</p>
               <Button onClick={() => navigate("/business")} className="w-full h-12 rounded-xl text-sm font-semibold border bg-white hover:bg-[#F0FFF4]" style={{ borderColor: "#00C853", color: "#00C853" }}>
                 Start Free →
               </Button>
@@ -319,18 +317,18 @@ export default function Index() {
               className="rounded-2xl p-8 relative border-2 cursor-pointer" style={{ backgroundColor: "#FFFFFF", borderColor: "#00C853", marginTop: "-16px", boxShadow: "0 20px 60px rgba(0,200,83,0.15)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white mb-4" style={{ backgroundColor: "#00C853" }}>Most Popular</span>
               <div className="mb-1">
-                <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹299</span>
+                <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹{MONTHLY_PRICE}</span>
                 <span className="text-base ml-1" style={{ color: "#666666" }}>/month</span>
               </div>
               <p className="text-xs mb-1" style={{ color: "#666666" }}>GST included</p>
               <p className="text-xs mb-6" style={{ color: "#666666" }}>Cancel anytime</p>
               <ul className="space-y-2.5 mb-4">
-                {["Everything in Free Trial", "Unlimited leads forever", "Instant WhatsApp ping 🔔", "Custom domain", "Weekly Monday report", "Priority support"].map((f) => (
+                {["Everything in Free Trial", "Unlimited customers forever", "Instant WhatsApp alert 🔔", "Custom domain", "Weekly Monday report", "Priority support"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#00C853" }}>1 customer = ₹1,500+ • LeadPe = ₹299/mo</p>
-              <Button onClick={() => navigate("/payment?plan=growth&amount=299")} className="w-full h-12 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+              <p className="text-xs mb-6" style={{ color: "#00C853" }}>1 customer = ₹1,500+ • LeadPe = ₹{MONTHLY_PRICE}/mo</p>
+              <Button onClick={() => navigate(`/payment?plan=growth&amount=${MONTHLY_PRICE}`)} className="w-full h-12 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
                 Get Growth Plan →
               </Button>
             </motion.div>
@@ -385,7 +383,7 @@ export default function Index() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <p className="text-sm mb-2" style={{ color: "#999999" }}>Are you a web developer or AI builder?</p>
-              <h3 className="text-xl md:text-2xl font-bold text-white leading-snug">
+              <h3 className="text-xl md:text-2xl font-bold text-white leaing-snug">
                 Join LeadPe Studio.<br />Build sites. Earn every month.
               </h3>
             </div>

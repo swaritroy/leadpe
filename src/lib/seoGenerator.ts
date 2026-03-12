@@ -38,7 +38,7 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
   }
 
   // META DESCRIPTION: "[name] in [city] — [description]. [offer]. Contact now on WhatsApp." (max 155 chars)
-  let descParts: string[] = [`${name} in ${city}`];
+  const descParts: string[] = [`${name} in ${city}`];
   if (description) descParts.push(description);
   if (offer) descParts.push(offer);
   descParts.push("Contact now on WhatsApp");
@@ -51,7 +51,7 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
   }
 
   // URL SLUG: lowercase, spaces to hyphens, remove special chars (max 30 chars)
-  let slug = name
+  const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "") // remove special chars
     .replace(/\s+/g, "-") // spaces to hyphens

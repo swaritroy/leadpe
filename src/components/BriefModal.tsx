@@ -8,7 +8,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 
-const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 interface BriefModalProps {
   request: any;
@@ -22,7 +22,7 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"prompt" | "info" | "submit">("prompt");
   const [prompt, setPrompt] = useState("");
-  const [promptLoading, setPromptLoading] = useState(true);
+  const [promptLoaing, setPromptLoaing] = useState(true);
   const [copied, setCopied] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -36,9 +36,22 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
   }, [request.id]);
 
   const generatePrompt = async () => {
-    setPromptLoading(true);
+    setPromptLoaing(true);
     try {
-      // Fetch SEO data
+      // 1. Check if ai_prompt already exists in the database
+      const { data: existingRequest, error: fetchError } = await (supabase as any)
+        .from("build_requests")
+        .select("ai_prompt")
+        .eq("id", request.id)
+        .maybeSingle();
+
+      if (existingRequest?.ai_prompt) {
+        setPrompt(existingRequest.ai_prompt);
+        setPromptLoaing(false);
+        return;
+      }
+
+      // 2. Fetch SEO and generate new prompt
       const { data: seoData } = await (supabase as any).from("business_seo")
         .select("*").eq("business_id", request.business_id || request.id).maybeSingle();
 
@@ -62,17 +75,26 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
         },
       });
 
-      if (error || data?.error) {
+      let generatedPrompt = "";
+      if (error || data?.error || !data?.result) {
         console.error("Prompt generation error:", error || data?.error);
-        setPrompt(getFallbackPrompt());
+        generatedPrompt = getFallbackPrompt();
       } else {
-        setPrompt(data.result || getFallbackPrompt());
+        generatedPrompt = data.result;
       }
+      
+      setPrompt(generatedPrompt);
+
+      // 3. Save to database for next time
+      await (supabase as any).from("build_requests")
+        .update({ ai_prompt: generatedPrompt })
+        .eq("id", request.id);
+
     } catch (e) {
       console.error("Prompt error:", e);
       setPrompt(getFallbackPrompt());
     }
-    setPromptLoading(false);
+    setPromptLoaing(false);
   };
 
   const getFallbackPrompt = () => {
@@ -217,7 +239,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
         {/* TOP BAR */}
         <div className="flex items-center justify-between px-5 border-b" style={{ height: 56, borderColor: "#F0F0F0" }}>
           <div>
-            <span style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
+            <span style={{ fontFamily: font.heaing, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
           </div>
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 14, color: "#666" }}>{request.business_name}</span>
@@ -252,7 +274,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
                 Copy → Lovable → Build → GitHub → Submit
               </p>
 
-              {promptLoading ? (
+              {promptLoaing ? (
                 <div className="rounded-xl p-8 text-center" style={{ backgroundColor: "#F8F9FA", border: "1px solid #E0E0E0" }}>
                   <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#00C853" }} />
                   <p style={{ fontSize: 14, color: "#666" }}>Generating AI prompt...</p>
@@ -270,15 +292,34 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
                 </div>
               )}
 
-              <button onClick={handleCopy} disabled={promptLoading}
+              <button onClick={handleCopy} disabled={promptLoaing}
                 style={{ width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer", marginTop: 12, minHeight: 52 }}>
                 {copied ? "Copied! ✓" : "Copy Complete Prompt 📋"}
               </button>
 
-              <button onClick={() => window.open("https://lovable.dev", "_blank")}
-                style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "12px", fontSize: 15, fontWeight: 600, cursor: "pointer", marginTop: 8, minHeight: 48 }}>
-                Open Lovable.dev →
-              </button>
+              <div className="mt-4">
+                <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 8, textAlign: "center" }}>
+                  Choose your build tool:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => window.open("https://lovable.dev", "_blank")}
+                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                    Open Lovable →
+                  </button>
+                  <button onClick={() => window.open("https://bolt.new", "_blank")}
+                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                    Open Bolt →
+                  </button>
+                  <button onClick={() => window.open("https://emergentmind.com", "_blank")}
+                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                    Open Emergent →
+                  </button>
+                  <button onClick={() => window.open("https://replit.com", "_blank")}
+                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                    Open Replit →
+                  </button>
+                </div>
+              </div>
 
               <div className="mt-4 space-y-1">
                 {["1️⃣ Copy prompt", "2️⃣ Open Lovable", "3️⃣ Paste in Lovable chat", "4️⃣ Build website", "5️⃣ Connect GitHub in Lovable", "6️⃣ Copy GitHub URL", "7️⃣ Go to Submit tab →"].map(s => (
@@ -292,7 +333,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
           {activeTab === "info" && (
             <div className="p-4 space-y-3">
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{request.business_name}</p>
+                <p style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{request.business_name}</p>
                 <p style={{ fontSize: 13, color: "#666" }}>{request.business_type} • {request.city}</p>
                 <div className="flex items-center gap-2 mt-3">
                   <span style={{ fontSize: 13, color: "#666" }}>WhatsApp: +91{request.owner_whatsapp}</span>
@@ -363,7 +404,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
           {/* ═══ SUBMIT TAB ═══ */}
           {activeTab === "submit" && (
             <div className="p-4">
-              <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
+              <h3 style={{ fontFamily: font.heaing, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
                 Submit Your Website
               </h3>
 

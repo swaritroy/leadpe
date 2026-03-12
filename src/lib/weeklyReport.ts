@@ -6,7 +6,7 @@ export interface WeeklyReportData {
   ownerName: string;
   phone: string;
   language: Language;
-  weekNumber: string;
+  weekPhone: string;
   weekStart: string;
   leadsThisWeek: number;
   leadsLastWeek: number;
@@ -67,7 +67,7 @@ export function generateTip(data: {
       noLeads: "💡 Share your site link in your local WhatsApp groups to get your first inquiry!",
       noResponse: "💡 Call leads within 1 hour — businesses that respond fast get 3x more customers!",
       growing: "💡 Great week! You're getting more visible on Google every day.",
-      trialEnding: "💡 Trial ending soon. Customers tried to reach you. Continue to keep seeing them.",
+      trialEnding: "💡 Trial ening soon. Customers tried to reach you. Continue to keep seeing them.",
     },
     hindi: {
       noLeads: "💡 अपनी साइट का लिंक अपने व्हाट्सएप ग्रुप्स में शेयर करें ताकि पहली इन्क्वायरी आए!",
@@ -76,14 +76,14 @@ export function generateTip(data: {
       trialEnding: "💡 ट्रायल जल्द खत्म होगा। कस्टमर्स आपसे संपर्क करने की कोशिश कर रहे थे। जारी रखें ताकि उन्हें देखते रहें।",
     },
     hinglish: {
-      noLeads: "💡 Apni site ka link apne WhatsApp groups mein share karein taaki pehli inquiry aaye!",
-      noResponse: "💡 Leads ko 1 ghante ke andar call karein — jo tezi se jawab dete hain unhe 3x zyada customers milte hain!",
-      growing: "💡 Badhiya hafta! Aap har din Google pe aur dikhnne lag rahe hain.",
-      trialEnding: "💡 Trial jald khatam hoga. Customers aapse contact karne ki koshish kar rahe the. Jaari rakhein taaki unhe dekhte rahein.",
+      noLeads: "💡 Share your site link in WhatsApp groups to get your first inquiry!",
+      noResponse: "💡 Call leads within 1 hour — businesses that respond quickly get 3x more customers!",
+      growing: "💡 Badhiya hafta! Aap har days Google pe aur dikhnne lag rahe hain.",
+      trialEnding: "💡 Trial ending soon. Customers were trying to reach you. Continue to keep receiving them.",
     },
   };
   
-  // Priority: Trial ending > No leads > Growing > Default
+  // Priority: Trial ening > No leads > Growing > Default
   if (isTrial && trialDay && trialDay >= 5) {
     return tips[language].trialEnding;
   }
@@ -186,7 +186,7 @@ export async function generateWeeklyReport(businessId: string): Promise<WeeklyRe
       ownerName: profile.full_name,
       phone: profile.whatsapp_number,
       language,
-      weekNumber: `Week ${getWeekNumber(new Date())}`,
+      weekPhone: `Week ${getWeekNumber(new Date())}`,
       weekStart: weekStart.toISOString().split("T")[0],
       leadsThisWeek: thisWeekCount,
       leadsLastWeek: lastWeekCount,
@@ -277,7 +277,7 @@ export async function sendWeeklyReportWhatsApp(report: WeeklyReportData): Promis
     
     return true;
   } catch (err) {
-    console.error("Error sending weekly report:", err);
+    console.error("Error sening weekly report:", err);
     return false;
   }
 }

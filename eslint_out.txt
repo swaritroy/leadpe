@@ -1,0 +1,14 @@
+[0m[0m
+[0m[4mC:\Users\SWARIT ROY\Desktop\leadpe\src\pages\DevDashboard.tsx[24m[0m
+[0m   [2m81:42[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m106:58[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m132:6[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m173:28[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m214:6[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m240:20[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m259:44[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m286:66[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m757:57[22m  [31merror[39m    Unexpected any. Specify a different type                                                                      [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[31m[1m✖ 9 problems (7 errors, 2 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m

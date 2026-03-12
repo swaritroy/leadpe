@@ -6,6 +6,7 @@ import LeadPeLogo from "@/components/LeadPeLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { TRIAL_DAYS } from "@/lib/constants";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -152,12 +153,12 @@ export default function Auth() {
             </div>
           )}
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {tab === "signin" ? (
               <motion.form key="si" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleSignIn} className="space-y-5">
                 <div className="text-center mb-6">
                   <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Welcome Back 👋</h1>
-                  <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Sign in to your dashboard</p>
+                  <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Sign in to your account</p>
                 </div>
 
                 <div>
@@ -192,7 +193,7 @@ export default function Auth() {
               <motion.form key="su" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleSignUp} className="space-y-4">
                 <div className="text-center mb-5">
                   <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Create Account</h1>
-                  <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Start your free 21-day trial</p>
+                  <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Start your {TRIAL_DAYS}-day free period</p>
                 </div>
 
                 <div>

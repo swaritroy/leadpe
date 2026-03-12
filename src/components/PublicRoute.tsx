@@ -1,34 +1,56 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PublicRouteProps {
   children: React.ReactNode;
 }
 
 const PublicRoute = ({ children }: PublicRouteProps) => {
-  const { user, role, loading, authReady } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authReady || loading) return;
-    if (!user || !role) return;
+    let mounted = true;
 
-    // Already logged in — redirect to correct dashboard
-    if (role === "business") navigate("/client/dashboard", { replace: true });
-    else if (role === "developer" || role === "vibe_coder") navigate("/dev/dashboard", { replace: true });
-    else if (role === "admin") navigate("/admin", { replace: true });
-  }, [user, role, loading, authReady, navigate]);
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        if (mounted) setLoading(false);
+        return;
+      }
 
-  if (!authReady || loading) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (!mounted) return;
+
+      const role = profile?.role;
+      if (role === "developer" || role === "vibe_coder" || role === "dev" || role === "coder") {
+        navigate("/dev/dashboard", { replace: true });
+      } else if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/client/dashboard", { replace: true });
+      }
+    };
+
+    checkSession();
+    
+    return () => { mounted = false; };
+  }, [navigate]);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
         <div className="animate-spin w-8 h-8 border-2 rounded-full" style={{ borderColor: "#E0E0E0", borderTopColor: "#00C853" }} />
       </div>
     );
   }
-
-  if (user && role) return null;
 
   return <>{children}</>;
 };

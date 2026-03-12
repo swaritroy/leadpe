@@ -61,7 +61,7 @@ export async function generateWelcomeMessage(business: {
 }
 
 function defaultWelcome(b: { ownerName: string; name: string; trialCode: string }): string {
-  return `🎉 Welcome to LeadPe, ${b.ownerName}!\n\nAapka ${b.name} ab LeadPe family ka part hai! 🌱\n\nHum aapki website 48 ghante mein tayaar kar denge.\n\nAapka Trial Code: *${b.trialCode}*\n\nKya hoga next:\n✅ Team contact karegi 2 ghante mein\n🌐 Website build hogi 48hrs mein\n📲 Leads seedhe WhatsApp pe aayenge\n📍 Google Maps setup hoga\n\nKoi bhi sawal ho toh reply karein!\n\nLeadPe Team 🌱`;
+  return `🎉 Welcome to LeadPe, ${b.ownerName}!\n\nYour business ${b.name} is now part of the LeadPe family! 🌱\n\nWe will have your website ready within 48 hours.\n\nYour Trial Code: *${b.trialCode}*\n\nWhat happens next:\n✅ Our team will contact you within 2 hours\n🌐 Website will be built in 48 hours\n📲 Leads will come directly to your WhatsApp\n📍 Google Maps will be set up\n\nReply anytime if you have questions!\n\nLeadPe Team 🌱`;
 }
 
 export async function generateLeadMessage(lead: {
@@ -74,10 +74,10 @@ export async function generateLeadMessage(lead: {
     });
 
     if (error || data?.error || !data?.result) {
-      return `🔔 NEW LEAD ALERT!\n\nCustomer: ${lead.customerName}\nPhone: ${lead.customerPhone}\nLooking for: ${lead.interest}\n\nJaldi contact karein! Ye hot lead hai 🔥\n\nLeadPe 🔔`;
+      return `🔔 NEW LEAD ALERT!\n\nCustomer: ${lead.customerName}\nPhone: ${lead.customerPhone}\nLooking for: ${lead.interest}\n\nContact them quickly! This is a hot lead 🔥\n\nLeadPe 🔔`;
     }
     return data.result;
   } catch {
-    return `🔔 NEW LEAD ALERT!\n\nCustomer: ${lead.customerName}\nPhone: ${lead.customerPhone}\nLooking for: ${lead.interest}\n\nJaldi contact karein!\n\nLeadPe 🔔`;
+    return `🔔 NEW LEAD ALERT!\n\nCustomer: ${lead.customerName}\nPhone: ${lead.customerPhone}\nLooking for: ${lead.interest}\n\nContact them quickly!\n\nLeadPe 🔔`;
   }
 }

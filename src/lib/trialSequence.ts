@@ -80,7 +80,7 @@ LeadPe ⚡`;
 // Save message to log
 export async function logMessage(
   businessId: string,
-  dayNumber: number,
+  dayPhone: number,
   messageType: "owner" | "admin",
   message: string,
   language: Language = "hinglish"
@@ -156,14 +156,14 @@ LeadPe ⚡`,
 कोई सवाल? रिप्लाई करें।
 लीडपे ⚡`,
     
-    hinglish: `🎉 ${deployment.business_name} ki website ab live hai!
+    hinglish: `🎉 ${deployment.business_name} website is now live!
 
-Apna link share karein:
+Share your link:
 👉 ${deployment.subdomain}
 
-Apne WhatsApp groups mein share karein — pehle leads aaj raat aa sakte hain! 🔔
+Share in your WhatsApp groups — first leads may come tonight! 🔔
 
-Koi sawaal? Reply karein.
+Questions? Just reply.
 LeadPe ⚡`,
   };
   
@@ -212,13 +212,13 @@ LeadPe ⚡`,
 असली लीड्स 7-14 दिन में शुरू हो जाते हैं। 📈
 लीडपे ⚡`,
     
-    hinglish: `${ownerName}, dekha? 🔔
+    hinglish: `${ownerName}, see this? 🔔
 
-Abhi ek test inquiry aayi — bilkul aise hi real customers aayenge jab aap Google pe aajayenge!
+A test inquiry just came in — this is exactly how real customers will reach you when you show up on Google!
 
-Yeh ping tab aata hai jab koi aapki site pe form bharta hai.
+This ping comes whenever someone fills the form on your site.
 
-Real leads 7-14 din mein shuru ho jaate hain. 📈
+Real leads start coming in 7-14 days. 📈
 LeadPe ⚡`,
   };
   
@@ -282,11 +282,11 @@ LeadPe ⚡`,
     
     hinglish: `${firstName} ji, good news! 🗺️
 
-Hum aapka Google Maps listing set up kar rahe hain.
+We are setting up your Google Maps listing.
 
-3-5 din mein aap Google Maps pe dikh ne lagenge — bilkul free!
+In 3-5 days you will appear on Google Maps — completely free!
 
-Matlab jab bhi koi '${type} in ${city}' search kare — aap dikhenge. 🔍
+Meaning when anyone searches '${type} in ${city}' — you'll show up. 🔍
 LeadPe ⚡`,
   };
   
@@ -347,14 +347,14 @@ LeadPe ⚡`,
 ${leads > 0 ? `${leads} लोग पहले से इंटरेस्टेड हैं!` : "साइट काम कर रही है — लीड्स आने वाले हैं!"}
 लीडपे ⚡`,
     
-    hinglish: `📊 AAPKI SITE — DAY 4 REPORT
+    hinglish: `📊 YOUR SITE — DAY 4 REPORT
 ━━━━━━━━━━━━━━
 👁 Visitors: ${visitors}
-📱 Mobile Se: ${mobileVisitors}
+📱 Mobile: ${mobileVisitors}
 📋 Inquiries: ${leads}
 ⚡ Speed Score: 94/100
 ━━━━━━━━━━━━━━
-${leads > 0 ? `${leads} log already interested hain!` : "Site kaam kar rahi hai — leads aane wale hain!"}
+${leads > 0 ? `${leads} people already interested!` : "Site is working — leads coming soon!"}
 LeadPe ⚡`,
   };
   
@@ -407,15 +407,15 @@ LeadPe ⚡`,
 कल इसके बारे में बात करते हैं।
 लीडपे ⚡`,
     
-    hinglish: `${firstName} ji, ek tip! 💡
+    hinglish: `${firstName} ji, a quick tip! 💡
 
-Hamare Growth plan wale businesses har inquiry ka instant WhatsApp alert paate hain.
+Our Growth plan businesses get instant WhatsApp alerts for every inquiry.
 
-Matlab jab bhi koi form bhare — turant aapke phone pe ping! 🔔
+Whenever someone fills the form — you get an instant ping on your phone! 🔔
 
-Abhi aap basic trial pe hain.
+You're currently on basic trial.
 
-Kal baat karte hain iske baare mein.
+We will talk about this tomorrow.
 LeadPe ⚡`,
   };
   
@@ -477,21 +477,21 @@ ${leads > 0 ? `✅ ${leads} इन्क्वायरी आई` : "✅ ली
 पेमेंट लिंक कल भेजेंगे।
 लीडपे ⚡`,
     
-    hinglish: `${firstName} ji, aapka free trial kal khatam ho raha hai. ⏰
+    hinglish: `${firstName} ji, your free trial ends tomorrow. ⏰
 
-Is hafte aapki site:
-✅ ${visitors} logon ne dekhi
-✅ Google pe index ho rahi hai
-${leads > 0 ? `✅ ${leads} inquiries aayi` : "✅ Leads aane wale hain"}
+This week your site:
+✅ ${visitors} people saw it
+✅ Getting indexed on Google
+${leads > 0 ? `✅ ${leads} inquiries received` : "✅ Leads coming soon"}
 
-Continue karne ke liye:
- sirf ₹299/month
+To continue:
+ just ₹299/month
 
-Ek naya student = ₹1500
+One new customer = ₹1500
 LeadPe cost = ₹299
 Net profit = ₹1201 💰
 
-Payment link kal bhejenge.
+Payment link coming tomorrow.
 LeadPe ⚡`,
   };
   
@@ -555,22 +555,22 @@ LeadPe ⚡`,
 यह एक्सपीरियंस हमारा सबसे बड़ा इनाम है। 🙏
 लीडपे ⚡`,
     
-    hinglish: `${firstName} ji, aapka trial aaj complete hua. 🙏
+    hinglish: `${firstName} ji, your trial is now complete. 🙏
 
-Is hafte results:
+This week's results:
 👁 ${visitors} visitors
 📋 ${leads} inquiries
 🗺️ Google Maps: In progress
 
-Continue karna chahein toh:
+If you want to continue:
 ₹299/month — Growth Plan
 
 👉 Reply "YES" to continue
 
-Nahi karna — koi baat nahi.
-Aapka data 30 din safe rahega.
+No worries if not.
+Your data will be safe for 30 days.
 
-Yeh experience hamara sabse bada reward hai. 🙏
+This experience is our biggest reward. 🙏
 LeadPe ⚡`,
   };
   

@@ -153,7 +153,7 @@ export default function StudioAuth() {
             </div>
           )}
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {tab === "join" ? (
               <motion.form key="join" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleJoin} className="space-y-4">
                 <div className="text-center mb-5">

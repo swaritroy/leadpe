@@ -21,7 +21,7 @@ const steps = [
   {
     id: 2,
     title: "Click 'Manage now'",
-    description: "Start adding your business",
+    description: "Start ading your business",
     action: null,
     url: null,
   },

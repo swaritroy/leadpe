@@ -185,7 +185,7 @@ export default function GetWebsite() {
             ))}
           </div>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {/* STEP 1 */}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
@@ -200,7 +200,6 @@ export default function GetWebsite() {
                   <div>
                     <label className="text-sm font-medium text-[#1A1A1A] block mb-1">WhatsApp Number *</label>
                     <Input type="tel" value={form.whatsapp} onChange={(e) => update("whatsapp", e.target.value.replace(/\D/g, "").slice(0, 10))} className="bg-white border-[#E0E0E0] h-12 rounded-xl" placeholder="98765 43210" />
-                    <p className="text-[10px] text-[#999] mt-1">OTP will be sent to verify</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-[#1A1A1A] block mb-1">Business Name *</label>

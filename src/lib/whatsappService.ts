@@ -94,7 +94,7 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `🔔 NAYA SIGNUP — LeadPe\n` +
+        `🔔 NEW SIGNUP — LeadPe\n` +
         `━━━━━━━━━━━━━━\n` +
         `Business: ${data.businessName}\n` +
         `Type: ${data.businessType}\n` +
@@ -127,12 +127,12 @@ export const getMessage = (
         `LeadPe ⚡ leadpe.online`,
 
       hinglish:
-        `LeadPe mein aapka swagat hai! 🎉\n\n` +
+        `Welcome to LeadPe! 🎉\n\n` +
         `${data.ownerName} ji,\n` +
-        `Aapka trial shuru ho gaya.\n` +
+        `Your trial has started.\n` +
         `Trial Code: ${data.trialCode}\n\n` +
-        `Hamari team 2 ghante mein\n` +
-        `aapse WhatsApp karegi.\n\n` +
+        `Our team will contact you\n` +
+        `via WhatsApp within 2 hours.\n\n` +
         `LeadPe ⚡ leadpe.online` 
     },
 
@@ -157,12 +157,12 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `🚀 Aapki website LIVE hai!\n\n` +
+        `🚀 Your website is LIVE!\n\n` +
         `${data.ownerName} ji,\n` +
-        `Aapki website ab live hai:\n` +
+        `Your website is now live:\n` +
         `👉 ${data.siteUrl}\n\n` +
-        `Apne WhatsApp groups mein\n` +
-        `share karein aaj! 🔔\n\n` +
+        `Share in your WhatsApp groups\n` +
+        `today! 🔔\n\n` +
         `LeadPe ⚡` 
     },
 
@@ -189,13 +189,13 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `🔔 NAYA INQUIRY\n` +
+        `🔔 NEW INQUIRY\n` +
         `━━━━━━━━━━━━━━\n` +
-        `Naam: ${data.customerName}\n` +
-        `Number: ${data.customerPhone}\n` +
+        `Name: ${data.customerName}\n` +
+        `Phone: ${data.customerPhone}\n` +
         `Interest: ${data.interest}\n` +
         `━━━━━━━━━━━━━━\n` +
-        `Abhi call karein! 📞\n` +
+        `Call them now! 📞\n` +
         `LeadPe ⚡` 
     },
 
@@ -218,11 +218,11 @@ export const getMessage = (
 
       hinglish:
         `${data.ownerName} ji! 👋\n\n` +
-        `Aapki website live hai:\n` +
+        `Your website is live:\n` +
         `👉 ${data.siteUrl}\n\n` +
-        `Local WhatsApp groups mein\n` +
-        `share karein — leads jaldi\n` +
-        `aayenge! 🔔\n\n` +
+        `Share in your local WhatsApp\n` +
+        `groups — leads will come\n` +
+        `soon! 🔔\n\n` +
         `LeadPe ⚡` 
     },
 
@@ -248,10 +248,10 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `${data.ownerName} ji, kal\n` +
-        `trial khatam! ⏰\n\n` +
-        `Is hafte: ${data.leads} inquiries\n\n` +
-        `Continue karein: ₹299/month\n` +
+        `${data.ownerName} ji, trial ends\n` +
+        `tomorrow! ⏰\n\n` +
+        `This week: ${data.leads} inquiries\n\n` +
+        `Continue: ₹299/month\n` +
         `1 customer = ₹1,500+\n` +
         `LeadPe = ₹299\n` +
         `Net profit = ₹1,201 💰\n\n` +
@@ -284,10 +284,10 @@ export const getMessage = (
         `${data.ownerName} ji, trial\n` +
         `complete! 🙏\n\n` +
         `Results: ${data.leads} inquiries\n\n` +
-        `Continue karein: ₹299/month\n` +
+        `Continue: ₹299/month\n` +
         `GPay: 9973383902\n\n` +
-        `Screenshot bhejein.\n` +
-        `5 min mein activate. ✅\n\n` +
+        `Send screenshot.\n` +
+        `Activated in 5 minutes. ✅\n\n` +
         `LeadPe ⚡` 
     },
 
@@ -321,7 +321,7 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `🔨 NAYA BUILD REQUEST\n` +
+        `🔨 NEW BUILD REQUEST\n` +
         `━━━━━━━━━━━━━━\n` +
         `Business: ${data.businessName}\n` +
         `Type: ${data.businessType}\n` +
@@ -331,7 +331,7 @@ export const getMessage = (
         `Plan: ${data.plan}\n` +
         `Deadline: 48 hours\n` +
         `━━━━━━━━━━━━━━\n` +
-        `Abhi coder assign karein!\n` +
+        `Assign a coder now!\n` +
         `LeadPe ⚡`
     },
 
@@ -383,8 +383,8 @@ export const getMessage = (
         `LeadPe ⚡`,
 
       hinglish:
-        `🎉 Badiya khabar ${data.ownerName} ji!\n` +
-        `Aapki website banana shuru ho gaya.\n` +
+        `🎉 Great news ${data.ownerName} ji!\n` +
+        `Your website building has started.\n` +
         `Builder: ${data.coderName}\n` +
         `Ready in: 48 hours 🚀\n` +
         `LeadPe ⚡`
@@ -423,7 +423,7 @@ export const getMessage = (
         `📊 WEEKLY REPORT\n` +
         `━━━━━━━━━━━━━━\n` +
         `${data.businessName}\n` +
-        `Hafte: ${data.week}\n` +
+        `Week: ${data.week}\n` +
         `━━━━━━━━━━━━━━\n` +
         `👁 Visitors: ${data.visitors}\n` +
         `📋 Inquiries: ${data.leads}\n` +

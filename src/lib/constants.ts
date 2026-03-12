@@ -2,6 +2,7 @@
 
 export const ADMIN_WHATSAPP = "919973383902";
 export const TRIAL_DAYS = 21;
+export const MONTHLY_PRICE = 299;
 export const FOUNDING_SPOTS = 50;
 export const FOUNDING_LEFT = 47;
 

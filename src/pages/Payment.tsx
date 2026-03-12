@@ -8,9 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import LeadPeLogo from "@/components/LeadPeLogo";
-import { ADMIN_WHATSAPP, UPI_ID, RAZORPAY_KEY_ID } from "@/lib/constants";
+import { ADMIN_WHATSAPP, UPI_ID, RAZORPAY_KEY_ID, MONTHLY_PRICE } from "@/lib/constants";
 
-const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -30,8 +30,8 @@ export default function Payment() {
   const navigate = useNavigate();
   const orderId = searchParams.get("order");
   const plan = searchParams.get("plan") || "growth";
-  const amount = parseInt(searchParams.get("amount") || "299");
-  const [showPending, setShowPending] = useState(false);
+  const amount = parseInt(searchParams.get("amount") || MONTHLY_PRICE.toString());
+  const [showPening, setShowPening] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [paying, setPaying] = useState(false);
@@ -62,19 +62,58 @@ export default function Payment() {
     }
   }, [orderId]);
 
-  // Poll for activation
+  // Realtime subscription for UPI payment activation (replaces setInterval polling)
   useEffect(() => {
-    if (!showPending || !user) return;
-    const interval = setInterval(async () => {
-      const { data } = await supabase.from("profiles").select("status").eq("user_id", user.id).single();
-      if (data?.status === "active") {
-        clearInterval(interval);
-        setShowPending(false);
-        setShowCelebration(true);
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [showPending, user]);
+    if (!showPening || !user) return;
+
+    const channel = supabase
+      .channel("payment-activation")
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "payments",
+          filter: `business_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          if (payload.new?.status === "paid") {
+            setShowPening(false);
+            setShowCelebration(true);
+            toast({ title: "Payment confirmed! 🎉" });
+            refreshProfile();
+          }
+        }
+      )
+      .subscribe();
+
+    // Also check profile status for admin-activated cases
+    const profileChannel = supabase
+      .channel("profile-activation")
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          if (payload.new?.status === "active") {
+            setShowPening(false);
+            setShowCelebration(true);
+            toast({ title: "Account activated! 🎉" });
+            refreshProfile();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(profileChannel);
+    };
+  }, [showPening, user, toast, refreshProfile]);
 
   const displayAmount = isOrderPayment ? (order?.total_price || amount) : amount;
   const gstAmount = Math.round(displayAmount * 0.18);
@@ -144,7 +183,7 @@ export default function Payment() {
       amount: displayAmount, gst: gstAmount, total: displayAmount,
       plan, method: "upi", status: "pending",
     });
-    setShowPending(true);
+    setShowPening(true);
   };
 
   if (!gateChecked) return null;
@@ -154,8 +193,8 @@ export default function Payment() {
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-sm">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }} className="text-7xl mb-6">🎉</motion.div>
-          <h2 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>You're on Growth Plan! 🚀</h2>
-          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>All leads unlocked. Customers can reach you now!</p>
+          <h2 style={{ fontFamily: font.heaing, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>You're on Growth Plan! 🚀</h2>
+          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>All customers visible now!</p>
           <Link to="/client/dashboard">
             <Button className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Go to Dashboard →</Button>
           </Link>
@@ -164,7 +203,7 @@ export default function Payment() {
     );
   }
 
-  if (showPending) {
+  if (showPening) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-sm">
@@ -172,10 +211,10 @@ export default function Payment() {
             className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0FFF4", border: "2px solid #00C853" }}>
             <Clock size={28} style={{ color: "#00C853" }} />
           </motion.div>
-          <h2 style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Activating your account...</h2>
+          <h2 style={{ fontFamily: font.heaing, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Activating your account...</h2>
           <p style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>Usually within 15 minutes.</p>
           <p style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>We'll WhatsApp you when live!</p>
-          <p style={{ fontSize: 12, color: "#999", marginBottom: 20 }}>This page checks every 30 seconds ⏱️</p>
+          <p style={{ fontSize: 12, color: "#999", marginBottom: 20 }}>This page updates automatically ⚡</p>
           <Link to="/client/dashboard">
             <Button className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Go to Dashboard →</Button>
           </Link>
@@ -199,7 +238,7 @@ export default function Payment() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {/* Hero */}
           <div className="text-center mb-6">
-            <h1 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>One Step to Go Live! 🚀</h1>
+            <h1 style={{ fontFamily: font.heaing, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>One Step to Go Live! 🚀</h1>
             <p style={{ fontSize: 14, color: "#666" }}>Your website is built and ready.</p>
           </div>
 
@@ -210,7 +249,7 @@ export default function Payment() {
               `Real domain: ${businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.online`,
               "Watermark removed",
               "Google can find you",
-              "Leads start flowing",
+              "Customers start flowing",
             ].map(f => (
               <div key={f} className="flex items-center gap-2 mb-2">
                 <Check size={16} style={{ color: "#00C853", flexShrink: 0 }} />
@@ -221,10 +260,10 @@ export default function Payment() {
 
           {/* Plan card */}
           <div className="bg-white rounded-2xl mb-5" style={{ border: "2px solid #00C853", padding: 20 }}>
-            <p style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Growth Plan 💚</p>
-            <p style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹299 / month</p>
+            <p style={{ fontFamily: font.heaing, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Growth Plan 💚</p>
+            <p style={{ fontFamily: font.heaing, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹{MONTHLY_PRICE} / month</p>
             <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>GST included. Cancel anytime.</p>
-            {["Unlimited leads", "WhatsApp ping on every inquiry", "Custom subdomain", "Full SEO", "Priority support"].map(f => (
+            {["Unlimited customers", "WhatsApp alert on every inquiry", "Custom subdomain", "Appear on Google", "Priority support"].map(f => (
               <div key={f} className="flex items-center gap-2 mb-1.5">
                 <Check size={14} style={{ color: "#00C853" }} />
                 <span style={{ fontSize: 13, color: "#1A1A1A" }}>{f}</span>
@@ -234,7 +273,7 @@ export default function Payment() {
 
           {/* Razorpay */}
           <div className="bg-white rounded-2xl mb-4 p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-            <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 2 }}>Pay Online</h3>
+            <h3 style={{ fontFamily: font.heaing, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 2 }}>Pay Online</h3>
             <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>UPI • Cards • Net Banking</p>
             <Button onClick={handleRazorpayPay} disabled={paying}
               className="w-full rounded-xl text-white font-semibold text-base" style={{ backgroundColor: "#00C853", height: 56 }}>

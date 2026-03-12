@@ -3,7 +3,7 @@ export interface TrialStatus {
   daysUsed: number;
   totalDays: number;
   isExpired: boolean;
-  isTrialEnding: boolean; // <= 3 days
+  isTrialEning: boolean; // <= 3 days
   isWarning: boolean; // <= 7 days
   percentage: number;
   plan: string | null;
@@ -28,7 +28,7 @@ export function getTrialStatus(profile: {
   const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86400000));
 
   const isExpired = now > endDate;
-  const isTrialEnding = daysLeft <= 3 && !isExpired;
+  const isTrialEning = daysLeft <= 3 && !isExpired;
   const isWarning = daysLeft <= 7 && daysLeft > 3;
 
   return {
@@ -36,7 +36,7 @@ export function getTrialStatus(profile: {
     daysUsed,
     totalDays,
     isExpired,
-    isTrialEnding,
+    isTrialEning,
     isWarning,
     percentage: Math.min(100, (daysUsed / totalDays) * 100),
     plan: profile.subscription_plan || null,

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
+import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
 
 const businessTypes = [
   "Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon / Parlour",
@@ -33,7 +34,7 @@ export default function Business() {
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    businessName: "", businessType: "", city: "", whatsappNumber: "", ownerName: "",
+    businessName: "", businessType: "", city: "", whatsappPhone: "", ownerName: "",
     plan: "growth", language: "hinglish",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -180,7 +181,7 @@ export default function Business() {
             keywords: seoData.keywords.join(", "),
             google_description: seoData.googleDescription,
             whatsapp_bio: seoData.whatsappBio,
-            h1_heading: seoData.h1,
+            h1_heaing: seoData.h1,
             about_text: seoData.aboutText,
           });
           console.log("SEO generated:", seoData);
@@ -291,7 +292,7 @@ export default function Business() {
               ))}
             </div>
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {step === 1 && (
                 <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
                   <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#1A1A1A" }}>Tell us about your business</h2>
@@ -321,17 +322,17 @@ export default function Business() {
                     </div>
                   </Field>
 
-                  <Field label="City / Town" hint="Kaunse shehar mein?" error={errors.city}>
+                  <Field label="City / Town" hint="Which city?" error={errors.city}>
                     <Input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Vaishali, Bihar"
                       className={inputStyle} style={inputCSS} />
                   </Field>
 
-                  <Field label="WhatsApp Number" hint="Leads isi number pe aayenge" error={errors.whatsappNumber}>
+                  <Field label="WhatsApp Number" hint="Leads will come to this number" error={errors.whatsappNumber}>
                     <Input value={form.whatsappNumber} onChange={(e) => update("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                       placeholder="98765 43210" type="tel" className={inputStyle} style={inputCSS} />
                   </Field>
 
-                  <Field label="Owner Name" hint="Aapka naam" error={errors.ownerName}>
+                  <Field label="Owner Name" hint="Your name" error={errors.ownerName}>
                     <Input value={form.ownerName} onChange={(e) => update("ownerName", e.target.value)} placeholder="e.g. Sanjay Singhania"
                       className={inputStyle} style={inputCSS} />
                   </Field>
@@ -346,8 +347,8 @@ export default function Business() {
                   <p className="text-sm text-center mb-6" style={{ color: "#666666" }}>Start free. Upgrade anytime.</p>
 
                   {[
-                    { value: "trial", name: "Free Trial", desc: "21 days — no credit card", price: "₹0", priceColor: "#1A1A1A" },
-                    { value: "growth", name: "Growth Plan", desc: "Unlimited leads + WhatsApp ping", price: "₹299/mo", priceColor: "#00C853" },
+                    { value: "trial", name: "Free Trial", desc: `${TRIAL_DAYS} days — no credit card`, price: "₹0", priceColor: "#1A1A1A" },
+                    { value: "growth", name: "Growth Plan", desc: "Unlimited customers + WhatsApp alert", price: `₹${MONTHLY_PRICE}/mo`, priceColor: "#00C853" },
                   ].map((p) => (
                     <div key={p.value} onClick={() => update("plan", p.value)}
                       className="rounded-2xl p-5 cursor-pointer transition-all flex items-center gap-4"

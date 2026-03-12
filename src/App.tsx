@@ -25,7 +25,7 @@ const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const ClientSettings = lazy(() => import("./pages/ClientSettings"));
 const Payment = lazy(() => import("./pages/Payment"));
 const DevDashboard = lazy(() => import("./pages/DevDashboard"));
-const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
+const DevOnboaring = lazy(() => import("./pages/DevOnboaring"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 const queryClient = new QueryClient();
@@ -52,16 +52,16 @@ const AppContent = () => {
       <BrowserRouter>
         <Suspense fallback={<Loader />}>
           <Routes>
-            {/* Fully public */}
-            <Route path="/" element={<Index />} />
-            <Route path="/studio" element={<Studio />} />
-            <Route path="/get-website" element={<GetWebsite />} />
-            <Route path="/demo/:orderId" element={<DemoPreview />} />
-
             {/* Public — redirect if already logged in */}
+            <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
+            <Route path="/studio" element={<PublicRoute><Studio /></PublicRoute>} />
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
             <Route path="/business" element={<PublicRoute><Business /></PublicRoute>} />
             <Route path="/studio/auth" element={<PublicRoute><StudioAuth /></PublicRoute>} />
+
+            {/* Fully public (no redirect) */}
+            <Route path="/get-website" element={<GetWebsite />} />
+            <Route path="/demo/:orderId" element={<DemoPreview />} />
 
             {/* Protected — business */}
             <Route path="/client/dashboard" element={
@@ -88,7 +88,7 @@ const AppContent = () => {
             } />
             <Route path="/dev/onboarding" element={
               <ProtectedRoute allowedRoles={["developer", "vibe_coder"]}>
-                <DevOnboarding />
+                <DevOnboaring />
               </ProtectedRoute>
             } />
 

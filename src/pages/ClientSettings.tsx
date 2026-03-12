@@ -82,7 +82,7 @@ const ClientSettings = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-extrabold font-display">Business Settings</h1>
-            <p className="text-sm text-muted-foreground">Yahan se apni info update karo — live site pe dikhega</p>
+            <p className="text-sm text-muted-foreground">Update your info here — it will show on your live site</p>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ const ClientSettings = () => {
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">Subdomain</label>
-                <span className="text-xs text-muted-foreground block mb-2">Aapka website ka address — {form.slug || "yourname"}.leadpe.online</span>
+                <span className="text-xs text-muted-foreground block mb-2">Your website address — {form.slug || "yourname"}.leadpe.online</span>
                 <div className="flex items-center gap-0">
                   <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} className="rounded-l-xl rounded-r-none border-r-0 bg-secondary border-border flex-1" placeholder="yourbusiness" />
                   <span className="h-10 px-3 flex items-center bg-muted border border-border rounded-r-xl text-xs text-muted-foreground whitespace-nowrap">.leadpe.online</span>
@@ -110,7 +110,7 @@ const ClientSettings = () => {
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">Address</label>
-                <span className="text-xs text-muted-foreground block mb-2">Aapka pata</span>
+                <span className="text-xs text-muted-foreground block mb-2">Your address</span>
                 <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="rounded-xl bg-secondary border-border" />
               </div>
               <div>

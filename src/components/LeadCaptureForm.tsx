@@ -226,7 +226,7 @@ export default function LeadCaptureForm({ businessId, businessName, ownerWhatsap
           {submitting ? (
             <>
               <Loader2 size={18} className="mr-2 animate-spin" />
-              Sending...
+              Sening...
             </>
           ) : (
             "Send Inquiry →"

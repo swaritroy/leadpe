@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_WHATSAPP } from "@/lib/constants";
 
-const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 interface ActivationPanelProps {
   buildRequests: any[];
@@ -114,7 +114,7 @@ export default function ActivationPanel({ buildRequests, profiles, onRefresh }: 
 
   return (
     <div>
-      <h3 className="text-lg font-bold mb-4" style={{ fontFamily: font.heading }}>
+      <h3 className="text-lg font-bold mb-4" style={{ fontFamily: font.heaing }}>
         Ready to Activate 🔴
         {readyToActivate.length > 0 && (
           <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: "#ef4444" }}>
@@ -140,7 +140,7 @@ export default function ActivationPanel({ buildRequests, profiles, onRefresh }: 
 
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700 }}>{request.business_name}</p>
+                    <p style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700 }}>{request.business_name}</p>
                     <p style={{ fontSize: 13, color: "#666" }}>{request.business_type} • {request.city}</p>
                   </div>
                   <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#FF9800" }}>
@@ -204,7 +204,7 @@ export default function ActivationPanel({ buildRequests, profiles, onRefresh }: 
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowConfirm(null)}>
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+            <h3 style={{ fontFamily: font.heaing, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
               Activate {showConfirm.business_name}?
             </h3>
             <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.6 }}>
