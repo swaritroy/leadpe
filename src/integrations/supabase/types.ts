@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       build_requests: {
         Row: {
+          ai_prompt: string | null
           assigned_coder_id: string | null
           assigned_coder_name: string | null
           business_id: string | null
@@ -42,6 +43,7 @@ export type Database = {
           website_purpose: string | null
         }
         Insert: {
+          ai_prompt?: string | null
           assigned_coder_id?: string | null
           assigned_coder_name?: string | null
           business_id?: string | null
@@ -68,6 +70,7 @@ export type Database = {
           website_purpose?: string | null
         }
         Update: {
+          ai_prompt?: string | null
           assigned_coder_id?: string | null
           assigned_coder_name?: string | null
           business_id?: string | null
@@ -610,6 +613,33 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_verifications: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          otp_code: string
+          phone: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           activated_at: string | null
@@ -664,6 +694,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          feedback_given: boolean | null
           founding_member: boolean | null
           free_months_earned: number | null
           full_name: string | null
@@ -689,6 +720,7 @@ export type Database = {
           trial_start_date: string | null
           upi_id: string | null
           user_id: string
+          website_status: string | null
           whatsapp_number: string | null
         }
         Insert: {
@@ -699,6 +731,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          feedback_given?: boolean | null
           founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
@@ -724,6 +757,7 @@ export type Database = {
           trial_start_date?: string | null
           upi_id?: string | null
           user_id: string
+          website_status?: string | null
           whatsapp_number?: string | null
         }
         Update: {
@@ -734,6 +768,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          feedback_given?: boolean | null
           founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
@@ -759,6 +794,7 @@ export type Database = {
           trial_start_date?: string | null
           upi_id?: string | null
           user_id?: string
+          website_status?: string | null
           whatsapp_number?: string | null
         }
         Relationships: []

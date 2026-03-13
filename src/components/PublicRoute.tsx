@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PublicRouteProps {
   children: React.ReactNode;
@@ -8,49 +8,36 @@ interface PublicRouteProps {
 
 const PublicRoute = ({ children }: PublicRouteProps) => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { user, role, loading, authReady } = useAuth();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+    if (!authReady || loading) return;
 
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        if (mounted) setLoading(false);
-        return;
-      }
+    if (!user) {
+      setChecked(true);
+      return;
+    }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+    // Redirect logged-in users to their dashboard
+    if (role === "developer" || role === "vibe_coder") {
+      navigate("/dev/dashboard", { replace: true });
+    } else if (role === "admin") {
+      navigate("/admin", { replace: true });
+    } else {
+      navigate("/client/dashboard", { replace: true });
+    }
+  }, [user, role, loading, authReady, navigate]);
 
-      if (!mounted) return;
-
-      const role = profile?.role;
-      if (role === "developer" || role === "vibe_coder" || role === "dev" || role === "coder") {
-        navigate("/dev/dashboard", { replace: true });
-      } else if (role === "admin") {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/client/dashboard", { replace: true });
-      }
-    };
-
-    checkSession();
-    
-    return () => { mounted = false; };
-  }, [navigate]);
-
-  if (loading) {
+  if (!authReady || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
         <div className="animate-spin w-8 h-8 border-2 rounded-full" style={{ borderColor: "#E0E0E0", borderTopColor: "#00C853" }} />
       </div>
     );
   }
+
+  if (!checked && user) return null;
 
   return <>{children}</>;
 };

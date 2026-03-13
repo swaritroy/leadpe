@@ -14,6 +14,7 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import Index from "./pages/Index";
 import Business from "./pages/Business";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Studio from "./pages/Studio";
 import StudioAuth from "./pages/StudioAuth";
 import GetWebsite from "./pages/GetWebsite";
@@ -59,8 +60,15 @@ const AppContent = () => {
             <Route path="/business" element={<PublicRoute><Business /></PublicRoute>} />
             <Route path="/studio/auth" element={<PublicRoute><StudioAuth /></PublicRoute>} />
 
+            {/* Auth callback — no wrapper needed */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
+
             {/* Fully public (no redirect) */}
-            <Route path="/get-website" element={<GetWebsite />} />
+            <Route path="/get-website" element={
+              <ProtectedRoute allowedRoles={["business"]}>
+                <GetWebsite />
+              </ProtectedRoute>
+            } />
             <Route path="/demo/:orderId" element={<DemoPreview />} />
 
             {/* Protected — business */}
