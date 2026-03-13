@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +19,7 @@ interface Lead {
   created_at: string;
 }
 
-const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -33,6 +33,7 @@ export default function ClientDashboard() {
   const [business, setBusiness] = useState<any>(null);
   const [showSignOut, setShowSignOut] = useState(false);
   const [newLeadAlert, setNewLeadAlert] = useState<Lead | null>(null);
+  const dataFetched = useRef(false);
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
@@ -42,68 +43,46 @@ export default function ClientDashboard() {
     setTrial(getTrialStatus(profile));
   }, [profile]);
 
-  // Fetch core data
+  // Fetch all data ONCE on mount
   useEffect(() => {
-    if (!user) return;
+    if (!user || dataFetched.current) return;
+    dataFetched.current = true;
+
     const init = async () => {
+      // Fetch build request
       const { data: br } = await (supabase.from("build_requests") as any)
         .select("*").eq("business_id", user.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (br) setBuildRequest(br);
 
+      // Fetch business
       const { data: biz } = await (supabase.from("businesses") as any)
         .select("*").eq("owner_id", user.id).maybeSingle();
-      if (biz) setBusiness(biz);
+      if (biz) {
+        setBusiness(biz);
+        // Fetch leads
+        const { data: leadsData } = await (supabase.from("leads") as any)
+          .select("*").eq("business_id", biz.id)
+          .order("created_at", { ascending: false }).limit(50);
+        setLeads(leadsData || []);
+      }
 
       setLoading(false);
     };
     init();
+  }, [user]);
 
-    // Realtime build status
-    const buildChannel = supabase.channel("build-status")
+  // Realtime subscriptions — set up once
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel("dashboard-realtime")
       .on("postgres_changes", {
         event: "*", schema: "public", table: "build_requests",
         filter: `business_id=eq.${user.id}`,
       }, (payload) => {
         setBuildRequest(payload.new);
-      }).subscribe();
-
-    return () => { supabase.removeChannel(buildChannel); };
-  }, [user]);
-
-  // Fetch leads
-  useEffect(() => {
-    if (!user) return;
-    const fetchLeads = async () => {
-      const { data: biz } = await (supabase.from("businesses") as any)
-        .select("id").eq("owner_id", user.id).maybeSingle();
-      if (!biz) return;
-
-      const { data } = await (supabase.from("leads") as any)
-        .select("*").eq("business_id", biz.id)
-        .order("created_at", { ascending: false }).limit(50);
-      setLeads(data || []);
-
-      const channel = supabase.channel("client-leads")
-        .on("postgres_changes", {
-          event: "INSERT", schema: "public", table: "leads",
-          filter: `business_id=eq.${biz.id}`,
-        }, (payload) => {
-          const newLead = payload.new as Lead;
-          setLeads((prev) => [newLead, ...prev]);
-          setNewLeadAlert(newLead);
-          setTimeout(() => setNewLeadAlert(null), 3000);
-        }).subscribe();
-
-      return () => { supabase.removeChannel(channel); };
-    };
-    fetchLeads();
-  }, [user]);
-
-  // Realtime profile (detect activation)
-  useEffect(() => {
-    if (!user) return;
-    const ch = supabase.channel("profile-status")
+      })
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "profiles",
         filter: `user_id=eq.${user.id}`,
@@ -111,9 +90,29 @@ export default function ClientDashboard() {
         if ((payload.new as any).status === "active" && profile?.status !== "active") {
           toast({ title: "🎉 Customers unlocked!", description: "You can now see all your customers." });
         }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, profile?.status, toast]);
+
+  // Realtime leads subscription
+  useEffect(() => {
+    if (!business?.id) return;
+
+    const channel = supabase.channel("client-leads")
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "leads",
+        filter: `business_id=eq.${business.id}`,
+      }, (payload) => {
+        const newLead = payload.new as Lead;
+        setLeads((prev) => [newLead, ...prev]);
+        setNewLeadAlert(newLead);
+        setTimeout(() => setNewLeadAlert(null), 3000);
       }).subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user, profile?.status]);
+
+    return () => { supabase.removeChannel(channel); };
+  }, [business?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -122,16 +121,17 @@ export default function ClientDashboard() {
 
   // Determine dashboard state
   const status = buildRequest?.status || null;
+  const websiteStatus = (profile as any)?.website_status || null;
   const isLive = status === "live";
   const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
-  const hasNoWebsite = !buildRequest;
+  const hasNoWebsite = !buildRequest && !websiteStatus;
 
   const isExpired = trial?.isExpired;
   const isPaid = profile?.status === "active" && !trial?.isTrial;
 
   // Trial bar config
   const getTrialBar = () => {
-    if (isPaid) return null; // Hide completely for paid users
+    if (isPaid) return null;
     if (!trial) return null;
     if (isExpired) return { bg: "#FFEBEE", text: "Your free period ended", color: "#C62828", btnText: "Continue →", btnColor: "#FF5252" };
     if (trial.isTrialEning) return { bg: "#FFF3E0", text: `⚠️ Free period ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Continue →", btnColor: "#FF6B00" };
@@ -151,7 +151,7 @@ export default function ClientDashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: font.body }}>
-      {/* ═══ NAVBAR ═══ */}
+      {/* NAVBAR */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 50, backgroundColor: "#fff",
         height: 56, boxShadow: "0 1px 8px rgba(0,0,0,0.06)", padding: "0 20px",
@@ -164,7 +164,7 @@ export default function ClientDashboard() {
             style={{
               width: 36, height: 36, borderRadius: "50%", backgroundColor: "#00C853",
               color: "#fff", border: "none", cursor: "pointer",
-              fontFamily: font.heaing, fontSize: 14, fontWeight: 700,
+              fontFamily: font.heading, fontSize: 14, fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
@@ -189,7 +189,7 @@ export default function ClientDashboard() {
         </div>
       </nav>
 
-      {/* ═══ TRIAL BAR ═══ */}
+      {/* TRIAL BAR */}
       {trialBar && (
         <div style={{
           backgroundColor: trialBar.bg, padding: "0 20px", height: 40,
@@ -214,7 +214,7 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* ═══ DASHBOARD STATES ═══ */}
+      {/* DASHBOARD STATES */}
       {hasNoWebsite && (
         <StateANoWebsite
           firstName={firstName}
@@ -240,7 +240,7 @@ export default function ClientDashboard() {
         />
       )}
 
-      {/* ═══ NEW CUSTOMER TOAST ═══ */}
+      {/* NEW CUSTOMER TOAST */}
       <AnimatePresence>
         {newLeadAlert && (
           <motion.div

@@ -12,9 +12,9 @@ import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 
 const businessTypes = [
-  "Coaching Centre", "Salon / Parlour", "Doctor / Clinic", "Restaurant / Cafe",
-  "Gym / Fitness", "Kirana / Shop", "Event Planner", "Real Estate",
-  "NGO / Trust", "Freelancer", "Home Business", "Other",
+  "Doctor / Clinic", "CA / Lawyer / CS", "Coaching Institute", "Contractor / Plumber",
+  "Photographer / Videographer", "Architect", "Gym / Fitness Trainer", "Digital Agency",
+  "Salon / Parlour", "Restaurant / Cafe", "Individual Consultant", "Other",
 ];
 
 const STEPS = ["Business", "Package"];
@@ -28,18 +28,20 @@ export default function GetWebsite() {
   const [submitted, setSubmitted] = useState(false);
   const [orderResult, setOrderResult] = useState<any>(null);
 
-  // Form state — auto-filled from profile
-  const [name, setName] = useState("");
+  // Form state
   const [whatsapp, setWhatsapp] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [city, setCity] = useState("");
   const [selectedPackage, setSelectedPackage] = useState("standard");
 
-  // Auto-fill from profile on mount
+  // Auto-filled from profile
+  const name = profile?.full_name || "";
+  const email = profile?.email || "";
+
+  // Auto-fill editable fields from profile on mount
   useEffect(() => {
     if (profile) {
-      if (profile.full_name) setName(profile.full_name);
       if (profile.whatsapp_number) setWhatsapp(profile.whatsapp_number);
       if (profile.city) setCity(profile.city);
       if (profile.business_name) setBusinessName(profile.business_name);
@@ -50,7 +52,8 @@ export default function GetWebsite() {
   const pkg = WEBSITE_PACKAGES.find((p) => p.id === selectedPackage)!;
 
   const canNext = () => {
-    return businessName.trim() && businessType.trim() && city.trim();
+    const phone = whatsapp.replace(/\D/g, "");
+    return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim();
   };
 
   const handleSubmit = async () => {
@@ -60,6 +63,18 @@ export default function GetWebsite() {
 
     const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name} — ₹${pkg.price}\nDomain: ${subdomainName}.leadpe.online (Free)\nTotal: ₹${pkg.price}\n━━━━━━━━━━━━━━━━━━━━`;
 
+    // Step 1: Update profile with business details
+    if (user) {
+      await supabase.from("profiles").update({
+        whatsapp_number: phone,
+        business_name: businessName,
+        business_type: businessType,
+        city,
+        website_status: "pending",
+      } as any).eq("user_id", user.id);
+    }
+
+    // Step 2: Insert order
     const { data, error } = await (supabase as any).from("orders").insert({
       customer_name: name,
       customer_whatsapp: phone,
@@ -82,7 +97,7 @@ export default function GetWebsite() {
       await logEvent(data.order_id, ORDER_EVENTS.ORDER_PLACED, `Package: ${pkg.name}, Total: ₹${pkg.price}`);
       setOrderResult(data);
 
-      // Create build_request for coder pipeline
+      // Step 3: Create build_request
       await (supabase as any).from("build_requests").insert({
         business_id: user?.id || null,
         business_name: businessName,
@@ -98,7 +113,7 @@ export default function GetWebsite() {
         deadline: new Date(Date.now() + pkg.deliveryDays * 86400000).toISOString(),
       });
 
-      // WhatsApp admin
+      // Step 4: WhatsApp admin
       const msg = encodeURIComponent(`🆕 NEW ORDER\n━━━━━━━━━━━━\nOrder: ${data.order_id}\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name}\nPrice: ₹${pkg.price}\n━━━━━━━━━━━━\nLeadPe ⚡`);
       window.open(`https://wa.me/919973383902?text=${msg}`, "_blank", "noopener,noreferrer");
     }
@@ -122,7 +137,6 @@ export default function GetWebsite() {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }} className="text-6xl mb-4 text-center">🎉</motion.div>
           <h1 className="text-2xl font-extrabold text-center mb-2" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Order Placed!</h1>
 
-          {/* Invoice */}
           <div className="rounded-xl p-4 text-left mb-4 border-2" style={{ backgroundColor: "#F0FFF4", borderColor: "#00C853" }}>
             <h3 className="font-bold text-sm mb-3" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>📋 Order Details</h3>
             <div className="space-y-1.5 text-sm">
@@ -141,7 +155,6 @@ export default function GetWebsite() {
             </div>
           </div>
 
-          {/* What happens next */}
           <div className="rounded-xl p-4 text-left text-xs mb-4" style={{ backgroundColor: "#FAFAFA", color: "#666" }}>
             <p className="font-bold text-sm mb-2" style={{ color: "#1A1A1A" }}>What happens next?</p>
             <div className="space-y-2">
@@ -166,7 +179,7 @@ export default function GetWebsite() {
             </Button>
           </div>
 
-          <Button onClick={() => navigate("/client/dashboard")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+          <Button onClick={() => navigate("/client/dashboard", { replace: true })} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
             Continue to Dashboard →
           </Button>
         </motion.div>
@@ -177,7 +190,6 @@ export default function GetWebsite() {
   // --- 2-STEP WIZARD ---
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm" style={{ borderColor: "#E0F2E9" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2"><LeadPeLogo theme="light" size="sm" /></Link>
@@ -210,33 +222,61 @@ export default function GetWebsite() {
                 <h2 className="text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Your Business</h2>
                 <p className="text-sm mb-6" style={{ color: "#999" }}>Tell us what you do.</p>
                 <div className="space-y-4">
-                  {/* Auto-filled fields */}
+                  {/* Auto-filled read-only fields */}
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Your Name</label>
                     <Input value={name} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
-                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your account. Contact support to change.</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your Google account.</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>WhatsApp Number</label>
-                    <Input value={whatsapp} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
-                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your account. Contact support to change.</p>
+                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Email</label>
+                    <Input value={email} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
                   </div>
 
                   {/* Editable fields */}
                   <div>
+                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>WhatsApp Number *</label>
+                    <Input
+                      type="tel"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      className="h-12 rounded-xl bg-white"
+                      style={{ border: "1px solid #E0E0E0" }}
+                      placeholder="98765 43210"
+                    />
+                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>All customer inquiries come here</p>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Name *</label>
-                    <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Ramesh Coaching Centre" />
+                    <Input
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      className="h-12 rounded-xl bg-white"
+                      style={{ border: "1px solid #E0E0E0" }}
+                      placeholder="Ramesh Coaching Centre"
+                    />
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Type *</label>
-                    <select value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="w-full h-12 rounded-xl bg-white text-sm px-3" style={{ border: "1px solid #E0E0E0", color: "#111" }}>
+                    <select
+                      value={businessType}
+                      onChange={(e) => setBusinessType(e.target.value)}
+                      className="w-full h-12 rounded-xl bg-white text-sm px-3"
+                      style={{ border: "1px solid #E0E0E0", color: "#111" }}
+                    >
                       <option value="">Select type</option>
                       {businessTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>City *</label>
-                    <Input value={city} onChange={(e) => setCity(e.target.value)} className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Vaishali, Bihar" />
+                    <Input
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="h-12 rounded-xl bg-white"
+                      style={{ border: "1px solid #E0E0E0" }}
+                      placeholder="Vaishali, Bihar"
+                    />
                   </div>
 
                   <Button onClick={() => setStep(2)} disabled={!canNext()} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
