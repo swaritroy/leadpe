@@ -59,11 +59,12 @@ serve(async (req) => {
       }}
     );
 
-  } catch (e) {
+  } catch (e: unknown) {
+    const err = e instanceof Error ? e.message : "Unknown error";
     return new Response(
       JSON.stringify({ 
         verified: false, 
-        message: e.message 
+        message: err 
       }),
       { 
         status: 500,
