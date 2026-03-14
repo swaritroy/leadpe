@@ -8,7 +8,7 @@ interface PublicRouteProps {
 
 const PublicRoute = ({ children }: PublicRouteProps) => {
   const navigate = useNavigate();
-  const { user, role, loading, authReady } = useAuth();
+  const { user, role, profile, loading, authReady } = useAuth();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -25,9 +25,15 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
     } else if (role === "admin") {
       navigate("/admin", { replace: true });
     } else {
-      navigate("/client/dashboard", { replace: true });
+      // Business user — check profile completeness
+      const isComplete = profile?.whatsapp_number && profile?.business_name && profile?.business_type && profile?.city;
+      if (!isComplete) {
+        navigate("/onboarding", { replace: true });
+      } else {
+        navigate("/client/dashboard", { replace: true });
+      }
     }
-  }, [user, role, loading, authReady, navigate]);
+  }, [user, role, profile, loading, authReady, navigate]);
 
   if (!authReady || loading) {
     return (

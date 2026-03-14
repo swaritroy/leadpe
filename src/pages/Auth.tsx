@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
@@ -27,14 +28,11 @@ export default function Auth() {
   const handleGoogleSignIn = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/auth/callback",
-      },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
-    if (authError) {
-      setError(authError.message);
+    if (result?.error) {
+      setError((result.error as Error).message || "Google sign-in failed.");
       setLoading(false);
     }
   }, []);

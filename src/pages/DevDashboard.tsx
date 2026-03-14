@@ -187,7 +187,7 @@ export default function DevDashboard() {
     const { data: activeData } = await supabase.from("build_requests")
       .select("*")
       .eq("assigned_coder_id", user.id)
-      .in("status", ["building", "review"])
+      .in("status", ["building", "review", "demo_ready", "revision"])
       .order("created_at", { ascending: false });
     setActiveBuilds((activeData as BuildRequest[]) || []);
 
@@ -368,21 +368,22 @@ export default function DevDashboard() {
       if (deployResult.success && deployResult.deployUrl) {
         await supabase.from("build_requests")
           .update({
-            status: "live",
+            status: "demo_ready",
             deploy_url: deployResult.deployUrl,
             deployed_at: new Date().toISOString()
           })
           .eq("id", selectedRequest.id);
         
-        await updateCoderEarnings(user!.id, {
-          id: selectedRequest.id,
-          coder_earning: selectedRequest.coder_earning || 640,
-          business_name: selectedRequest.business_name,
-        });
+        // Update business profile so dashboard shows demo_ready state
+        if (selectedRequest.business_id) {
+          await supabase.from("profiles")
+            .update({ website_status: "demo_ready" } as any)
+            .eq("user_id", selectedRequest.business_id);
+        }
         
         toast({
-          title: "🚀 Website Live!",
-          description: `${deployResult.deployUrl}`
+          title: "🎨 Demo Deployed!",
+          description: `Business will review at ${deployResult.deployUrl}`
         });
       }
       

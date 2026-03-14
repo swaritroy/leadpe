@@ -105,12 +105,13 @@ Deno.serve(async (req) => {
         }).eq("id", order_db_id);
       }
 
-      // If it's a plan payment, activate user profile
-      if (!is_order_payment && body.user_id) {
+      // Activate user profile (both plan and order payments)
+      if (body.user_id) {
         await supabase.from("profiles").update({
           status: "active",
           subscription_plan: body.plan || "growth",
           plan_status: "active",
+          website_status: "live",
         }).eq("user_id", body.user_id);
       }
 

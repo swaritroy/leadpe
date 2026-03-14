@@ -228,10 +228,12 @@ export default function GetWebsite() {
                     <Input value={name} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
                     <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your Google account.</p>
                   </div>
+                  {email && !email.endsWith("@leadpe.com") && (
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Email</label>
                     <Input value={email} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
                   </div>
+                  )}
 
                   {/* Editable fields */}
                   <div>
