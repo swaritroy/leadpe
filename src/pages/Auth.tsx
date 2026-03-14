@@ -28,14 +28,11 @@ export default function Auth() {
   const handleGoogleSignIn = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/auth/callback",
-      },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
-    if (authError) {
-      setError(authError.message);
+    if (result?.error) {
+      setError((result.error as Error).message || "Google sign-in failed.");
       setLoading(false);
     }
   }, []);
