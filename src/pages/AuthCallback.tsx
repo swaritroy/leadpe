@@ -10,7 +10,6 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Wait for auth session to be established
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
@@ -24,7 +23,7 @@ export default function AuthCallback() {
       // Check if profile exists
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("whatsapp_number, role")
+        .select("whatsapp_number, business_name, business_type, city, role")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -32,14 +31,14 @@ export default function AuthCallback() {
       await refreshProfile();
 
       if (!existingProfile) {
-        // Profile should be auto-created by trigger, wait a moment and retry
+        // Profile auto-created by trigger — wait and retry
         await new Promise(r => setTimeout(r, 1500));
         await refreshProfile();
-        navigate("/get-website", { replace: true });
+        navigate("/onboarding", { replace: true });
         return;
       }
 
-      // Check role - if admin or dev, redirect appropriately
+      // Admin/dev redirects
       if (existingProfile.role === "admin") {
         navigate("/admin", { replace: true });
         return;
@@ -49,9 +48,14 @@ export default function AuthCallback() {
         return;
       }
 
-      // Business user - check if they have WhatsApp number (completed onboarding)
-      if (!existingProfile.whatsapp_number) {
-        navigate("/get-website", { replace: true });
+      // Business user — check profile completeness
+      const isComplete = existingProfile.whatsapp_number &&
+        existingProfile.business_name &&
+        existingProfile.business_type &&
+        existingProfile.city;
+
+      if (!isComplete) {
+        navigate("/onboarding", { replace: true });
       } else {
         navigate("/client/dashboard", { replace: true });
       }
