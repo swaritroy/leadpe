@@ -20,6 +20,7 @@ import StudioAuth from "./pages/StudioAuth";
 import GetWebsite from "./pages/GetWebsite";
 import DemoPreview from "./pages/DemoPreview";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
 
 // Protected pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
@@ -63,7 +64,14 @@ const AppContent = () => {
             {/* Auth callback — no wrapper needed */}
             <Route path="/auth/callback" element={<AuthCallback />} />
 
-            {/* Fully public (no redirect) */}
+            {/* Onboarding — protected, business only */}
+            <Route path="/onboarding" element={
+              <ProtectedRoute allowedRoles={["business"]}>
+                <Onboarding />
+              </ProtectedRoute>
+            } />
+
+            {/* Get website — protected business */}
             <Route path="/get-website" element={
               <ProtectedRoute allowedRoles={["business"]}>
                 <GetWebsite />
