@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, Share2, Copy } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Share2, Copy, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +17,16 @@ const businessTypes = [
   "Salon / Parlour", "Restaurant / Cafe", "Individual Consultant", "Other",
 ];
 
-const STEPS = ["Business", "Package"];
+const STEPS = ["Business", "Package", "Details", "Done"];
+
+const COLOR_OPTIONS = [
+  { label: "Green", value: "#00C853" },
+  { label: "Blue", value: "#2563EB" },
+  { label: "Purple", value: "#7C3AED" },
+  { label: "Orange", value: "#EA580C" },
+  { label: "Black", value: "#1A1A1A" },
+  { label: "Surprise", value: "rainbow" },
+];
 
 export default function GetWebsite() {
   const { toast } = useToast();
@@ -28,18 +37,30 @@ export default function GetWebsite() {
   const [submitted, setSubmitted] = useState(false);
   const [orderResult, setOrderResult] = useState<any>(null);
 
-  // Form state
+  // Step 1: Business
   const [whatsapp, setWhatsapp] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [city, setCity] = useState("");
-  const [selectedPackage, setSelectedPackage] = useState("standard");
 
-  // Auto-filled from profile
+  // Step 2: Package
+  const [selectedPackage, setSelectedPackage] = useState("standard");
+  const [expandedPkg, setExpandedPkg] = useState<string | null>(null);
+
+  // Step 3: Assets
+  const [colorPref, setColorPref] = useState("#00C853");
+  const [additionalDetails, setAdditionalDetails] = useState("");
+  const [oneLineDesc, setOneLineDesc] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const photosInputRef = useRef<HTMLInputElement>(null);
+
   const name = profile?.full_name || "";
   const email = profile?.email || "";
 
-  // Auto-fill editable fields from profile on mount
   useEffect(() => {
     if (profile) {
       if (profile.whatsapp_number) setWhatsapp(profile.whatsapp_number);
@@ -51,19 +72,63 @@ export default function GetWebsite() {
 
   const pkg = WEBSITE_PACKAGES.find((p) => p.id === selectedPackage)!;
 
-  const canNext = () => {
+  const canNext = useCallback(() => {
     const phone = whatsapp.replace(/\D/g, "");
     return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim();
-  };
+  }, [whatsapp, businessName, businessType, city]);
 
-  const handleSubmit = async () => {
+  const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  }, []);
+
+  const handlePhotosChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setPhotoFiles(prev => [...prev, ...files]);
+    setPhotoPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+  }, []);
+
+  const removePhoto = useCallback((idx: number) => {
+    setPhotoFiles(prev => prev.filter((_, i) => i !== idx));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
     setLoading(true);
     const phone = whatsapp.replace(/\D/g, "");
     const subdomainName = businessName.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name} — ₹${pkg.price}\nDomain: ${subdomainName}.leadpe.online (Free)\nTotal: ₹${pkg.price}\n━━━━━━━━━━━━━━━━━━━━`;
+    // Upload logo if exists
+    let logoUrl: string | null = null;
+    if (logoFile && user) {
+      const ext = logoFile.name.split(".").pop();
+      const path = `${user.id}/logo.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("site-builds").upload(path, logoFile, { upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from("site-builds").getPublicUrl(path);
+        logoUrl = urlData.publicUrl;
+      }
+    }
 
-    // Step 1: Update profile with business details
+    // Upload photos
+    const photosUrls: string[] = [];
+    if (photoFiles.length > 0 && user) {
+      for (let i = 0; i < photoFiles.length; i++) {
+        const ext = photoFiles[i].name.split(".").pop();
+        const path = `${user.id}/photo-${i}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("site-builds").upload(path, photoFiles[i], { upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from("site-builds").getPublicUrl(path);
+          photosUrls.push(urlData.publicUrl);
+        }
+      }
+    }
+
+    const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name} — ₹${pkg.price}\nColor: ${colorPref}\nDomain: ${subdomainName}.leadpe.online (Free)\nTotal: ₹${pkg.price}\n━━━━━━━━━━━━━━━━━━━━`;
+
     if (user) {
       await supabase.from("profiles").update({
         whatsapp_number: phone,
@@ -74,7 +139,6 @@ export default function GetWebsite() {
       } as any).eq("user_id", user.id);
     }
 
-    // Step 2: Insert order
     const { data, error } = await (supabase as any).from("orders").insert({
       customer_name: name,
       customer_whatsapp: phone,
@@ -87,7 +151,10 @@ export default function GetWebsite() {
       own_domain: `${subdomainName}.leadpe.online`,
       domain_addon_price: 0,
       total_price: pkg.price,
-      color_preference: "green",
+      color_preference: colorPref,
+      special_requirements: additionalDetails || null,
+      logo_url: logoUrl,
+      photos_urls: photosUrls.length > 0 ? photosUrls : null,
       status: "pending",
       payment_amount: pkg.price,
       build_record: buildRecord,
@@ -97,7 +164,9 @@ export default function GetWebsite() {
       await logEvent(data.order_id, ORDER_EVENTS.ORDER_PLACED, `Package: ${pkg.name}, Total: ₹${pkg.price}`);
       setOrderResult(data);
 
-      // Step 3: Create build_request
+      // Generate AI build prompt
+      const buildPromptText = `Build a professional website for:\nBusiness: ${businessName}\nType: ${businessType}\nLocation: ${city}\nWhatsApp: ${phone}\nColor: ${colorPref}\nStyle: Modern, clean, mobile-first\nPackage: ${pkg.name} (${pkg.features.join(", ")})\nSpecial requirements: ${additionalDetails || "None"}\nOne line: ${oneLineDesc || businessName}\n\nInclude:\n- Hero section with "${oneLineDesc || businessName}"\n- Services/specializations section\n- WhatsApp contact button (fixed bottom)\n- Google Maps embed for ${city}\n- Testimonials section (placeholder)\n- Contact section\n- Mobile responsive\n- Fast loading\n- SEO meta tags for ${businessType} in ${city}`;
+
       await (supabase as any).from("build_requests").insert({
         business_id: user?.id || null,
         business_name: businessName,
@@ -109,11 +178,12 @@ export default function GetWebsite() {
         package_price: pkg.price,
         coder_earning: pkg.coderEarning,
         website_purpose: businessType,
+        special_requirements: additionalDetails || null,
+        ai_prompt: buildPromptText,
         status: "pending",
         deadline: new Date(Date.now() + pkg.deliveryDays * 86400000).toISOString(),
       });
 
-      // Step 4: WhatsApp admin
       const msg = encodeURIComponent(`🆕 NEW ORDER\n━━━━━━━━━━━━\nOrder: ${data.order_id}\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name}\nPrice: ₹${pkg.price}\n━━━━━━━━━━━━\nLeadPe ⚡`);
       window.open(`https://wa.me/919973383902?text=${msg}`, "_blank", "noopener,noreferrer");
     }
@@ -126,9 +196,9 @@ export default function GetWebsite() {
 
     setLoading(false);
     setSubmitted(true);
-  };
+  }, [whatsapp, businessName, businessType, city, selectedPackage, colorPref, additionalDetails, oneLineDesc, logoFile, photoFiles, name, pkg, user, toast]);
 
-  // --- SUCCESS / INVOICE PAGE ---
+  // --- SUCCESS PAGE ---
   if (submitted && orderResult) {
     const demoDate = new Date(Date.now() + (pkg?.deliveryDays || 2) * 86400000).toLocaleDateString("en-IN");
     return (
@@ -187,7 +257,7 @@ export default function GetWebsite() {
     );
   }
 
-  // --- 2-STEP WIZARD ---
+  // --- 4-STEP WIZARD ---
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm" style={{ borderColor: "#E0F2E9" }}>
@@ -200,16 +270,16 @@ export default function GetWebsite() {
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-[520px] mx-auto">
           {/* Progress */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
             {STEPS.map((label, i) => (
-              <div key={label} className="flex items-center gap-2">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+              <div key={label} className="flex items-center gap-1.5">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step > i + 1 ? "text-white" : step === i + 1 ? "text-white shadow-lg" : "text-[#999]"
                 }`} style={{ backgroundColor: step >= i + 1 ? "#00C853" : "#E0E0E0" }}>
-                  {step > i + 1 ? <Check size={16} /> : i + 1}
+                  {step > i + 1 ? <Check size={14} /> : i + 1}
                 </div>
-                <span className={`text-sm ${step >= i + 1 ? "text-[#1A1A1A] font-medium" : "text-[#999]"}`}>{label}</span>
-                {i < STEPS.length - 1 && <div className="w-8 h-0.5 mx-1" style={{ backgroundColor: step > i + 1 ? "#00C853" : "#E0E0E0" }} />}
+                <span className={`text-xs ${step >= i + 1 ? "text-[#1A1A1A] font-medium" : "text-[#999]"}`}>{label}</span>
+                {i < STEPS.length - 1 && <div className="w-6 h-0.5 mx-0.5" style={{ backgroundColor: step > i + 1 ? "#00C853" : "#E0E0E0" }} />}
               </div>
             ))}
           </div>
@@ -222,65 +292,42 @@ export default function GetWebsite() {
                 <h2 className="text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Your Business</h2>
                 <p className="text-sm mb-6" style={{ color: "#999" }}>Tell us what you do.</p>
                 <div className="space-y-4">
-                  {/* Auto-filled read-only fields */}
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Your Name</label>
                     <Input value={name} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
-                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your Google account.</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#999" }}>From your account.</p>
                   </div>
                   {email && !email.endsWith("@leadpe.com") && (
-                  <div>
-                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Email</label>
-                    <Input value={email} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
-                  </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Email</label>
+                      <Input value={email} readOnly className="h-12 rounded-xl cursor-not-allowed" style={{ backgroundColor: "#F5F5F5", border: "1px solid #E0E0E0" }} />
+                    </div>
                   )}
-
-                  {/* Editable fields */}
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>WhatsApp Number *</label>
-                    <Input
-                      type="tel"
-                      value={whatsapp}
+                    <Input type="tel" value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                      className="h-12 rounded-xl bg-white"
-                      style={{ border: "1px solid #E0E0E0" }}
-                      placeholder="98765 43210"
-                    />
+                      className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="98765 43210" />
                     <p className="text-[10px] mt-1" style={{ color: "#999" }}>All customer inquiries come here</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Name *</label>
-                    <Input
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      className="h-12 rounded-xl bg-white"
-                      style={{ border: "1px solid #E0E0E0" }}
-                      placeholder="Ramesh Coaching Centre"
-                    />
+                    <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
+                      className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Ramesh Coaching Centre" />
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Type *</label>
-                    <select
-                      value={businessType}
-                      onChange={(e) => setBusinessType(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-white text-sm px-3"
-                      style={{ border: "1px solid #E0E0E0", color: "#111" }}
-                    >
+                    <select value={businessType} onChange={(e) => setBusinessType(e.target.value)}
+                      className="w-full h-12 rounded-xl bg-white text-sm px-3" style={{ border: "1px solid #E0E0E0", color: "#111" }}>
                       <option value="">Select type</option>
                       {businessTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>City *</label>
-                    <Input
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="h-12 rounded-xl bg-white"
-                      style={{ border: "1px solid #E0E0E0" }}
-                      placeholder="Vaishali, Bihar"
-                    />
+                    <Input value={city} onChange={(e) => setCity(e.target.value)}
+                      className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Vaishali, Bihar" />
                   </div>
-
                   <Button onClick={() => setStep(2)} disabled={!canNext()} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
                     Next — Choose Package → <ArrowRight size={16} className="ml-2" />
                   </Button>
@@ -296,41 +343,171 @@ export default function GetWebsite() {
                   <p className="text-sm mb-6" style={{ color: "#999" }}>Free demo before any payment.</p>
                   <div className="space-y-3">
                     {WEBSITE_PACKAGES.filter(p => p.id !== "complex").map((p) => (
-                      <div key={p.id} onClick={() => setSelectedPackage(p.id)}
-                        className="rounded-xl p-4 cursor-pointer transition-all"
-                        style={{
-                          border: selectedPackage === p.id ? "2px solid #00C853" : "2px solid #E0E0E0",
-                          backgroundColor: selectedPackage === p.id ? "#F0FFF4" : "#fff",
-                          borderLeftWidth: 4, borderLeftColor: p.color,
-                        }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: p.color }}>{p.badge}</span>
-                            <span className="font-bold" style={{ color: "#1A1A1A" }}>{p.name}</span>
+                      <div key={p.id} className="rounded-xl overflow-hidden transition-all"
+                        style={{ border: selectedPackage === p.id ? "2px solid #00C853" : "2px solid #E0E0E0", backgroundColor: selectedPackage === p.id ? "#F0FFF4" : "#fff" }}>
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                              <span className="font-bold" style={{ color: "#1A1A1A" }}>{p.name}</span>
+                            </div>
+                            <span className="font-extrabold text-lg" style={{ color: "#1A1A1A" }}>₹{p.price.toLocaleString()}</span>
                           </div>
-                          <span className="font-extrabold" style={{ color: "#1A1A1A" }}>₹{p.price.toLocaleString()}</span>
+                          <p className="text-xs mb-3" style={{ color: "#999" }}>Demo in {p.deliveryDays} days</p>
+                          <ul className="space-y-1 mb-3">
+                            {p.features.slice(0, 3).map((f) => (
+                              <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
+                                <Check size={12} style={{ color: "#00C853" }} /> {f}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* Expandable details */}
+                          {expandedPkg === p.id && (
+                            <div className="mb-3 pt-2 border-t" style={{ borderColor: "#E0E0E0" }}>
+                              <ul className="space-y-1">
+                                {p.features.slice(3).map((f) => (
+                                  <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
+                                    <Check size={12} style={{ color: "#00C853" }} /> {f}
+                                  </li>
+                                ))}
+                              </ul>
+                              <p className="text-[10px] mt-2" style={{ color: "#999" }}>Best for: {p.bestFor.join(" • ")}</p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <button onClick={() => setExpandedPkg(expandedPkg === p.id ? null : p.id)}
+                              className="text-xs font-medium flex items-center gap-1" style={{ color: "#666" }}>
+                              {expandedPkg === p.id ? <><ChevronUp size={14} /> Less</> : <><ChevronDown size={14} /> Details</>}
+                            </button>
+                            <button onClick={() => setSelectedPackage(p.id)}
+                              className="text-sm font-bold px-4 py-1.5 rounded-lg transition-all"
+                              style={{
+                                backgroundColor: selectedPackage === p.id ? "#00A843" : "#00C853",
+                                color: "#fff",
+                              }}>
+                              {selectedPackage === p.id ? "Selected ✓" : "Select →"}
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs mb-2" style={{ color: "#999" }}>Demo in {p.deliveryDays} days</p>
-                        <div className="flex flex-wrap gap-1">
-                          {p.features.slice(0, 3).map((f) => (
-                            <span key={f} className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F5F5F5", color: "#666" }}>{f}</span>
-                          ))}
-                        </div>
-                        <p className="text-[10px] mt-2" style={{ color: "#999" }}>Best for: {p.bestFor.join(" • ")}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-3 mb-4">
+                <div className="flex gap-3">
                   <Button onClick={() => setStep(1)} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#E0E0E0" }}>
+                    <ArrowLeft size={16} className="mr-2" /> Back
+                  </Button>
+                  <Button onClick={() => setStep(3)} disabled={!selectedPackage} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                    Next → <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 3 — Assets & Details */}
+            {step === 3 && (
+              <motion.div key="s3" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+                <div className="bg-white rounded-2xl p-6 shadow-lg mb-4" style={{ border: "1px solid #E0F2E9" }}>
+                  <h2 className="text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Help Us Build Better</h2>
+                  <p className="text-sm mb-6" style={{ color: "#999" }}>Everything here is optional. Our team fills gaps automatically.</p>
+
+                  <div className="space-y-5">
+                    {/* Logo */}
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Your Logo</label>
+                      <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                      {logoPreview ? (
+                        <div className="flex items-center gap-3">
+                          <img src={logoPreview} alt="Logo" className="w-16 h-16 object-contain rounded-lg border" style={{ borderColor: "#E0E0E0" }} />
+                          <button onClick={() => { setLogoFile(null); setLogoPreview(null); }} className="text-xs" style={{ color: "#ef4444" }}>Remove</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => logoInputRef.current?.click()}
+                          className="w-full h-20 rounded-xl border-2 border-dashed flex items-center justify-center gap-2 text-sm transition-colors hover:border-[#00C853]"
+                          style={{ borderColor: "#E0E0E0", color: "#999" }}>
+                          <Upload size={16} /> Click to upload logo
+                        </button>
+                      )}
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>No logo? We create one free ✓</p>
+                    </div>
+
+                    {/* Photos */}
+                    <div>
+                      <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Business Photos</label>
+                      <input ref={photosInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotosChange} />
+                      {photoPreviews.length > 0 && (
+                        <div className="flex gap-2 flex-wrap mb-2">
+                          {photoPreviews.map((src, i) => (
+                            <div key={i} className="relative">
+                              <img src={src} alt="" className="w-16 h-16 object-cover rounded-lg border" style={{ borderColor: "#E0E0E0" }} />
+                              <button onClick={() => removePhoto(i)} className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white border flex items-center justify-center" style={{ borderColor: "#E0E0E0" }}>
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button onClick={() => photosInputRef.current?.click()}
+                        className="w-full h-16 rounded-xl border-2 border-dashed flex items-center justify-center gap-2 text-sm transition-colors hover:border-[#00C853]"
+                        style={{ borderColor: "#E0E0E0", color: "#999" }}>
+                        <Upload size={16} /> Add photos
+                      </button>
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>No photos? We use professional stock photos free ✓</p>
+                    </div>
+
+                    {/* Color */}
+                    <div>
+                      <label className="text-sm font-medium block mb-2" style={{ color: "#1A1A1A" }}>Preferred Color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {COLOR_OPTIONS.map((c) => (
+                          <button key={c.value} onClick={() => setColorPref(c.value)}
+                            className="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all"
+                            style={{
+                              background: c.value === "rainbow" ? "linear-gradient(135deg, #FF6B6B, #FFD93D, #6BCB77, #4D96FF, #9B59B6)" : c.value,
+                              borderColor: colorPref === c.value ? "#1A1A1A" : "transparent",
+                              boxShadow: colorPref === c.value ? "0 0 0 2px #fff, 0 0 0 4px #1A1A1A" : "none",
+                            }}
+                            title={c.label}>
+                            {colorPref === c.value && <Check size={16} className="text-white" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* One line description */}
+                    <div>
+                      <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>One line about your business</label>
+                      <Input value={oneLineDesc} onChange={(e) => setOneLineDesc(e.target.value)}
+                        className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }}
+                        placeholder="e.g. Best dermatologist in Patna with 15 years experience" />
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>This appears on Google and WhatsApp</p>
+                    </div>
+
+                    {/* Additional details */}
+                    <div>
+                      <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Anything else to include?</label>
+                      <textarea value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)}
+                        className="w-full rounded-xl bg-white text-sm p-3 resize-none" rows={4}
+                        style={{ border: "1px solid #E0E0E0", fontFamily: "DM Sans, sans-serif" }}
+                        placeholder={"e.g. Add fee structure,\nInclude team members,\nAdd Hindi language option,\nMy working hours are 9am-6pm..."} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mb-2">
+                  <Button onClick={() => setStep(2)} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#E0E0E0" }}>
                     <ArrowLeft size={16} className="mr-2" /> Back
                   </Button>
                   <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-14 rounded-xl text-white font-bold text-base" style={{ backgroundColor: "#00C853" }}>
                     {loading ? "Placing Order..." : "Place Free Order →"}
                   </Button>
                 </div>
-                <p className="text-center text-xs" style={{ color: "#999" }}>No payment now. Free subdomain included.</p>
+                <button onClick={handleSubmit} disabled={loading} className="w-full text-center text-sm py-2" style={{ color: "#999" }}>
+                  Skip, build with basics →
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

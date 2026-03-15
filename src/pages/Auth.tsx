@@ -6,12 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   // Sign In state
   const [siPhone, setSiPhone] = useState("");
@@ -26,6 +28,7 @@ export default function Auth() {
   const [caShowPw, setCaShowPw] = useState(false);
 
   const handleGoogleSignIn = useCallback(async () => {
+    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     setLoading(true);
     setError("");
     const result = await lovable.auth.signInWithOAuth("google", {
@@ -35,7 +38,7 @@ export default function Auth() {
       setError((result.error as Error).message || "Google sign-in failed.");
       setLoading(false);
     }
-  }, []);
+  }, [agreed]);
 
   const checkProfileAndRedirect = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
@@ -53,14 +56,9 @@ export default function Auth() {
 
   const handleSignIn = useCallback(async () => {
     setError("");
-    if (siPhone.length !== 10) {
-      setError("Enter a valid 10-digit number.");
-      return;
-    }
-    if (!siPassword) {
-      setError("Please enter your password.");
-      return;
-    }
+    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
+    if (siPhone.length !== 10) { setError("Enter a valid 10-digit number."); return; }
+    if (!siPassword) { setError("Please enter your password."); return; }
     setLoading(true);
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email: siPhone + "@leadpe.com",
@@ -75,10 +73,11 @@ export default function Auth() {
       await checkProfileAndRedirect(data.user.id);
     }
     setLoading(false);
-  }, [siPhone, siPassword, checkProfileAndRedirect]);
+  }, [siPhone, siPassword, checkProfileAndRedirect, agreed]);
 
   const handleCreateAccount = useCallback(async () => {
     setError("");
+    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     if (!caName.trim()) { setError("Please enter your full name."); return; }
     if (caPhone.length !== 10) { setError("Enter a valid 10-digit number."); return; }
     if (caPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
@@ -86,7 +85,6 @@ export default function Auth() {
 
     setLoading(true);
 
-    // Check duplicate
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
@@ -115,7 +113,6 @@ export default function Auth() {
     }
 
     if (data.user) {
-      // Wait for trigger to create profile, then update whatsapp
       await new Promise(r => setTimeout(r, 1500));
       await supabase
         .from("profiles")
@@ -125,10 +122,7 @@ export default function Auth() {
       await checkProfileAndRedirect(data.user.id);
     }
     setLoading(false);
-  }, [caName, caPhone, caPassword, caConfirm, checkProfileAndRedirect]);
-
-  const labelStyle = { color: "#444", fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 500 as const };
-  const inputStyle = "h-[48px] rounded-xl text-base";
+  }, [caName, caPhone, caPassword, caConfirm, checkProfileAndRedirect, agreed]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
@@ -150,7 +144,7 @@ export default function Auth() {
               </div>
             )}
 
-            {/* Google Button — shared */}
+            {/* Google Button */}
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
@@ -185,24 +179,24 @@ export default function Auth() {
             {/* SIGN IN TAB */}
             <TabsContent value="signin" className="space-y-4 mt-0">
               <div>
-                <label style={labelStyle}>Phone Number</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Phone Number</label>
                 <Input
                   type="tel"
                   maxLength={10}
                   placeholder="98765 43210"
                   value={siPhone}
                   onChange={(e) => setSiPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className={inputStyle}
+                  className="h-[48px] rounded-xl text-base"
                 />
               </div>
               <div className="relative">
-                <label style={labelStyle}>Password</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Password</label>
                 <Input
                   type={siShowPw ? "text" : "password"}
                   placeholder="Your password"
                   value={siPassword}
                   onChange={(e) => setSiPassword(e.target.value)}
-                  className={inputStyle + " pr-12"}
+                  className="h-[48px] rounded-xl text-base pr-12"
                 />
                 <button type="button" onClick={() => setSiShowPw(!siShowPw)} className="absolute right-3 top-[34px]" style={{ color: "#999" }}>
                   {siShowPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -210,7 +204,7 @@ export default function Auth() {
               </div>
               <button
                 onClick={handleSignIn}
-                disabled={loading}
+                disabled={loading || !agreed}
                 className="w-full h-[52px] rounded-xl font-semibold text-base transition-all disabled:opacity-60"
                 style={{ backgroundColor: "#00C853", color: "#fff", fontFamily: "DM Sans, sans-serif" }}
               >
@@ -221,51 +215,51 @@ export default function Auth() {
             {/* CREATE ACCOUNT TAB */}
             <TabsContent value="signup" className="space-y-4 mt-0">
               <div>
-                <label style={labelStyle}>Full Name</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Full Name</label>
                 <Input
                   placeholder="Dr. Ramesh Sharma"
                   value={caName}
                   onChange={(e) => setCaName(e.target.value)}
-                  className={inputStyle}
+                  className="h-[48px] rounded-xl text-base"
                 />
               </div>
               <div>
-                <label style={labelStyle}>Phone Number</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Phone Number</label>
                 <Input
                   type="tel"
                   maxLength={10}
                   placeholder="98765 43210"
                   value={caPhone}
                   onChange={(e) => setCaPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  className={inputStyle}
+                  className="h-[48px] rounded-xl text-base"
                 />
               </div>
               <div className="relative">
-                <label style={labelStyle}>Password</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Password</label>
                 <Input
                   type={caShowPw ? "text" : "password"}
                   placeholder="Min 6 characters"
                   value={caPassword}
                   onChange={(e) => setCaPassword(e.target.value)}
-                  className={inputStyle + " pr-12"}
+                  className="h-[48px] rounded-xl text-base pr-12"
                 />
                 <button type="button" onClick={() => setCaShowPw(!caShowPw)} className="absolute right-3 top-[34px]" style={{ color: "#999" }}>
                   {caShowPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               <div>
-                <label style={labelStyle}>Confirm Password</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#444", fontFamily: "DM Sans, sans-serif" }}>Confirm Password</label>
                 <Input
                   type={caShowPw ? "text" : "password"}
                   placeholder="Re-enter password"
                   value={caConfirm}
                   onChange={(e) => setCaConfirm(e.target.value)}
-                  className={inputStyle}
+                  className="h-[48px] rounded-xl text-base"
                 />
               </div>
               <button
                 onClick={handleCreateAccount}
-                disabled={loading}
+                disabled={loading || !agreed}
                 className="w-full h-[52px] rounded-xl font-semibold text-base transition-all disabled:opacity-60"
                 style={{ backgroundColor: "#00C853", color: "#fff", fontFamily: "DM Sans, sans-serif" }}
               >
@@ -273,6 +267,22 @@ export default function Auth() {
               </button>
             </TabsContent>
           </Tabs>
+
+          {/* Terms checkbox */}
+          <div className="flex items-start gap-2 mt-4">
+            <Checkbox
+              id="terms"
+              checked={agreed}
+              onCheckedChange={(v) => setAgreed(v === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="terms" className="text-xs leading-tight" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
+              I agree to LeadPe's{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium underline" style={{ color: "#00C853" }}>
+                Terms and Conditions
+              </a>
+            </label>
+          </div>
 
           <p className="text-xs text-center mt-4" style={{ color: "#999", fontFamily: "DM Sans, sans-serif" }}>
             Your data is safe. We never share it.
