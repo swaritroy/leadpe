@@ -62,7 +62,8 @@ const AppContent = () => {
             <Route path="/business" element={<PublicRoute><Business /></PublicRoute>} />
             <Route path="/studio/auth" element={<PublicRoute><StudioAuth /></PublicRoute>} />
 
-            {/* Auth callback — no wrapper needed */}
+            {/* Public pages */}
+            <Route path="/terms" element={<Terms />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Onboarding — protected, business only */}
