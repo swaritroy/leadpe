@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const businessTypes = [
   { icon: "🏫", name: "Coaching Centre" },
@@ -409,6 +410,7 @@ export default function Index() {
           </div>
         </div>
       </footer>
+      <WhatsAppButton />
     </div>
   );
 }

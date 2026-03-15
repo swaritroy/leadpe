@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_WHATSAPP } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
@@ -412,6 +413,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           📤 Share My Website
         </button>
       </motion.div>
+      <WhatsAppButton />
     </div>
   );
 }

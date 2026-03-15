@@ -1,26 +1,10 @@
 import { useEffect, useState } from "react";
 
-const HIDDEN_ROUTES = [
-  "/client/dashboard",
-  "/client/settings",
-  "/dev/dashboard",
-  "/dev/onboarding",
-  "/admin",
-  "/get-website",
-  "/payment",
-  "/studio/auth",
-  "/auth",
-  "/auth/callback",
-];
-
 export default function WhatsAppButton() {
   const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const path = window.location.pathname;
-    const shouldHide = HIDDEN_ROUTES.some((route) => path.startsWith(route));
-    if (shouldHide) return;
 
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();

@@ -8,7 +8,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
 import SplashScreen from "@/components/SplashScreen";
-import WhatsAppButton from "./components/WhatsAppButton";
 
 // Public pages
 import Index from "./pages/Index";
@@ -122,7 +121,6 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <WhatsAppButton />
     </>
   );
 };

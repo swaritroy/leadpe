@@ -96,107 +96,64 @@ export default function GetWebsite() {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     setLoading(true);
-    const phone = whatsapp.replace(/\D/g, "");
-    const subdomainName = businessName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    try {
+      // 1. Insert order
+      const { data: order, error: orderError } = await (supabase as any)
+        .from("orders")
+        .insert({
+          business_id: user?.id || null,
+          business_name: businessName,
+          business_type: businessType,
+          city: city,
+          package_id: selectedPackage,
+          total_price: pkg.price,
+          status: "pending",
+          payment_status: "unpaid",
+        })
+        .select("id")
+        .single();
 
-    // Upload logo if exists
-    let logoUrl: string | null = null;
-    if (logoFile && user) {
-      const ext = logoFile.name.split(".").pop();
-      const path = `${user.id}/logo.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("site-builds").upload(path, logoFile, { upsert: true });
-      if (!uploadErr) {
-        const { data: urlData } = supabase.storage.from("site-builds").getPublicUrl(path);
-        logoUrl = urlData.publicUrl;
-      }
-    }
+      if (orderError) throw orderError;
 
-    // Upload photos
-    const photosUrls: string[] = [];
-    if (photoFiles.length > 0 && user) {
-      for (let i = 0; i < photoFiles.length; i++) {
-        const ext = photoFiles[i].name.split(".").pop();
-        const path = `${user.id}/photo-${i}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("site-builds").upload(path, photoFiles[i], { upsert: true });
-        if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from("site-builds").getPublicUrl(path);
-          photosUrls.push(urlData.publicUrl);
-        }
-      }
-    }
-
-    const buildRecord = `━━━━━━━━━━━━━━━━━━━━\nLeadPe Build Record\n━━━━━━━━━━━━━━━━━━━━\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name} — ₹${pkg.price}\nColor: ${colorPref}\nDomain: ${subdomainName}.leadpe.online (Free)\nTotal: ₹${pkg.price}\n━━━━━━━━━━━━━━━━━━━━`;
-
-    if (user) {
-      await supabase.from("profiles").update({
-        whatsapp_number: phone,
-        business_name: businessName,
-        business_type: businessType,
-        city,
-        website_status: "pending",
-      } as any).eq("user_id", user.id);
-    }
-
-    const { data, error } = await (supabase as any).from("orders").insert({
-      customer_name: name,
-      customer_whatsapp: phone,
-      business_name: businessName,
-      business_type: businessType,
-      city,
-      package_id: selectedPackage,
-      package_price: pkg.price,
-      domain_option: "subdomain",
-      own_domain: `${subdomainName}.leadpe.online`,
-      domain_addon_price: 0,
-      total_price: pkg.price,
-      color_preference: colorPref,
-      special_requirements: additionalDetails || null,
-      logo_url: logoUrl,
-      photos_urls: photosUrls.length > 0 ? photosUrls : null,
-      status: "pending",
-      payment_amount: pkg.price,
-      build_record: buildRecord,
-    }).select().single();
-
-    if (data) {
-      await logEvent(data.order_id, ORDER_EVENTS.ORDER_PLACED, `Package: ${pkg.name}, Total: ₹${pkg.price}`);
-      setOrderResult(data);
-
-      // Generate AI build prompt
-      const buildPromptText = `Build a professional website for:\nBusiness: ${businessName}\nType: ${businessType}\nLocation: ${city}\nWhatsApp: ${phone}\nColor: ${colorPref}\nStyle: Modern, clean, mobile-first\nPackage: ${pkg.name} (${pkg.features.join(", ")})\nSpecial requirements: ${additionalDetails || "None"}\nOne line: ${oneLineDesc || businessName}\n\nInclude:\n- Hero section with "${oneLineDesc || businessName}"\n- Services/specializations section\n- WhatsApp contact button (fixed bottom)\n- Google Maps embed for ${city}\n- Testimonials section (placeholder)\n- Contact section\n- Mobile responsive\n- Fast loading\n- SEO meta tags for ${businessType} in ${city}`;
-
+      // 2. Insert build request
       await (supabase as any).from("build_requests").insert({
         business_id: user?.id || null,
+        order_id: order.id,
         business_name: businessName,
         business_type: businessType,
-        city,
-        owner_name: name,
-        owner_whatsapp: phone,
+        city: city,
         package_id: selectedPackage,
-        package_price: pkg.price,
-        coder_earning: pkg.coderEarning,
-        website_purpose: businessType,
-        special_requirements: additionalDetails || null,
-        ai_prompt: buildPromptText,
         status: "pending",
-        deadline: new Date(Date.now() + pkg.deliveryDays * 86400000).toISOString(),
+        assigned_coder_id: null,
       });
 
-      const msg = encodeURIComponent(`🆕 NEW ORDER\n━━━━━━━━━━━━\nOrder: ${data.order_id}\nCustomer: ${name}\nWhatsApp: ${phone}\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nPackage: ${pkg.name}\nPrice: ₹${pkg.price}\n━━━━━━━━━━━━\nLeadPe ⚡`);
-      window.open(`https://wa.me/919973383902?text=${msg}`, "_blank", "noopener,noreferrer");
-    }
+      // 3. Update profile
+      if (user) {
+        await (supabase as any)
+          .from("profiles")
+          .update({
+            website_status: "pending",
+            business_name: businessName,
+            business_type: businessType,
+            city: city,
+            whatsapp_number: whatsapp,
+          })
+          .eq("user_id", user.id);
+      }
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      // 4. Navigate to dashboard
+      navigate("/client/dashboard", { replace: true });
+    } catch (error) {
+      toast({
+        title: "Something went wrong. Try again.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setLoading(false);
-    setSubmitted(true);
-  }, [whatsapp, businessName, businessType, city, selectedPackage, colorPref, additionalDetails, oneLineDesc, logoFile, photoFiles, name, pkg, user, toast]);
+  };
 
   // --- SUCCESS PAGE ---
   if (submitted && orderResult) {
