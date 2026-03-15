@@ -21,6 +21,7 @@ import GetWebsite from "./pages/GetWebsite";
 import DemoPreview from "./pages/DemoPreview";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import Terms from "./pages/Terms";
 
 // Protected pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
