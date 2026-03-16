@@ -120,8 +120,8 @@ export default function ClientDashboard() {
   };
 
   // Determine dashboard state
-  const status = buildRequest?.status || null;
-  const websiteStatus = (profile as any)?.website_status || null;
+  const status = (buildRequest?.status as string) || null;
+  const websiteStatus = profile?.website_status || null;
   const isLive = status === "live";
   const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
   const hasNoWebsite = !buildRequest && !websiteStatus;
