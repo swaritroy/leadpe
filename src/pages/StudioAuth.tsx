@@ -61,10 +61,16 @@ export default function StudioAuth() {
     setLoading(true);
     try {
       const { data, error: functionErr } = await supabase.functions.invoke("send-otp", { body: { phone: digits } });
-      if (functionErr || !data.success) {
+      if (functionErr || !data?.success) {
         setLoading(false);
-        setError(data?.message || functionErr?.message || "Failed to send OTP.");
+        setError(data?.message || functionErr?.message || "Failed to send OTP. Please try again.");
         return;
+      }
+      // If SMS failed, show debug OTP in toast
+      if (data.debug_otp) {
+        toast({ title: "SMS unavailable", description: `Test OTP: ${data.debug_otp}`, variant: "default" });
+      } else {
+        toast({ title: "Code sent!", description: "Check your SMS messages." });
       }
       setLoading(false);
       setScreen("otp");
