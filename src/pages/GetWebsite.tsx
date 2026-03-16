@@ -35,7 +35,7 @@ export default function GetWebsite() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [orderResult, setOrderResult] = useState<any>(null);
+  const [orderResult, setOrderResult] = useState<Record<string, string> | null>(null);
 
   // Step 1: Business
   const [whatsapp, setWhatsapp] = useState("");
