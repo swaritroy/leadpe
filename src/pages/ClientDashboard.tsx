@@ -56,15 +56,15 @@ export default function ClientDashboard() {
       if (br) setBuildRequest(br as Record<string, unknown>);
 
       // Fetch business
-      const { data: biz } = await (supabase.from("businesses") as any)
+      const { data: biz } = await supabase.from("businesses")
         .select("*").eq("owner_id", user.id).maybeSingle();
       if (biz) {
-        setBusiness(biz);
+        setBusiness(biz as Record<string, unknown>);
         // Fetch leads
-        const { data: leadsData } = await (supabase.from("leads") as any)
+        const { data: leadsData } = await supabase.from("leads")
           .select("*").eq("business_id", biz.id)
           .order("created_at", { ascending: false }).limit(50);
-        setLeads(leadsData || []);
+        setLeads((leadsData || []) as Lead[]);
       }
 
       setLoading(false);
