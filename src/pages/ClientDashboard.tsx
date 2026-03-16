@@ -50,10 +50,10 @@ export default function ClientDashboard() {
 
     const init = async () => {
       // Fetch build request
-      const { data: br } = await (supabase.from("build_requests") as any)
+      const { data: br } = await supabase.from("build_requests")
         .select("*").eq("business_id", user.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (br) setBuildRequest(br);
+      if (br) setBuildRequest(br as Record<string, unknown>);
 
       // Fetch business
       const { data: biz } = await (supabase.from("businesses") as any)
