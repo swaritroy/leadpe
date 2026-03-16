@@ -81,7 +81,7 @@ export default function ClientDashboard() {
         event: "*", schema: "public", table: "build_requests",
         filter: `business_id=eq.${user.id}`,
       }, (payload) => {
-        setBuildRequest(payload.new);
+        setBuildRequest(payload.new as Record<string, unknown>);
       })
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "profiles",
