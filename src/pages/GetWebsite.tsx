@@ -35,7 +35,7 @@ export default function GetWebsite() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [orderResult, setOrderResult] = useState<any>(null);
+  const [orderResult, setOrderResult] = useState<Record<string, string> | null>(null);
 
   // Step 1: Business
   const [whatsapp, setWhatsapp] = useState("");
@@ -99,53 +99,90 @@ export default function GetWebsite() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // 1. Insert order
-      const { data: order, error: orderError } = await (supabase as any)
+      const customerName = profile?.full_name || name || businessName;
+      const customerWhatsapp = whatsapp.replace(/\D/g, "");
+
+      // 1. Insert order (customer_name and customer_whatsapp are required NOT NULL)
+      const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          business_id: user?.id || null,
+          customer_name: customerName,
+          customer_whatsapp: customerWhatsapp,
           business_name: businessName,
           business_type: businessType,
           city: city,
           package_id: selectedPackage,
+          package_price: pkg.price,
           total_price: pkg.price,
+          color_preference: colorPref,
+          special_requirements: additionalDetails || null,
           status: "pending",
-          payment_status: "unpaid",
+          payment_status: "pending",
         })
-        .select("id")
+        .select("id, order_id")
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Insert build request
-      await (supabase as any).from("build_requests").insert({
+      // 2. Generate AI prompt
+      const aiPrompt = `Build a professional website for:
+Business: ${businessName}
+Type: ${businessType}
+Location: ${city}
+WhatsApp: ${customerWhatsapp}
+Color: ${colorPref === "rainbow" ? "Surprise me" : colorPref}
+Style: Modern, clean, mobile-first
+Package: ${pkg.name} (${pkg.features.join(", ")})
+${additionalDetails ? `Special requirements: ${additionalDetails}` : ""}
+${oneLineDesc ? `One line: ${oneLineDesc}` : ""}
+
+Include:
+- Hero section${oneLineDesc ? ` with "${oneLineDesc}"` : ""}
+- Services/specializations section
+- WhatsApp contact button (fixed bottom)
+- Google Maps embed for ${city}
+- Testimonials section (placeholder)
+- Contact section
+- Mobile responsive
+- Fast loading
+- SEO meta tags for ${businessType} in ${city}`;
+
+      // 3. Insert build request
+      const { error: brError } = await supabase.from("build_requests").insert({
         business_id: user?.id || null,
-        order_id: order.id,
         business_name: businessName,
         business_type: businessType,
         city: city,
+        owner_name: customerName,
+        owner_whatsapp: customerWhatsapp,
         package_id: selectedPackage,
+        package_price: pkg.price,
+        coder_earning: pkg.coderEarning,
+        ai_prompt: aiPrompt,
+        special_requirements: additionalDetails || null,
         status: "pending",
-        assigned_coder_id: null,
       });
 
-      // 3. Update profile
+      if (brError) throw brError;
+
+      // 4. Update profile
       if (user) {
-        await (supabase as any)
+        await supabase
           .from("profiles")
           .update({
             website_status: "pending",
             business_name: businessName,
             business_type: businessType,
             city: city,
-            whatsapp_number: whatsapp,
+            whatsapp_number: customerWhatsapp,
           })
           .eq("user_id", user.id);
       }
 
-      // 4. Navigate to dashboard
+      // 5. Navigate to dashboard
       navigate("/client/dashboard", { replace: true });
-    } catch (error) {
+    } catch (err: unknown) {
+      console.error("Order error:", err);
       toast({
         title: "Something went wrong. Try again.",
         variant: "destructive",

@@ -27,6 +27,11 @@ interface Profile {
   onboarding_complete: boolean | null;
   business_name: string | null;
   business_type: string | null;
+  website_status: string | null;
+  site_url: string | null;
+  plan_status: string | null;
+  plan_renewal_date: string | null;
+  avatar_url: string | null;
 }
 
 interface AuthContextType {

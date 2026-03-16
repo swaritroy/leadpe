@@ -29,8 +29,8 @@ export default function ClientDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [trial, setTrial] = useState<TrialStatus | null>(null);
-  const [buildRequest, setBuildRequest] = useState<any>(null);
-  const [business, setBusiness] = useState<any>(null);
+  const [buildRequest, setBuildRequest] = useState<Record<string, unknown> | null>(null);
+  const [business, setBusiness] = useState<Record<string, unknown> | null>(null);
   const [showSignOut, setShowSignOut] = useState(false);
   const [newLeadAlert, setNewLeadAlert] = useState<Lead | null>(null);
   const dataFetched = useRef(false);
@@ -50,21 +50,21 @@ export default function ClientDashboard() {
 
     const init = async () => {
       // Fetch build request
-      const { data: br } = await (supabase.from("build_requests") as any)
+      const { data: br } = await supabase.from("build_requests")
         .select("*").eq("business_id", user.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (br) setBuildRequest(br);
+      if (br) setBuildRequest(br as Record<string, unknown>);
 
       // Fetch business
-      const { data: biz } = await (supabase.from("businesses") as any)
+      const { data: biz } = await supabase.from("businesses")
         .select("*").eq("owner_id", user.id).maybeSingle();
       if (biz) {
-        setBusiness(biz);
+        setBusiness(biz as Record<string, unknown>);
         // Fetch leads
-        const { data: leadsData } = await (supabase.from("leads") as any)
+        const { data: leadsData } = await supabase.from("leads")
           .select("*").eq("business_id", biz.id)
           .order("created_at", { ascending: false }).limit(50);
-        setLeads(leadsData || []);
+        setLeads((leadsData || []) as Lead[]);
       }
 
       setLoading(false);
@@ -81,7 +81,7 @@ export default function ClientDashboard() {
         event: "*", schema: "public", table: "build_requests",
         filter: `business_id=eq.${user.id}`,
       }, (payload) => {
-        setBuildRequest(payload.new);
+        setBuildRequest(payload.new as Record<string, unknown>);
       })
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "profiles",
@@ -120,8 +120,8 @@ export default function ClientDashboard() {
   };
 
   // Determine dashboard state
-  const status = buildRequest?.status || null;
-  const websiteStatus = (profile as any)?.website_status || null;
+  const status = (buildRequest?.status as string) || null;
+  const websiteStatus = profile?.website_status || null;
   const isLive = status === "live";
   const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
   const hasNoWebsite = !buildRequest && !websiteStatus;
