@@ -29,8 +29,8 @@ export default function ClientDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [trial, setTrial] = useState<TrialStatus | null>(null);
-  const [buildRequest, setBuildRequest] = useState<any>(null);
-  const [business, setBusiness] = useState<any>(null);
+  const [buildRequest, setBuildRequest] = useState<Record<string, unknown> | null>(null);
+  const [business, setBusiness] = useState<Record<string, unknown> | null>(null);
   const [showSignOut, setShowSignOut] = useState(false);
   const [newLeadAlert, setNewLeadAlert] = useState<Lead | null>(null);
   const dataFetched = useRef(false);
