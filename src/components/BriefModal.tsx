@@ -374,6 +374,29 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
                 </div>
               )}
 
+              {/* GitHub Requirements Checklist */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#EFF6FF", border: "1px solid #93C5FD" }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF", marginBottom: 8 }}>📦 GitHub Requirements</p>
+                <div className="space-y-2">
+                  {[
+                    "Repository must be PUBLIC",
+                    "Built with React + Vite",
+                    'Has package.json with "build": "vite build" script',
+                    "No build errors locally",
+                    "LeadPe widget code included",
+                    'Branch name must be "main"',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle size={14} style={{ color: "#3B82F6", marginTop: 2, flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: "#1E3A5F" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: "#6B7280", marginTop: 8 }}>
+                  ⚠️ Private repos will cause deployment errors.
+                </p>
+              </div>
+
               {/* Lead Widget */}
               <div className="rounded-xl p-4" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FF9800" }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#E65100", marginBottom: 8 }}>⚠️ Lead Widget (REQUIRED)</p>
