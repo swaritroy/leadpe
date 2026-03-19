@@ -582,7 +582,7 @@ export default function DevDashboard() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-[#666]">Deadline:</span>
-                          <LiveTimer deadline={request.deadline} />
+                          <LiveTimer deadline={(request as any).hard_deadline || request.deadline} />
                         </div>
                       </div>
                       <div className="flex gap-2 mb-2">
