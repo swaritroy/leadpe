@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 interface StateExpiredProps {
-  profile: Record<string, unknown> | null;
+  profile: any;
   user: { id: string } | null;
 }
 
