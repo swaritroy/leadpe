@@ -227,6 +227,38 @@ export type Database = {
         }
         Relationships: []
       }
+      coder_penalties: {
+        Row: {
+          build_request_id: string | null
+          coder_id: string | null
+          created_at: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          build_request_id?: string | null
+          coder_id?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          build_request_id?: string | null
+          coder_id?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coder_penalties_coder_id_fkey"
+            columns: ["coder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deployments: {
         Row: {
           building_fee: number | null
