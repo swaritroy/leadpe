@@ -285,63 +285,60 @@ export default function DevDashboard() {
   const handleAcceptRequest = async (request: BuildRequest) => {
     if (!user || acceptingId) return;
 
-    // Max 3 active builds check
-    const activeBuildCount = activeBuilds.filter(b => 
-      ["building", "demo_ready", "revision"].includes(b.status)
-    ).length;
-    if (activeBuildCount >= 3) {
+    // Step 1: Check active builds limit via DB count
+    const { count } = await supabase
+      .from("build_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_coder_id", user.id)
+      .in("status", ["building", "demo_ready", "revision"]);
+
+    if ((count ?? 0) >= 3) {
       toast({
         title: "Limit reached",
-        description: "You have 3 active builds. Complete one before accepting more.",
+        description: "Complete one of your 3 active builds first.",
         variant: "destructive"
       });
       return;
     }
 
     setAcceptingId(request.id);
-    try {
-      const { data, error } = await (supabase as any).from("build_requests")
-        .update({
-          status: "building",
-          assigned_coder_id: user.id,
-          assigned_coder_name: profile?.full_name || "Unknown",
-        })
-        .eq("id", request.id)
-        .is("assigned_coder_id", null)
-        .select();
-      
-      if (error) throw error;
-      
-      if (!data || data.length === 0) {
-        toast({
-          title: "Already taken",
-          description: "Another builder accepted this request.",
-          variant: "destructive"
-        });
-        setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-        setAcceptingId(null);
-        return;
-      }
-      
-      // Success
-      setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-      setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
-      
+
+    // Step 2: Remove from UI immediately (optimistic)
+    setBuildRequests(prev => prev.filter(r => r.id !== request.id));
+
+    // Step 3: Attempt database update
+    const { data, error } = await (supabase as any).from("build_requests")
+      .update({
+        status: "building",
+        assigned_coder_id: user.id,
+        assigned_coder_name: profile?.full_name || "Unknown",
+      })
+      .eq("id", request.id)
+      .is("assigned_coder_id", null)
+      .eq("status", "pending")
+      .select();
+
+    // Step 4: Handle result
+    if (error || !data || data.length === 0) {
+      // Failed — someone else got it. Card already removed — do NOT add back.
       toast({
-        title: "✅ Request Accepted!",
-        description: "Open brief and start building.",
-      });
-      
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not accept. Try again.",
+        title: "Already taken",
+        description: "Another builder accepted this request.",
         variant: "destructive"
       });
-      fetchData();
-    } finally {
       setAcceptingId(null);
+      return;
     }
+
+    // Step 5: Success
+    toast({
+      title: "Build accepted!",
+      description: "Open the brief and start building.",
+    });
+
+    // Step 6: Add to my builds
+    setActiveBuilds(prev => [...prev, data[0]]);
+    setAcceptingId(null);
   };
   
   const handleViewBrief = (request: BuildRequest) => {

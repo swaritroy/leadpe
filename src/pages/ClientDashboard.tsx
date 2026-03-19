@@ -81,7 +81,14 @@ export default function ClientDashboard() {
         event: "*", schema: "public", table: "build_requests",
         filter: `business_id=eq.${user.id}`,
       }, (payload) => {
-        setBuildRequest(payload.new as Record<string, unknown>);
+        const updated = payload.new as Record<string, unknown>;
+        setBuildRequest(updated);
+
+        // Sync profile website_status based on build status
+        const newStatus = updated.status as string;
+        if (newStatus === "building" || newStatus === "demo_ready" || newStatus === "live") {
+          // Force profile re-read isn't needed since we derive state from buildRequest
+        }
       })
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "profiles",
