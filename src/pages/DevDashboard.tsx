@@ -53,21 +53,45 @@ interface Earning {
 const LiveTimer = ({ deadline }: { deadline: string }) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [color, setColor] = useState("#00C853");
+  const [canAccept, setCanAccept] = useState(true);
   useEffect(() => {
     const tick = () => {
       const diff = new Date(deadline).getTime() - Date.now();
-      if (diff <= 0) { setTimeLeft("Time Up"); setColor("#EF4444"); return; }
+      if (diff <= 0) {
+        setTimeLeft("⚠️ Urgent");
+        setColor("#EF4444");
+        setCanAccept(true);
+        return;
+      }
       const hrs = Math.floor(diff / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const secs = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft(`${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} left ⏰`);
-      setColor(hrs < 6 ? "#EF4444" : hrs < 24 ? "#F57F17" : "#00C853");
+      const formatted = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      if (diff < 6 * 60 * 60 * 1000) {
+        setTimeLeft(formatted);
+        setColor("#EF4444");
+        setCanAccept(false);
+      } else if (diff < 12 * 60 * 60 * 1000) {
+        setTimeLeft(formatted);
+        setColor("#F57F17");
+        setCanAccept(true);
+      } else {
+        setTimeLeft(`${formatted} left ⏰`);
+        setColor("#00C853");
+        setCanAccept(true);
+      }
     };
     tick();
     const inv = setInterval(tick, 1000);
     return () => clearInterval(inv);
   }, [deadline]);
-  return <span style={{ color, fontWeight: 700 }}>{timeLeft}</span>;
+  return (
+    <span style={{ color, fontWeight: 700 }}>
+      {timeLeft}
+      {!canAccept && <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: "#999" }}>Cannot accept — too little time</span>}
+    </span>
+  );
 };
 
 export default function DevDashboard() {
