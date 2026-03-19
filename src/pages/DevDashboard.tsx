@@ -537,14 +537,19 @@ export default function DevDashboard() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {buildRequests.map((request) => (
-                    <div key={request.id} className="rounded-xl border border-[#E0F2E9] p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  {buildRequests.map((request) => {
+                    const isTimeUp = request.deadline && new Date(request.deadline).getTime() < Date.now();
+                    return (
+                    <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
                       <div className="flex items-center gap-3 mb-4">
                         <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
                           <p className="text-xs text-[#666]">{request.business_type} · {request.city}</p>
                         </div>
+                        {isTimeUp && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ Urgent</span>
+                        )}
                       </div>
                       <div className="space-y-2 mb-4 text-sm">
                         <div className="flex justify-between">
@@ -565,7 +570,8 @@ export default function DevDashboard() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </motion.div>
