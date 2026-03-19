@@ -145,8 +145,10 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
   };
 
   const handleSubmitGithub = async () => {
-    if (!githubUrl.includes("github.com")) {
-      toast({ title: "Invalid URL", description: "Must contain github.com", variant: "destructive" });
+    // Validate GitHub URL format
+    const isValidGithub = githubUrl.includes("github.com") && githubUrl.split("/").filter(Boolean).length >= 2;
+    if (!isValidGithub) {
+      toast({ title: "Invalid URL", description: "Enter a valid GitHub URL. Example: github.com/username/repo-name", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -374,6 +376,29 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
                 </div>
               )}
 
+              {/* GitHub Requirements Checklist */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: "#EFF6FF", border: "1px solid #93C5FD" }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF", marginBottom: 8 }}>📦 GitHub Requirements</p>
+                <div className="space-y-2">
+                  {[
+                    "Repository must be PUBLIC",
+                    "Built with React + Vite",
+                    'Has package.json with "build": "vite build" script',
+                    "No build errors locally",
+                    "LeadPe widget code included",
+                    'Branch name must be "main"',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle size={14} style={{ color: "#3B82F6", marginTop: 2, flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: "#1E3A5F" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: "#6B7280", marginTop: 8 }}>
+                  ⚠️ Private repos will cause deployment errors.
+                </p>
+              </div>
+
               {/* Lead Widget */}
               <div className="rounded-xl p-4" style={{ backgroundColor: "#FFF3E0", border: "1px solid #FF9800" }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#E65100", marginBottom: 8 }}>⚠️ Lead Widget (REQUIRED)</p>
@@ -434,10 +459,39 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
                 onBlur={(e) => (e.target.style.borderColor = "#E0E0E0")}
               />
 
-              {qualityChecking && (
-                <div className="rounded-xl p-4 text-center mb-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
-                  <Loader2 size={24} className="animate-spin mx-auto mb-2" style={{ color: "#00C853" }} />
-                  <p style={{ fontSize: 14, fontWeight: 600 }}>Running quality check...</p>
+              {/* Deployment Progress Steps */}
+              {(qualityChecking || submitting) && (
+                <div className="rounded-xl p-4 mb-3 space-y-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} style={{ color: "#00C853" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>✅ GitHub URL received</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {qualityChecking ? (
+                      <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} />
+                    ) : qualityReport ? (
+                      <CheckCircle size={16} style={{ color: "#00C853" }} />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: qualityChecking ? 600 : 400, color: "#1A1A1A" }}>
+                      {qualityChecking ? "⏳ Running quality check..." : qualityReport ? "✅ Quality check passed" : "Quality check"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {submitting && !qualityChecking && qualityReport?.passed ? (
+                      <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: submitting && !qualityChecking ? 600 : 400, color: "#1A1A1A" }}>
+                      {submitting && !qualityChecking && qualityReport?.passed ? "⏳ Deploying to Vercel..." : "Deploy to Vercel"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    <span style={{ fontSize: 13, color: "#999" }}>Website is live!</span>
+                  </div>
                 </div>
               )}
 

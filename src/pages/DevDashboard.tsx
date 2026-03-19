@@ -117,14 +117,33 @@ export default function DevDashboard() {
 
     if (!user) return;
 
-    const channel = supabase.channel('build_requests_updates')
+    const channel = supabase.channel('build-requests-realtime')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'build_requests' },
         (payload) => {
+          const updated = payload.new as BuildRequest;
+          
+          // If someone accepted this request, remove from available
+          if (updated.assigned_coder_id && updated.status === "building") {
+            setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
+          }
+          
+          // If current coder's build was updated
+          if (updated.assigned_coder_id === user?.id) {
+            setActiveBuilds(prev => 
+              prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'build_requests' },
+        (payload) => {
           const newRow = payload.new as BuildRequest;
-          if (newRow.status === "building" && newRow.assigned_coder_id) {
-            setBuildRequests(prev => prev.filter(r => r.id !== newRow.id));
+          if (!newRow.assigned_coder_id && newRow.status === "pending") {
+            setBuildRequests(prev => [newRow, ...prev]);
           }
         }
       )
@@ -133,6 +152,7 @@ export default function DevDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchData = async () => {
@@ -264,35 +284,60 @@ export default function DevDashboard() {
 
   const handleAcceptRequest = async (request: BuildRequest) => {
     if (!user || acceptingId) return;
+
+    // Max 3 active builds check
+    const activeBuildCount = activeBuilds.filter(b => 
+      ["building", "demo_ready", "revision"].includes(b.status)
+    ).length;
+    if (activeBuildCount >= 3) {
+      toast({
+        title: "Limit reached",
+        description: "You have 3 active builds. Complete one before accepting more.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setAcceptingId(request.id);
     try {
-      const { error } = await (supabase as any).from("build_requests")
+      const { data, error } = await (supabase as any).from("build_requests")
         .update({
           status: "building",
           assigned_coder_id: user.id,
           assigned_coder_name: profile?.full_name || "Unknown",
         })
         .eq("id", request.id)
-        .is("assigned_coder_id", null);
+        .is("assigned_coder_id", null)
+        .select();
       
       if (error) throw error;
       
-      // Immediately remove from local state
+      if (!data || data.length === 0) {
+        toast({
+          title: "Already taken",
+          description: "Another builder accepted this request.",
+          variant: "destructive"
+        });
+        setBuildRequests(prev => prev.filter(r => r.id !== request.id));
+        setAcceptingId(null);
+        return;
+      }
+      
+      // Success
       setBuildRequests(prev => prev.filter(r => r.id !== request.id));
       setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
       
       toast({
         title: "✅ Request Accepted!",
-        description: `You're now building ${request.business_name}`,
+        description: "Open brief and start building.",
       });
       
     } catch (error) {
       toast({
-        title: "Already taken",
-        description: "Another builder accepted this request.",
+        title: "Error",
+        description: "Could not accept. Try again.",
         variant: "destructive"
       });
-      // Refresh to get accurate state
       fetchData();
     } finally {
       setAcceptingId(null);
@@ -489,11 +534,9 @@ export default function DevDashboard() {
               
               {buildRequests.length === 0 ? (
                 <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center bg-white shadow-sm">
-                  <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-green-50">
-                    <Wrench size={20} className="text-[#00C853]" />
-                  </div>
-                  <p className="text-[#666] font-medium">No pending requests right now.</p>
-                  <p className="text-sm text-[#999] mt-1">Check back soon!</p>
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-[#666] font-medium">No build requests right now.</p>
+                  <p className="text-sm text-[#999] mt-1">New requests appear here automatically. Stay on this page.</p>
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

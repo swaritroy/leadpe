@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,10 @@ const corsHeaders = {
 };
 
 const VERCEL_API = "https://api.vercel.com";
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,6 +27,11 @@ serve(async (req) => {
       );
     }
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     const { action, data } = await req.json();
     const headers = {
       Authorization: `Bearer ${VERCEL_TOKEN}`,
@@ -29,7 +39,7 @@ serve(async (req) => {
     };
 
     if (action === "deploy") {
-      const { businessName, businessType, city, githubUrl, trialCode } = data;
+      const { businessName, businessType, city, githubUrl, trialCode, buildRequestId, businessId } = data;
 
       // Parse GitHub URL
       const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "");
@@ -62,6 +72,7 @@ serve(async (req) => {
             { key: "VITE_BUSINESS_CITY", value: city, type: "plain", target: ["production"] },
             { key: "VITE_BUSINESS_TYPE", value: businessType || "", type: "plain", target: ["production"] },
             { key: "VITE_TRIAL_CODE", value: trialCode || "", type: "plain", target: ["production"] },
+            { key: "VITE_LEADPE_MODE", value: "demo", type: "plain", target: ["production"] },
           ],
         }),
       });
@@ -90,12 +101,69 @@ serve(async (req) => {
         );
       }
 
+      const deploymentId = deployData.id;
+      const deployUrl = `https://${deployData.url}`;
+
+      // Step 3: Poll deployment status (max 3 minutes)
+      let finalState = "BUILDING";
+      let finalUrl = deployUrl;
+      const maxWait = 180000; // 3 minutes
+      const pollInterval = 5000;
+      const startTime = Date.now();
+
+      while (Date.now() - startTime < maxWait) {
+        await sleep(pollInterval);
+        try {
+          const statusResp = await fetch(`${VERCEL_API}/v13/deployments/${deploymentId}`, { headers });
+          const statusData = await statusResp.json();
+          finalState = statusData.readyState || statusData.state || "BUILDING";
+          if (statusData.url) finalUrl = `https://${statusData.url}`;
+
+          if (finalState === "READY" || finalState === "ERROR") break;
+        } catch (e) {
+          console.error("Poll error:", e);
+        }
+      }
+
+      console.log("Final deploy state:", finalState, finalUrl);
+
+      // Step 4: Save deployment URL to build_requests
+      if (buildRequestId) {
+        await supabase.from("build_requests").update({
+          deploy_url: finalUrl,
+          status: finalState === "READY" ? "demo_ready" : "review",
+          deployed_at: new Date().toISOString(),
+        }).eq("id", buildRequestId);
+      }
+
+      // Step 5: Update business owner profile
+      if (businessId) {
+        await supabase.from("profiles").update({
+          website_status: "demo_ready",
+        }).eq("user_id", businessId);
+      }
+
+      // Step 6: Send WhatsApp notification to business owner
+      if (data.ownerWhatsapp && finalState === "READY") {
+        try {
+          await supabase.functions.invoke("send-whatsapp", {
+            body: {
+              to: data.ownerWhatsapp,
+              message: `Your website preview is ready! Login to review it: leadpe.online`,
+            },
+          });
+        } catch (e) {
+          console.error("WhatsApp send error:", e);
+        }
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
-          deployUrl: `https://${deployData.url}`,
+          deployUrl: finalUrl,
           projectName,
-          deploymentId: deployData.id,
+          deploymentId,
+          state: finalState,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
