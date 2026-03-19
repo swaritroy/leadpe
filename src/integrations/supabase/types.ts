@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       build_requests: {
         Row: {
+          admin_notified: boolean | null
           ai_prompt: string | null
           assigned_coder_id: string | null
           assigned_coder_name: string | null
@@ -29,6 +30,7 @@ export type Database = {
           deploy_url: string | null
           deployed_at: string | null
           github_url: string | null
+          hard_deadline: string | null
           id: string
           owner_name: string | null
           owner_whatsapp: string | null
@@ -43,6 +45,7 @@ export type Database = {
           website_purpose: string | null
         }
         Insert: {
+          admin_notified?: boolean | null
           ai_prompt?: string | null
           assigned_coder_id?: string | null
           assigned_coder_name?: string | null
@@ -56,6 +59,7 @@ export type Database = {
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
+          hard_deadline?: string | null
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
@@ -70,6 +74,7 @@ export type Database = {
           website_purpose?: string | null
         }
         Update: {
+          admin_notified?: boolean | null
           ai_prompt?: string | null
           assigned_coder_id?: string | null
           assigned_coder_name?: string | null
@@ -83,6 +88,7 @@ export type Database = {
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
+          hard_deadline?: string | null
           id?: string
           owner_name?: string | null
           owner_whatsapp?: string | null
