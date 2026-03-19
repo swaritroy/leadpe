@@ -180,7 +180,7 @@ export default function DevDashboard() {
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
     setBuildRequests(pendingData || []);
     
     
