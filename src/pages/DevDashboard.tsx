@@ -117,36 +117,36 @@ export default function DevDashboard() {
 
     if (!user) return;
 
-    const channel = supabase.channel('build-requests-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'build_requests' },
-        (payload) => {
-          const updated = payload.new as BuildRequest;
-          
-          // If someone accepted this request, remove from available
-          if (updated.assigned_coder_id && updated.status === "building") {
-            setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
-          }
-          
-          // If current coder's build was updated
-          if (updated.assigned_coder_id === user?.id) {
-            setActiveBuilds(prev => 
-              prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
-            );
-          }
+    const channel = supabase.channel("build-pool-" + user.id)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "build_requests",
+      }, (payload) => {
+        const updated = payload.new as BuildRequest;
+
+        // If someone accepted this request, remove from available pool
+        if (updated.assigned_coder_id && updated.status === "building") {
+          setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'build_requests' },
-        (payload) => {
-          const newRow = payload.new as BuildRequest;
-          if (!newRow.assigned_coder_id && newRow.status === "pending") {
-            setBuildRequests(prev => [newRow, ...prev]);
-          }
+
+        // If current coder's build was updated
+        if (updated.assigned_coder_id === user?.id) {
+          setActiveBuilds(prev =>
+            prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
+          );
         }
-      )
+      })
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "build_requests",
+      }, (payload) => {
+        const newRow = payload.new as BuildRequest;
+        if (!newRow.assigned_coder_id && newRow.status === "pending") {
+          setBuildRequests(prev => [newRow, ...prev]);
+        }
+      })
       .subscribe();
 
     return () => {
@@ -180,7 +180,7 @@ export default function DevDashboard() {
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
     setBuildRequests(pendingData || []);
     
     
@@ -285,63 +285,60 @@ export default function DevDashboard() {
   const handleAcceptRequest = async (request: BuildRequest) => {
     if (!user || acceptingId) return;
 
-    // Max 3 active builds check
-    const activeBuildCount = activeBuilds.filter(b => 
-      ["building", "demo_ready", "revision"].includes(b.status)
-    ).length;
-    if (activeBuildCount >= 3) {
+    // Step 1: Check active builds limit via DB count
+    const { count } = await supabase
+      .from("build_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_coder_id", user.id)
+      .in("status", ["building", "demo_ready", "revision"]);
+
+    if ((count ?? 0) >= 3) {
       toast({
         title: "Limit reached",
-        description: "You have 3 active builds. Complete one before accepting more.",
+        description: "Complete one of your 3 active builds first.",
         variant: "destructive"
       });
       return;
     }
 
     setAcceptingId(request.id);
-    try {
-      const { data, error } = await (supabase as any).from("build_requests")
-        .update({
-          status: "building",
-          assigned_coder_id: user.id,
-          assigned_coder_name: profile?.full_name || "Unknown",
-        })
-        .eq("id", request.id)
-        .is("assigned_coder_id", null)
-        .select();
-      
-      if (error) throw error;
-      
-      if (!data || data.length === 0) {
-        toast({
-          title: "Already taken",
-          description: "Another builder accepted this request.",
-          variant: "destructive"
-        });
-        setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-        setAcceptingId(null);
-        return;
-      }
-      
-      // Success
-      setBuildRequests(prev => prev.filter(r => r.id !== request.id));
-      setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
-      
+
+    // Step 2: Remove from UI immediately (optimistic)
+    setBuildRequests(prev => prev.filter(r => r.id !== request.id));
+
+    // Step 3: Attempt database update
+    const { data, error } = await (supabase as any).from("build_requests")
+      .update({
+        status: "building",
+        assigned_coder_id: user.id,
+        assigned_coder_name: profile?.full_name || "Unknown",
+      })
+      .eq("id", request.id)
+      .is("assigned_coder_id", null)
+      .eq("status", "pending")
+      .select();
+
+    // Step 4: Handle result
+    if (error || !data || data.length === 0) {
+      // Failed — someone else got it. Card already removed — do NOT add back.
       toast({
-        title: "✅ Request Accepted!",
-        description: "Open brief and start building.",
-      });
-      
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not accept. Try again.",
+        title: "Already taken",
+        description: "Another builder accepted this request.",
         variant: "destructive"
       });
-      fetchData();
-    } finally {
       setAcceptingId(null);
+      return;
     }
+
+    // Step 5: Success
+    toast({
+      title: "Build accepted!",
+      description: "Open the brief and start building.",
+    });
+
+    // Step 6: Add to my builds
+    setActiveBuilds(prev => [...prev, data[0]]);
+    setAcceptingId(null);
   };
   
   const handleViewBrief = (request: BuildRequest) => {
@@ -540,14 +537,19 @@ export default function DevDashboard() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {buildRequests.map((request) => (
-                    <div key={request.id} className="rounded-xl border border-[#E0F2E9] p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  {buildRequests.map((request) => {
+                    const isTimeUp = request.deadline && new Date(request.deadline).getTime() < Date.now();
+                    return (
+                    <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
                       <div className="flex items-center gap-3 mb-4">
                         <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
                           <p className="text-xs text-[#666]">{request.business_type} · {request.city}</p>
                         </div>
+                        {isTimeUp && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ Urgent</span>
+                        )}
                       </div>
                       <div className="space-y-2 mb-4 text-sm">
                         <div className="flex justify-between">
@@ -568,7 +570,8 @@ export default function DevDashboard() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </motion.div>
