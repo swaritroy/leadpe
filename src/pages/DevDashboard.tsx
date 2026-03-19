@@ -154,6 +154,11 @@ export default function DevDashboard() {
           setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
         }
 
+        // If status changed to expired, remove from available pool
+        if (updated.status === "expired") {
+          setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
+        }
+
         // If current coder's build was updated
         if (updated.assigned_coder_id === user?.id) {
           setActiveBuilds(prev =>
@@ -173,8 +178,19 @@ export default function DevDashboard() {
       })
       .subscribe();
 
+    // Auto-remove expired cards every 60 seconds
+    const expiryInterval = setInterval(() => {
+      setBuildRequests(prev =>
+        prev.filter(r => {
+          const hdl = (r as any).hard_deadline || r.deadline;
+          return !hdl || new Date(hdl).getTime() > Date.now();
+        })
+      );
+    }, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(expiryInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
