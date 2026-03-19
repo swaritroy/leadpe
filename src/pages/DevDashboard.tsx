@@ -53,21 +53,45 @@ interface Earning {
 const LiveTimer = ({ deadline }: { deadline: string }) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [color, setColor] = useState("#00C853");
+  const [canAccept, setCanAccept] = useState(true);
   useEffect(() => {
     const tick = () => {
       const diff = new Date(deadline).getTime() - Date.now();
-      if (diff <= 0) { setTimeLeft("Time Up"); setColor("#EF4444"); return; }
+      if (diff <= 0) {
+        setTimeLeft("⚠️ Urgent");
+        setColor("#EF4444");
+        setCanAccept(true);
+        return;
+      }
       const hrs = Math.floor(diff / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const secs = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft(`${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} left ⏰`);
-      setColor(hrs < 6 ? "#EF4444" : hrs < 24 ? "#F57F17" : "#00C853");
+      const formatted = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      if (diff < 6 * 60 * 60 * 1000) {
+        setTimeLeft(formatted);
+        setColor("#EF4444");
+        setCanAccept(false);
+      } else if (diff < 12 * 60 * 60 * 1000) {
+        setTimeLeft(formatted);
+        setColor("#F57F17");
+        setCanAccept(true);
+      } else {
+        setTimeLeft(`${formatted} left ⏰`);
+        setColor("#00C853");
+        setCanAccept(true);
+      }
     };
     tick();
     const inv = setInterval(tick, 1000);
     return () => clearInterval(inv);
   }, [deadline]);
-  return <span style={{ color, fontWeight: 700 }}>{timeLeft}</span>;
+  return (
+    <span style={{ color, fontWeight: 700 }}>
+      {timeLeft}
+      {!canAccept && <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: "#999" }}>Cannot accept — too little time</span>}
+    </span>
+  );
 };
 
 export default function DevDashboard() {
@@ -538,7 +562,10 @@ export default function DevDashboard() {
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {buildRequests.map((request) => {
-                    const isTimeUp = request.deadline && new Date(request.deadline).getTime() < Date.now();
+                    const hdl = (request as any).hard_deadline || request.deadline;
+                    const isTimeUp = hdl && new Date(hdl).getTime() < Date.now();
+                    const diff = hdl ? new Date(hdl).getTime() - Date.now() : Infinity;
+                    const tooLittleTime = diff > 0 && diff < 6 * 60 * 60 * 1000;
                     return (
                     <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
                       <div className="flex items-center gap-3 mb-4">
@@ -558,17 +585,20 @@ export default function DevDashboard() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-[#666]">Deadline:</span>
-                          <LiveTimer deadline={request.deadline} />
+                          <LiveTimer deadline={(request as any).hard_deadline || request.deadline} />
                         </div>
                       </div>
                       <div className="flex gap-2 mb-2">
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
-                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id || tooLittleTime} className="flex-1 font-semibold text-white" style={{ backgroundColor: tooLittleTime ? "#999" : "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : tooLittleTime ? "Too late" : "Accept ✓"}
                         </Button>
                       </div>
+                      {tooLittleTime && (
+                        <p className="text-xs mt-1" style={{ color: "#999" }}>Less than 6 hours remaining. Cannot guarantee quality delivery.</p>
+                      )}
                     </div>
                     );
                   })}

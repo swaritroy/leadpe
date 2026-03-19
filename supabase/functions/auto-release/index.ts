@@ -18,81 +18,160 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const now = Date.now();
     const results: string[] = [];
 
-    // 1. Release builds with no GitHub submission in 48 hours
-    const cutoff48h = new Date(now - 48 * 60 * 60 * 1000).toISOString();
-    const { data: staleBuilds } = await supabase
-      .from("build_requests")
-      .select("*")
-      .eq("status", "building")
-      .is("github_url", null)
-      .lt("created_at", cutoff48h);
-
-    if (staleBuilds && staleBuilds.length > 0) {
-      for (const build of staleBuilds) {
-        // Release back to pool
-        await supabase
-          .from("build_requests")
-          .update({
-            assigned_coder_id: null,
-            assigned_coder_name: null,
-            status: "pending",
-          })
-          .eq("id", build.id);
-
-        // Record penalty
-        if (build.assigned_coder_id) {
-          await supabase.from("coder_penalties").insert({
-            coder_id: build.assigned_coder_id,
-            reason: "missed_deadline",
-            build_request_id: build.id,
-          });
-        }
-
-        // Notify business via WhatsApp
-        if (build.owner_whatsapp) {
-          try {
-            await supabase.functions.invoke("send-whatsapp", {
-              body: {
-                to: build.owner_whatsapp,
-                message:
-                  "We are finding a faster builder for your website. No delay to your timeline.",
-              },
-            });
-          } catch (e) {
-            console.error("WhatsApp error:", e);
-          }
-        }
-
-        results.push(`Released stale build: ${build.business_name} (${build.id})`);
-      }
-    }
-
-    // 2. Alert admin for requests with no accept after 24 hours
-    const cutoff24h = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+    // ─────────────────────────────────────
+    // CASE 1: No accept after 24 hours — alert admin once
+    // ─────────────────────────────────────
     const { data: unaccepted } = await supabase
       .from("build_requests")
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .lt("created_at", cutoff24h);
+      .eq("admin_notified", false)
+      .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
-    if (unaccepted && unaccepted.length > 0) {
-      for (const build of unaccepted) {
+    for (const build of (unaccepted || [])) {
+      try {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            to: "919973383902",
+            message:
+              "🚨 NO BUILDER ALERT\n" +
+              "Business: " + build.business_name + "\n" +
+              "Type: " + build.business_type + "\n" +
+              "City: " + build.city + "\n" +
+              "Package: " + build.package_id + "\n" +
+              "24 hours passed.\n" +
+              "No coder accepted.\n" +
+              "Build manually: leadpe.online/admin"
+          }
+        });
+      } catch (e) {
+        console.error("WhatsApp error:", e);
+      }
+
+      await supabase
+        .from("build_requests")
+        .update({ admin_notified: true })
+        .eq("id", build.id);
+
+      results.push(`Admin notified for: ${build.business_name}`);
+    }
+
+    // ─────────────────────────────────────
+    // CASE 2: Hard deadline expired — no coder accepted in 48 hours
+    // ─────────────────────────────────────
+    const { data: expired } = await supabase
+      .from("build_requests")
+      .select("*")
+      .eq("status", "pending")
+      .is("assigned_coder_id", null)
+      .lt("hard_deadline", new Date().toISOString());
+
+    for (const build of (expired || [])) {
+      await supabase
+        .from("build_requests")
+        .update({ status: "expired" })
+        .eq("id", build.id);
+
+      // Update business profile
+      if (build.business_id) {
+        await supabase
+          .from("profiles")
+          .update({ website_status: "expired" })
+          .eq("user_id", build.business_id);
+      }
+
+      try {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            to: "919973383902",
+            message:
+              "⛔ ORDER EXPIRED\n" +
+              "Business: " + build.business_name + "\n" +
+              "City: " + build.city + "\n" +
+              "48 hours passed. No builder.\n" +
+              "Client will see reorder option.\n" +
+              "Consider building manually."
+          }
+        });
+      } catch (e) {
+        console.error("WhatsApp error:", e);
+      }
+
+      results.push(`Expired: ${build.business_name}`);
+    }
+
+    // ─────────────────────────────────────
+    // CASE 3: Coder accepted but missed build deadline
+    // ─────────────────────────────────────
+    const { data: stale } = await supabase
+      .from("build_requests")
+      .select("*")
+      .eq("status", "building")
+      .is("github_url", null)
+      .lt("hard_deadline", new Date().toISOString());
+
+    for (const build of (stale || [])) {
+      const penalisedCoder = build.assigned_coder_id;
+
+      // Release back to pool with 4hr emergency window
+      await supabase
+        .from("build_requests")
+        .update({
+          assigned_coder_id: null,
+          assigned_coder_name: null,
+          status: "pending",
+          admin_notified: false,
+          hard_deadline: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+        })
+        .eq("id", build.id);
+
+      // Penalty for coder
+      if (penalisedCoder) {
+        await supabase.from("coder_penalties").insert({
+          coder_id: penalisedCoder,
+          reason: "missed_deadline",
+          build_request_id: build.id
+        });
+      }
+
+      // Alert admin
+      try {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            to: "919973383902",
+            message:
+              "🚨 CODER MISSED DEADLINE\n" +
+              "Business: " + build.business_name + "\n" +
+              "4 hour emergency window open.\n" +
+              "Build manually NOW:\n" +
+              "leadpe.online/admin"
+          }
+        });
+      } catch (e) {
+        console.error("WhatsApp error:", e);
+      }
+
+      // Apologise to business
+      if (build.owner_whatsapp) {
         try {
           await supabase.functions.invoke("send-whatsapp", {
             body: {
-              to: "919973383902",
-              message: `⚠️ No builder accepted: ${build.business_name} after 24 hours. Manual action needed.`,
-            },
+              to: build.owner_whatsapp,
+              message:
+                "We sincerely apologise for the delay on your website.\n" +
+                "We are personally ensuring it is ready within 4 hours.\n" +
+                "— LeadPe Team"
+            }
           });
         } catch (e) {
-          console.error("Admin WhatsApp error:", e);
+          console.error("WhatsApp error:", e);
         }
-        results.push(`Alerted admin for unaccepted: ${build.business_name}`);
       }
+
+      results.push(`Released stale build: ${build.business_name}`);
     }
 
     console.log("Auto-release results:", JSON.stringify(results));

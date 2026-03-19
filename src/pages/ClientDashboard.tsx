@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import StateANoWebsite from "@/components/dashboard/StateANoWebsite";
 import StateBBuilding from "@/components/dashboard/StateBBuilding";
 import StateCLive from "@/components/dashboard/StateCLive";
+import StateExpired from "@/components/dashboard/StateExpired";
 
 interface Lead {
   id: string;
@@ -130,7 +131,8 @@ export default function ClientDashboard() {
   const status = (buildRequest?.status as string) || null;
   const websiteStatus = profile?.website_status || null;
   const isLive = status === "live";
-  const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
+  const isExpiredOrder = status === "expired" || websiteStatus === "expired";
+  const isBuilding = !isExpiredOrder && (status === "pending" || status === "building" || status === "demo_ready");
   const hasNoWebsite = !buildRequest && !websiteStatus;
 
   const isExpired = trial?.isExpired;
@@ -233,6 +235,13 @@ export default function ClientDashboard() {
         <StateBBuilding
           buildRequest={buildRequest}
           businessName={profile?.business_name || profile?.full_name || "Business"}
+        />
+      )}
+
+      {isExpiredOrder && (
+        <StateExpired
+          profile={profile}
+          user={user}
         />
       )}
 
