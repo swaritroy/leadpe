@@ -514,11 +514,9 @@ export default function DevDashboard() {
               
               {buildRequests.length === 0 ? (
                 <div className="rounded-2xl border border-[#E0F2E9] p-8 text-center bg-white shadow-sm">
-                  <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-green-50">
-                    <Wrench size={20} className="text-[#00C853]" />
-                  </div>
-                  <p className="text-[#666] font-medium">No pending requests right now.</p>
-                  <p className="text-sm text-[#999] mt-1">Check back soon!</p>
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-[#666] font-medium">No build requests right now.</p>
+                  <p className="text-sm text-[#999] mt-1">New requests appear here automatically. Stay on this page.</p>
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
