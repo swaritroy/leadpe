@@ -66,9 +66,9 @@ export default function StudioAuth() {
         setError(data?.message || functionErr?.message || "Failed to send OTP. Please try again.");
         return;
       }
-      // If SMS failed, show debug OTP in toast
-      if (data.debug_otp) {
-        toast({ title: "SMS unavailable", description: `Test OTP: ${data.debug_otp}`, variant: "default" });
+      // If SMS failed or not configured, show test OTP in toast
+      if (data.test_mode && data.test_otp) {
+        toast({ title: "Test Mode — SMS unavailable", description: `Your OTP is: ${data.test_otp}`, duration: 30000 });
       } else {
         toast({ title: "Code sent!", description: "Check your SMS messages." });
       }
