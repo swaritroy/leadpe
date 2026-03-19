@@ -117,36 +117,36 @@ export default function DevDashboard() {
 
     if (!user) return;
 
-    const channel = supabase.channel('build-requests-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'build_requests' },
-        (payload) => {
-          const updated = payload.new as BuildRequest;
-          
-          // If someone accepted this request, remove from available
-          if (updated.assigned_coder_id && updated.status === "building") {
-            setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
-          }
-          
-          // If current coder's build was updated
-          if (updated.assigned_coder_id === user?.id) {
-            setActiveBuilds(prev => 
-              prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
-            );
-          }
+    const channel = supabase.channel("build-pool-" + user.id)
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "build_requests",
+      }, (payload) => {
+        const updated = payload.new as BuildRequest;
+
+        // If someone accepted this request, remove from available pool
+        if (updated.assigned_coder_id && updated.status === "building") {
+          setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'build_requests' },
-        (payload) => {
-          const newRow = payload.new as BuildRequest;
-          if (!newRow.assigned_coder_id && newRow.status === "pending") {
-            setBuildRequests(prev => [newRow, ...prev]);
-          }
+
+        // If current coder's build was updated
+        if (updated.assigned_coder_id === user?.id) {
+          setActiveBuilds(prev =>
+            prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
+          );
         }
-      )
+      })
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "build_requests",
+      }, (payload) => {
+        const newRow = payload.new as BuildRequest;
+        if (!newRow.assigned_coder_id && newRow.status === "pending") {
+          setBuildRequests(prev => [newRow, ...prev]);
+        }
+      })
       .subscribe();
 
     return () => {
