@@ -592,10 +592,13 @@ export default function DevDashboard() {
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
-                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id || tooLittleTime} className="flex-1 font-semibold text-white" style={{ backgroundColor: tooLittleTime ? "#999" : "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : tooLittleTime ? "Too late" : "Accept ✓"}
                         </Button>
                       </div>
+                      {tooLittleTime && (
+                        <p className="text-xs mt-1" style={{ color: "#999" }}>Less than 6 hours remaining. Cannot guarantee quality delivery.</p>
+                      )}
                     </div>
                     );
                   })}
