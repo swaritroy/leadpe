@@ -145,8 +145,10 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
   };
 
   const handleSubmitGithub = async () => {
-    if (!githubUrl.includes("github.com")) {
-      toast({ title: "Invalid URL", description: "Must contain github.com", variant: "destructive" });
+    // Validate GitHub URL format
+    const isValidGithub = githubUrl.includes("github.com") && githubUrl.split("/").filter(Boolean).length >= 2;
+    if (!isValidGithub) {
+      toast({ title: "Invalid URL", description: "Enter a valid GitHub URL. Example: github.com/username/repo-name", variant: "destructive" });
       return;
     }
     setSubmitting(true);
