@@ -238,6 +238,13 @@ export default function ClientDashboard() {
         />
       )}
 
+      {isExpiredOrder && (
+        <StateExpired
+          profile={profile}
+          user={user}
+        />
+      )}
+
       {isLive && (
         <StateCLive
           buildRequest={buildRequest}
