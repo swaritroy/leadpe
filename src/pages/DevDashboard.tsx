@@ -220,7 +220,8 @@ export default function DevDashboard() {
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .order("created_at", { ascending: true });
+      .gt("hard_deadline", new Date().toISOString())
+      .order("hard_deadline", { ascending: true });
     setBuildRequests(pendingData || []);
     
     
