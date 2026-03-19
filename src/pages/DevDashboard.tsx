@@ -248,8 +248,8 @@ export default function DevDashboard() {
     const { data: activeData } = await supabase.from("build_requests")
       .select("*")
       .eq("assigned_coder_id", user.id)
-      .in("status", ["building", "review", "demo_ready", "revision"])
-      .order("created_at", { ascending: false });
+      .in("status", ["building", "demo_ready", "revision"])
+      .order("hard_deadline", { ascending: true });
     setActiveBuilds((activeData as BuildRequest[]) || []);
 
     setLoading(false);
