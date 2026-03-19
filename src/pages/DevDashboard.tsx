@@ -562,7 +562,10 @@ export default function DevDashboard() {
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {buildRequests.map((request) => {
-                    const isTimeUp = request.deadline && new Date(request.deadline).getTime() < Date.now();
+                    const hdl = (request as any).hard_deadline || request.deadline;
+                    const isTimeUp = hdl && new Date(hdl).getTime() < Date.now();
+                    const diff = hdl ? new Date(hdl).getTime() - Date.now() : Infinity;
+                    const tooLittleTime = diff > 0 && diff < 6 * 60 * 60 * 1000;
                     return (
                     <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
                       <div className="flex items-center gap-3 mb-4">
