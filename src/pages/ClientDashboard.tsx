@@ -131,7 +131,8 @@ export default function ClientDashboard() {
   const status = (buildRequest?.status as string) || null;
   const websiteStatus = profile?.website_status || null;
   const isLive = status === "live";
-  const isBuilding = status === "pending" || status === "building" || status === "demo_ready";
+  const isExpiredOrder = status === "expired" || websiteStatus === "expired";
+  const isBuilding = !isExpiredOrder && (status === "pending" || status === "building" || status === "demo_ready");
   const hasNoWebsite = !buildRequest && !websiteStatus;
 
   const isExpired = trial?.isExpired;
