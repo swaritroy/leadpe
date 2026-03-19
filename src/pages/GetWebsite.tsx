@@ -124,30 +124,57 @@ export default function GetWebsite() {
 
       if (orderError) throw orderError;
 
-      // 2. Generate AI prompt
-      const aiPrompt = `Build a professional website for:
-Business: ${businessName}
-Type: ${businessType}
-Location: ${city}
-WhatsApp: ${customerWhatsapp}
-Color: ${colorPref === "rainbow" ? "Surprise me" : colorPref}
-Style: Modern, clean, mobile-first
-Package: ${pkg.name} (${pkg.features.join(", ")})
-${additionalDetails ? `Special requirements: ${additionalDetails}` : ""}
-${oneLineDesc ? `One line: ${oneLineDesc}` : ""}
+      // 2. Generate lead widget HTML
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const leadWidgetHtml = `<!-- LeadPe Lead Capture Widget -->
+<div id="leadpe-widget">
+  <div style="background:#fff;border:2px solid #00C853;border-radius:16px;padding:24px;max-width:400px;margin:20px auto;font-family:sans-serif;box-shadow:0 4px 20px rgba(0,200,83,0.15)">
+    <h3 style="color:#1A1A1A;margin:0 0 8px;font-size:20px">Get Free Consultation 📞</h3>
+    <p style="color:#666;margin:0 0 20px;font-size:14px">Leave your details. We'll call you back!</p>
+    <input id="lp-name" type="text" placeholder="Your Name" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:12px;box-sizing:border-box"/>
+    <input id="lp-phone" type="tel" placeholder="WhatsApp Number" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:12px;box-sizing:border-box"/>
+    <input id="lp-interest" type="text" placeholder="What are you looking for?" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:16px;box-sizing:border-box"/>
+    <button onclick="submitLeadPeLead()" style="width:100%;background:#00C853;color:white;border:none;border-radius:10px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer">Get Callback 📲</button>
+    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Powered by LeadPe 🌱</p>
+  </div>
+</div>
+<script>
+async function submitLeadPeLead(){var n=document.getElementById('lp-name').value;var p=document.getElementById('lp-phone').value;var i=document.getElementById('lp-interest').value;if(!n||!p){alert('Please fill name and phone');return}var btn=document.querySelector('#leadpe-widget button');btn.textContent='Sending...';btn.disabled=true;try{var res=await fetch('${supabaseUrl}/rest/v1/leads',{method:'POST',headers:{'Content-Type':'application/json','apikey':'${supabaseKey}','Authorization':'Bearer ${supabaseKey}','Prefer':'return=minimal'},body:JSON.stringify({business_id:'${user?.id}',customer_name:n,phone:p.replace(/\\D/g,''),message:i,source:'website',status:'new'})});if(res.ok){document.getElementById('leadpe-widget').innerHTML='<div style="text-align:center;padding:40px 20px;background:#F0FFF4;border-radius:16px;border:2px solid #00C853"><div style="font-size:48px">✅</div><h3 style="color:#1A1A1A">Request Received!</h3><p style="color:#666">We will call you back within 2 hours.</p></div>'}else{btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}catch(e){btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}
+</script>`;
 
-Include:
-- Hero section${oneLineDesc ? ` with "${oneLineDesc}"` : ""}
-- Services/specializations section
-- WhatsApp contact button (fixed bottom)
-- Google Maps embed for ${city}
-- Testimonials section (placeholder)
-- Contact section
-- Mobile responsive
-- Fast loading
-- SEO meta tags for ${businessType} in ${city}`;
+      // 3. Call AI to generate detailed build prompt
+      let aiPrompt = "";
+      try {
+        const { data: aiData } = await supabase.functions.invoke("ai-generate", {
+          body: {
+            type: "build_prompt",
+            data: {
+              business_name: businessName,
+              business_type: businessType,
+              city: city,
+              whatsapp_number: customerWhatsapp,
+              owner_name: customerName,
+              one_line_description: oneLineDesc,
+              color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
+              special_requirements: additionalDetails || "",
+              package_name: pkg.name,
+              package_features: pkg.features.join(", "),
+              lead_widget_html: leadWidgetHtml,
+            },
+          },
+        });
+        aiPrompt = aiData?.result || "";
+      } catch {
+        console.log("AI prompt generation failed, using fallback");
+      }
 
-      // 3. Insert build request
+      // Fallback if AI failed
+      if (!aiPrompt) {
+        aiPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
+      }
+
+      // 4. Insert build request
       const { error: brError } = await supabase.from("build_requests").insert({
         business_id: user?.id || null,
         business_name: businessName,

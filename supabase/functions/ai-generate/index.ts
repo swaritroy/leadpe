@@ -5,6 +5,122 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function buildPromptTemplate(data: Record<string, string>): { system: string; user: string } {
+  const system = `You are an expert web developer creating detailed build instructions for a professional Indian business website. Generate a complete, specific, actionable Lovable.dev prompt. Return ONLY the prompt text. No explanation. No preamble.`;
+
+  const user = `Generate a complete Lovable.dev website build prompt for this Indian business:
+
+BUSINESS DETAILS:
+- Name: ${data.business_name}
+- Type: ${data.business_type}
+- City: ${data.city}
+- WhatsApp: ${data.whatsapp_number}
+- Owner: ${data.owner_name}
+- One line: ${data.one_line_description || ""}
+- Brand color: ${data.color_preference || "#00C853"}
+- Special requirements: ${data.special_requirements || "None"}
+
+PACKAGE: ${data.package_name || "Standard"}
+Package includes: ${data.package_features || "5 pages, WhatsApp button, Mobile friendly"}
+
+The prompt must include ALL of these sections in this exact order:
+
+1. PROJECT OVERVIEW
+   Specific website purpose for this exact business type in India.
+   Target audience description.
+
+2. DESIGN SYSTEM
+   - Primary color: ${data.color_preference || "#00C853"}
+   - Font: Syne for headings, Inter for body text
+   - Style: Modern, trustworthy, professional Indian business
+   - Mobile-first (70% Indian users are on mobile)
+   - Border radius: 12px for cards
+   - Smooth scroll behavior
+
+3. PAGES TO BUILD
+   Based on ${data.business_type}, specify exactly which pages:
+   
+   For Doctor/Clinic:
+   Home, About Doctor, Services/Treatments, Patient Reviews, Contact + Appointment
+   
+   For CA/Lawyer:
+   Home, About, Practice Areas, Why Choose Us, Contact
+   
+   For Coaching Institute:
+   Home, About, Courses/Batches, Results/Testimonials, Contact + Enquiry
+   
+   For Contractor/Plumber:
+   Home, Services, Our Work (gallery), Why Us, Contact + Quote Request
+   
+   For Others:
+   Home, About, Services, Testimonials, Contact
+
+4. HERO SECTION (most important)
+   - Headline targeting people searching for ${data.business_type} in ${data.city}
+   - Subheadline: ${data.one_line_description || data.business_name}
+   - Primary CTA: "WhatsApp Us Now →" links to: https://wa.me/91${data.whatsapp_number}
+   - Secondary CTA: "Call Now →" links to: tel:+91${data.whatsapp_number}
+   - Trust badges relevant to business type
+
+5. WHATSAPP INTEGRATION (CRITICAL)
+   Fixed floating WhatsApp button bottom-right corner:
+   - Green circle, WhatsApp icon
+   - Opens: https://wa.me/91${data.whatsapp_number}
+   - Pre-filled message: "Hi, I found you on Google. I need [service]."
+   
+   Lead capture widget MUST be embedded:
+   Paste this exact HTML in the contact section and any enquiry forms:
+   ${data.lead_widget_html || "<!-- Lead widget will be added -->"}
+
+6. SEO META TAGS (in <head>):
+   Title: "${data.business_name} | ${data.business_type} in ${data.city}"
+   Description: "${data.one_line_description || data.business_name}. Contact us on WhatsApp for instant response."
+   Keywords: "${data.business_type} in ${data.city}, best ${data.business_type} ${data.city}, ${data.business_name}"
+   OG tags for WhatsApp sharing
+
+7. GOOGLE MAPS
+   Embed Google Maps search for: "${data.business_name} ${data.city}" in the Contact section
+
+8. TRUST ELEMENTS
+   Based on ${data.business_type} add:
+   - Years of experience section
+   - Number of clients served
+   - Certifications/qualifications
+   - Before/after or results section
+   - Client testimonials (3 placeholder cards)
+
+9. CONTACT SECTION
+   - Business name
+   - WhatsApp: ${data.whatsapp_number}
+   - City: ${data.city}
+   - Working hours placeholder
+   - Google Maps embed
+   - Lead capture widget embedded here
+
+10. FOOTER
+    - Business name + tagline
+    - Quick links
+    - WhatsApp button
+    - "Powered by LeadPe" small text
+
+11. PERFORMANCE REQUIREMENTS
+    - No heavy animations
+    - Images must be lazy loaded
+    - Must score 90+ on mobile PageSpeed
+    - No external fonts that slow loading
+
+12. LEAD WIDGET REQUIREMENT (CRITICAL)
+    The following HTML widget MUST be embedded in the contact section.
+    Do not modify it. Paste as-is:
+    ${data.lead_widget_html || "<!-- Lead widget will be added -->"}
+
+Generate the complete prompt now.
+Make it specific to ${data.business_type}.
+Use real Indian context and language.`;
+
+  return { system, user };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -19,9 +135,15 @@ serve(async (req) => {
     }
 
     let prompt = "";
+    let systemPrompt = "";
     let maxTokens = 500;
 
-    if (type === "seo") {
+    if (type === "build_prompt") {
+      maxTokens = 2000;
+      const prompts = buildPromptTemplate(data);
+      systemPrompt = prompts.system;
+      prompt = prompts.user;
+    } else if (type === "seo") {
       maxTokens = 800;
       prompt = `You are an SEO expert for Indian local businesses.
 Generate SEO content for:
@@ -92,6 +214,13 @@ Return ONLY the message.`;
       });
     }
 
+    const messages: Array<{ role: string; content: string }> = [];
+    if (systemPrompt) {
+      messages.push({ role: "user", content: prompt });
+    } else {
+      messages.push({ role: "user", content: prompt });
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -102,7 +231,8 @@ Return ONLY the message.`;
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
-        messages: [{ role: "user", content: prompt }],
+        ...(systemPrompt ? { system: systemPrompt } : {}),
+        messages,
       }),
     });
 
