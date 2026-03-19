@@ -69,14 +69,17 @@ serve(async (req) => {
     const apiKey = Deno.env.get("FAST2SMS_API_KEY");
 
     if (!apiKey) {
-      console.error("FAST2SMS_API_KEY not found — returning debug OTP");
+      console.error("FAST2SMS_API_KEY not found");
       return new Response(
-        JSON.stringify({ success: true, debug_otp: otp, sms_sent: false }),
+        JSON.stringify({ success: false, message: "SMS service not configured." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Send SMS via Fast2SMS
+    console.log("Phone:", cleanPhone);
+    console.log("OTP generated:", otp);
+
+    // Send SMS via Fast2SMS using "q" (quick) route — no DLT required
     const smsResponse = await fetch("https://www.fast2sms.com/dev/bulkV2", {
       method: "POST",
       headers: {
@@ -84,8 +87,11 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        route: "otp",
-        variables_values: otp,
+        route: "q",
+        message:
+          "Your LeadPe verification code is " +
+          otp +
+          ". Valid for 10 minutes. Do not share with anyone. LeadPe will never call you asking for this code.",
         numbers: cleanPhone,
         flash: 0,
       }),
@@ -95,14 +101,11 @@ serve(async (req) => {
     console.log("Fast2SMS response:", JSON.stringify(smsResult));
 
     if (!smsResult.return) {
-      // SMS failed — return debug OTP as fallback
-      console.error("SMS failed, returning debug OTP");
+      console.error("SMS failed:", JSON.stringify(smsResult));
       return new Response(
         JSON.stringify({
-          success: true,
-          debug_otp: otp,
-          sms_sent: false,
-          sms_error: smsResult.message || JSON.stringify(smsResult),
+          success: false,
+          message: "SMS failed: " + (smsResult.message || JSON.stringify(smsResult)),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -115,7 +118,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("send-otp error:", e);
     return new Response(
-      JSON.stringify({ success: false, message: e.message || "Unknown error" }),
+      JSON.stringify({ success: false, message: (e as Error).message || "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
