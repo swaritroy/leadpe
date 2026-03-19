@@ -154,6 +154,11 @@ export default function DevDashboard() {
           setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
         }
 
+        // If status changed to expired, remove from available pool
+        if (updated.status === "expired") {
+          setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
+        }
+
         // If current coder's build was updated
         if (updated.assigned_coder_id === user?.id) {
           setActiveBuilds(prev =>
@@ -173,8 +178,19 @@ export default function DevDashboard() {
       })
       .subscribe();
 
+    // Auto-remove expired cards every 60 seconds
+    const expiryInterval = setInterval(() => {
+      setBuildRequests(prev =>
+        prev.filter(r => {
+          const hdl = (r as any).hard_deadline || r.deadline;
+          return !hdl || new Date(hdl).getTime() > Date.now();
+        })
+      );
+    }, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(expiryInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -204,7 +220,8 @@ export default function DevDashboard() {
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .order("created_at", { ascending: true });
+      .gt("hard_deadline", new Date().toISOString())
+      .order("hard_deadline", { ascending: true });
     setBuildRequests(pendingData || []);
     
     
@@ -231,8 +248,8 @@ export default function DevDashboard() {
     const { data: activeData } = await supabase.from("build_requests")
       .select("*")
       .eq("assigned_coder_id", user.id)
-      .in("status", ["building", "review", "demo_ready", "revision"])
-      .order("created_at", { ascending: false });
+      .in("status", ["building", "demo_ready", "revision"])
+      .order("hard_deadline", { ascending: true });
     setActiveBuilds((activeData as BuildRequest[]) || []);
 
     setLoading(false);
