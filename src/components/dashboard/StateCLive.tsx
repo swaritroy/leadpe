@@ -99,11 +99,11 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const handleSubmitFeedback = async () => {
     if (!feedbackRating) return;
     setSubmittingFeedback(true);
-    await (supabase as any).from("feedback").insert({
-      user_id: user?.id, business_id: business?.id,
+    await supabase.from("feedback").insert({
+      user_id: user?.id, business_id: user?.id,
       rating: feedbackRating, comment: feedbackComment || null,
-    });
-    await (supabase.from("profiles") as any).update({ feedback_given: true }).eq("user_id", user?.id);
+    } as any);
+    await supabase.from("profiles").update({ feedback_given: true } as any).eq("user_id", user?.id);
     const msg = `📝 Feedback: ${feedbackRating}/5 from ${profile?.business_name}\n${feedbackComment || ""}`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
     setFeedbackSubmitted(true);

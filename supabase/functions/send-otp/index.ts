@@ -109,12 +109,11 @@ serve(async (req) => {
 
     if (!smsResult.return) {
       console.error("SMS failed:", JSON.stringify(smsResult));
-      // SMS failed — return test OTP so flow isn't broken
       return new Response(
         JSON.stringify({
           success: true,
           test_mode: true,
-          test_otp: otp,
+          test_otp: IS_PRODUCTION ? undefined : otp,
           sms_error: smsResult.message || "SMS delivery failed",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

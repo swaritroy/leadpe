@@ -70,4 +70,4 @@ export const BUILD_STATUS_FLOW = [
 ] as const;
 
 export const UPI_ID = "9973383902@upi";
-export const RAZORPAY_KEY_ID = "rzp_test_SNA8UASKNisTI9";
+export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_SNA8UASKNisTI9";
