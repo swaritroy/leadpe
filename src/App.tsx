@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
-import SplashScreen from "@/components/SplashScreen";
+
 
 // Public pages
 import Index from "./pages/Index";
@@ -39,15 +39,8 @@ const Loader = () => (
 );
 
 const AppContent = () => {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    setShowSplash(false);
-  }, []);
-
   return (
     <>
-      <SplashScreen show={showSplash} />
       <Toaster />
       <Sonner />
       <BrowserRouter>
