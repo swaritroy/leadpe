@@ -86,7 +86,7 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
             <>
               <div style={{ fontSize: 48, marginBottom: 8 }}>🔍</div>
               <p style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.4 }}>
-                We are fining the right<br />builder for you
+                We are finding the right<br />builder for you
               </p>
               <p style={{ fontFamily: font.body, fontSize: 13, color: "#999", marginTop: 6 }}>
                 Usually takes 2-4 hours

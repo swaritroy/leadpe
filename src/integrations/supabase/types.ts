@@ -415,6 +415,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          business_id: string | null
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           business_id: string
@@ -739,6 +766,8 @@ export type Database = {
           id: string
           monthly_capacity: string | null
           monthly_passive: number | null
+          name_changes_this_month: number | null
+          number_changes_this_month: number | null
           onboarding_complete: boolean | null
           plan_renewal_date: string | null
           plan_status: string | null
@@ -776,6 +805,8 @@ export type Database = {
           id?: string
           monthly_capacity?: string | null
           monthly_passive?: number | null
+          name_changes_this_month?: number | null
+          number_changes_this_month?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
@@ -813,6 +844,8 @@ export type Database = {
           id?: string
           monthly_capacity?: string | null
           monthly_passive?: number | null
+          name_changes_this_month?: number | null
+          number_changes_this_month?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
@@ -936,6 +969,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ratings: {
+        Row: {
+          build_request_id: string | null
+          business_id: string | null
+          coder_id: string | null
+          created_at: string | null
+          feedback: string | null
+          id: string
+          rating: number
+        }
+        Insert: {
+          build_request_id?: string | null
+          business_id?: string | null
+          coder_id?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating: number
+        }
+        Update: {
+          build_request_id?: string | null
+          business_id?: string | null
+          coder_id?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating?: number
+        }
+        Relationships: []
       }
       scheduled_messages: {
         Row: {
