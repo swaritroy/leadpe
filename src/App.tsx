@@ -39,15 +39,8 @@ const Loader = () => (
 );
 
 const AppContent = () => {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    setShowSplash(false);
-  }, []);
-
   return (
     <>
-      <SplashScreen show={showSplash} />
       <Toaster />
       <Sonner />
       <BrowserRouter>
