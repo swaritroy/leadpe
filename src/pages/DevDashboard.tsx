@@ -226,7 +226,7 @@ export default function DevDashboard() {
     
     
     const { data: compData } = await supabase.from("build_requests")
-      .select(`*, ratings(rating)`)
+      .select("*")
       .eq("assigned_coder_id", user.id)
       .eq("status", "live")
       .order("deployed_at", { ascending: false });
