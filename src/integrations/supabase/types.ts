@@ -27,6 +27,7 @@ export type Database = {
           coder_earning: number | null
           created_at: string | null
           deadline: string | null
+          demo_url: string | null
           deploy_url: string | null
           deployed_at: string | null
           github_url: string | null
@@ -56,6 +57,7 @@ export type Database = {
           coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
+          demo_url?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
+          demo_url?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
