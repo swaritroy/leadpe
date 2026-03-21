@@ -71,14 +71,16 @@ serve(async (req) => {
     console.log("Phone:", cleanPhone);
     console.log("OTP generated:", otp);
 
+    const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
+
     if (!apiKey) {
-      console.error("FAST2SMS_API_KEY missing — returning test OTP");
+      console.error("FAST2SMS_API_KEY missing");
       return new Response(
         JSON.stringify({
           success: true,
           test_mode: true,
-          test_otp: otp,
-          message: "SMS service not configured. Test OTP returned.",
+          test_otp: IS_PRODUCTION ? undefined : otp,
+          message: IS_PRODUCTION ? "SMS service unavailable." : "SMS not configured. Test OTP returned.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -107,12 +109,11 @@ serve(async (req) => {
 
     if (!smsResult.return) {
       console.error("SMS failed:", JSON.stringify(smsResult));
-      // SMS failed — return test OTP so flow isn't broken
       return new Response(
         JSON.stringify({
           success: true,
           test_mode: true,
-          test_otp: otp,
+          test_otp: IS_PRODUCTION ? undefined : otp,
           sms_error: smsResult.message || "SMS delivery failed",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

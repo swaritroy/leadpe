@@ -234,15 +234,16 @@ export default function DevDashboard() {
     if (compData) {
       setCompletedBuilds(compData);
       setTotalCompleted(compData.length);
-      let sum = 0, count = 0;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      compData.forEach((b: any) => {
-        if (b.ratings && b.ratings.length > 0) {
-          sum += b.ratings[0].rating;
-          count++;
+      // Fetch average rating separately from ratings table
+      if (compData.length > 0) {
+        const { data: ratingsData } = await supabase.from("ratings")
+          .select("rating")
+          .eq("coder_id", user.id);
+        if (ratingsData && ratingsData.length > 0) {
+          const sum = ratingsData.reduce((a: number, r: any) => a + r.rating, 0);
+          setAvgRating(Number((sum / ratingsData.length).toFixed(1)));
         }
-      });
-      setAvgRating(count > 0 ? Number((sum / count).toFixed(1)) : 0);
+      }
     }
 
     const { data: activeData } = await supabase.from("build_requests")
