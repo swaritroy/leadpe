@@ -89,7 +89,7 @@ serve(async (req) => {
       );
     }
 
-    const smsUrl = `https://2factor.in/API/V1/${apiKey}/SMS/${cleanPhone}/AUTOGEN/${templateName}`;
+    const smsUrl = `https://2factor.in/API/V1/${apiKey}/SMS/${cleanPhone}/${otp}/${templateName}`;
     console.log("Calling 2Factor API...");
 
     const smsResponse = await fetch(smsUrl);
