@@ -81,13 +81,13 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const handleSubmitRating = async () => {
     if (!ratingValue || !buildRequest) return;
     setSubmittingRating(true);
-    await (supabase as any).from("ratings").insert({
-      business_id: business?.id || user?.id,
-      coder_id: buildRequest.assigned_coder_id || "unknown",
+    await supabase.from("ratings").insert({
+      business_id: user?.id,
+      coder_id: buildRequest.assigned_coder_id || null,
       build_request_id: buildRequest.id,
       rating: ratingValue,
       feedback: ratingFeedback || null,
-    });
+    } as any);
     const msg = `⭐ Rating: ${ratingValue}/5 from ${profile?.business_name}\n${ratingFeedback || "No comment"}`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
     setRatingSubmitted(true);
