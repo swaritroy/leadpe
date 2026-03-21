@@ -196,7 +196,6 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
         await (supabase as any).from("build_requests").update({
           status: "demo_ready",
           deploy_url: deployResult.deployUrl,
-          demo_url: deployResult.deployUrl,
           deployed_at: new Date().toISOString(),
           github_url: githubUrl,
         }).eq("id", request.id);
@@ -204,7 +203,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
         const coderEarn = request.coder_earning || 640;
         await updateCoderEarnings(userId, { id: request.id, coder_earning: coderEarn, business_name: request.business_name });
 
-        window.open(`https://wa.me/91${request.owner_whatsapp?.replace(/\D/g, "")}?text=${encodeURIComponent(`🎉 Aapki website preview ready hai!\n🌐 ${deployResult.deployUrl}\nLeadPe dashboard pe dekho!\nLeadPe 🌱`)}`, "_blank");
+        window.open(`https://wa.me/91${request.owner_whatsapp?.replace(/\D/g, "")}?text=${encodeURIComponent(`🎉 Your website preview is ready!\n🌐 ${deployResult.deployUrl}\nLogin to your LeadPe dashboard to review it!\nLeadPe 🌱`)}`, "_blank");
         window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ DEPLOYED\nBusiness: ${request.business_name}\nURL: ${deployResult.deployUrl}\nScore: ${report.score}/100\nCoder: ${profile?.full_name}\nLeadPe ⚡`)}`, "_blank");
 
         toast({ title: "🚀 Deployed!", description: `${deployResult.deployUrl} — ₹${coderEarn} earned!` });

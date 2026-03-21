@@ -226,7 +226,7 @@ export default function DevDashboard() {
     
     
     const { data: compData } = await supabase.from("build_requests")
-      .select(`*, ratings(rating)`)
+      .select("*")
       .eq("assigned_coder_id", user.id)
       .eq("status", "live")
       .order("deployed_at", { ascending: false });
@@ -299,24 +299,23 @@ export default function DevDashboard() {
     fetchData();
   };
 
-  const nameChangesLeft = 2 - (profile?.name_changes_this_month || 0);
-  const numberChangesLeft = 2 - (profile?.number_changes_this_month || 0);
+  const nameChangesLeft = 2 - ((profile as any)?.name_changes_this_month || 0);
+  const numberChangesLeft = 2 - ((profile as any)?.number_changes_this_month || 0);
 
   const handleUpdateProfile = async (field: "name" | "number") => {
     if (field === "name" && nameChangesLeft <= 0) return toast({ title: "Limit reached", description: "Monthly limit reached. Try again next month.", variant: "destructive" });
     if (field === "number" && numberChangesLeft <= 0) return toast({ title: "Limit reached", description: "Monthly limit reached. Try again next month.", variant: "destructive" });
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (field === "name") {
       updates.full_name = editNameValue;
-      updates.name_changes_this_month = (profile?.name_changes_this_month || 0) + 1;
+      updates.name_changes_this_month = ((profile as any)?.name_changes_this_month || 0) + 1;
     } else {
       updates.whatsapp_number = editNumberValue;
-      updates.number_changes_this_month = (profile?.number_changes_this_month || 0) + 1;
+      updates.number_changes_this_month = ((profile as any)?.number_changes_this_month || 0) + 1;
     }
     
-    await supabase.from("profiles").update(updates).eq("user_id", user!.id);
+    await (supabase.from("profiles") as any).update(updates).eq("user_id", user!.id);
     toast({ title: "Profile updated" });
     if (field === "name") setEditingName(false);
     else setEditingNumber(false);

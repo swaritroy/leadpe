@@ -192,7 +192,23 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
 
       if (brError) throw brError;
 
-      // 4. Update profile
+      // 4. Create businesses row (required for leads RLS)
+      if (user) {
+        const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        await supabase.from("businesses").upsert({
+          id: user.id,
+          owner_id: user.id,
+          name: businessName,
+          slug: slug || "biz-" + Date.now(),
+          business_type: businessType,
+          city: city,
+          whatsapp_number: customerWhatsapp,
+          owner_name: customerName,
+          description: oneLineDesc || "",
+        }, { onConflict: "id" });
+      }
+
+      // 5. Update profile
       if (user) {
         await supabase
           .from("profiles")
