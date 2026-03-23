@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 
 // Public pages
