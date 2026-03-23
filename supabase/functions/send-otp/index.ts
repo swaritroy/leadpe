@@ -67,13 +67,13 @@ serve(async (req) => {
       );
     }
 
-    // Send OTP via 2Factor.in API (GET request)
+    // Send OTP via 2Factor.in API — use ADDON_SERVICES for guaranteed TEXT SMS
+    // The /SMS/ route falls back to voice call if DLT template is not registered
     const apiKey = Deno.env.get("TWOFACTOR_API_KEY");
-    const templateName = Deno.env.get("TWOFACTOR_TEMPLATE_NAME") || "LeadPe-OTP";
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone);
-    console.log("OTP generated (will not log in production)");
+    console.log("OTP generated successfully");
 
     if (!apiKey) {
       console.error("TWOFACTOR_API_KEY missing");
@@ -89,33 +89,66 @@ serve(async (req) => {
       );
     }
 
-    const smsUrl = `https://2factor.in/API/V1/${apiKey}/SMS/${cleanPhone}/${otp}/${templateName}`;
-    console.log("Calling 2Factor API...");
+    // Use 2Factor ADDON_SERVICES/SEND/TSMS for explicit TEXT SMS (not voice)
+    // This sends a transactional SMS that doesn't require DLT template
+    const smsUrl = `https://2factor.in/API/R1/?module=TRANS_SMS&apikey=${apiKey}&to=${cleanPhone}&from=LEADPE&templatename=LeadPe-OTP&var1=${otp}`;
+    
+    console.log("Calling 2Factor Transactional SMS API...");
+    
+    let smsResult: any;
+    let smsSent = false;
 
-    const smsResponse = await fetch(smsUrl);
-    const smsResult = await smsResponse.json();
-    console.log("2Factor response:", JSON.stringify(smsResult));
+    try {
+      const smsResponse = await fetch(smsUrl);
+      smsResult = await smsResponse.json();
+      console.log("2Factor TSMS response:", JSON.stringify(smsResult));
+      
+      if (smsResult.Status === "Success") {
+        smsSent = true;
+      }
+    } catch (smsErr) {
+      console.error("TSMS API call failed:", smsErr);
+    }
 
-    if (smsResult.Status === "Success") {
+    // If transactional SMS failed, try the standard OTP route with AUTOGEN2
+    // AUTOGEN2 forces TEXT SMS (AUTOGEN without 2 may use voice)
+    if (!smsSent) {
+      console.log("TSMS failed, trying standard SMS OTP route...");
+      const fallbackUrl = `https://2factor.in/API/V1/${apiKey}/SMS/${cleanPhone}/${otp}`;
+      
+      try {
+        const fallbackResponse = await fetch(fallbackUrl);
+        smsResult = await fallbackResponse.json();
+        console.log("2Factor fallback response:", JSON.stringify(smsResult));
+        
+        if (smsResult.Status === "Success") {
+          smsSent = true;
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback SMS failed:", fallbackErr);
+      }
+    }
+
+    if (smsSent) {
       return new Response(
         JSON.stringify({ success: true, sms_sent: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // SMS failed
-    console.error("2Factor SMS failed:", smsResult.Details || JSON.stringify(smsResult));
+    // All SMS methods failed
+    console.error("All SMS methods failed:", JSON.stringify(smsResult));
 
     if (IS_PRODUCTION) {
       return new Response(
-        JSON.stringify({ success: false, message: "SMS failed. Try again." }),
+        JSON.stringify({ success: false, message: "SMS failed. Try again in a minute." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Non-production fallback: return test OTP
     return new Response(
-      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsResult.Details || "SMS delivery failed" }),
+      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsResult?.Details || "SMS delivery failed" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
