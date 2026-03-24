@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,22 @@ const languages = [
   { code: "hinglish", label: "⚡ Hinglish" },
 ];
 
+// Field component defined OUTSIDE to prevent re-mount on parent re-render
+function Field({ label, hint, error: fieldError, children }: { label: string; hint: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>
+        {label} <span className="text-xs block" style={{ color: "#666666" }}>{hint}</span>
+      </label>
+      {children}
+      {fieldError && <p className="text-xs text-red-500 mt-1">{fieldError}</p>}
+    </div>
+  );
+}
+
+const inputStyle = "rounded-xl h-12 text-base";
+const inputCSS: React.CSSProperties = { backgroundColor: "#FFFFFF", border: "1px solid #E0E0E0", borderRadius: "10px", padding: "12px 16px", color: "#1A1A1A", fontSize: "16px" };
+
 export default function Business() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,24 +49,27 @@ export default function Business() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const [form, setForm] = useState({
-    businessName: "", businessType: "", city: "", whatsappPhone: "", ownerName: "",
-    plan: "growth", language: "hinglish", whatsappNumber: "",
-  });
+  const [businessName, setBusinessName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [city, setCity] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [plan, setPlan] = useState("growth");
+  const [language, setLanguage] = useState("hinglish");
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const update = (key: string, value: string) => {
-    setForm((p) => ({ ...p, [key]: value }));
+  const clearError = useCallback((key: string) => {
     setErrors((p) => ({ ...p, [key]: "" }));
-  };
+  }, []);
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.businessName.trim()) e.businessName = "Required";
-    if (!form.businessType.trim()) e.businessType = "Required";
-    if (!form.city.trim()) e.city = "Required";
-    if (!form.ownerName.trim()) e.ownerName = "Required";
-    const digits = form.whatsappNumber.replace(/\D/g, "");
+    if (!businessName.trim()) e.businessName = "Required";
+    if (!businessType.trim()) e.businessType = "Required";
+    if (!city.trim()) e.city = "Required";
+    if (!ownerName.trim()) e.ownerName = "Required";
+    const digits = whatsappNumber.replace(/\D/g, "");
     if (!digits) e.whatsappNumber = "Required";
     else if (digits.length !== 10) e.whatsappNumber = "Please enter 10 digit number";
     setErrors(e);
@@ -62,30 +81,26 @@ export default function Business() {
 
   const createAccount = async () => {
     const code = "LP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-    const digits = form.whatsappNumber.replace(/\D/g, "");
+    const digits = whatsappNumber.replace(/\D/g, "");
     const email = `${digits}@leadpe.com`;
     const trialStart = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
-    const isGrowth = form.plan === "growth";
+    const isGrowth = plan === "growth";
 
     // 1. Insert to signups table
-    const { error: dbError } = await supabase.from("signups").insert({
-      business_name: form.businessName,
-      business_type: form.businessType,
-      city: form.city,
+    await supabase.from("signups").insert({
+      business_name: businessName,
+      business_type: businessType,
+      city,
       whatsapp_number: digits,
-      owner_name: form.ownerName,
-      plan_selected: form.plan,
-      preferred_language: form.language,
+      owner_name: ownerName,
+      plan_selected: plan,
+      preferred_language: language,
       status: isGrowth ? "pending_payment" : "trial",
       trial_code: code,
       trial_start_date: trialStart,
       trial_end_date: trialEnd,
     });
-
-    if (dbError) {
-      throw new Error(dbError.message);
-    }
 
     // 2. Auto create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -93,7 +108,7 @@ export default function Business() {
       password: code,
       options: {
         data: {
-          full_name: form.ownerName,
+          full_name: ownerName,
           whatsapp_number: digits,
           role: "business",
           trial_code: code,
@@ -111,24 +126,24 @@ export default function Business() {
     if (authData.user) {
       // 3. Update profile
       await (supabase.from("profiles") as any).update({
-        full_name: form.ownerName,
+        full_name: ownerName,
         whatsapp_number: digits,
         email,
         role: "business",
         status: isGrowth ? "pending_payment" : "trial",
-        subscription_plan: form.plan,
+        subscription_plan: plan,
         trial_code: code,
-        preferred_language: form.language,
-        business_name: form.businessName,
-        business_type: form.businessType,
-        city: form.city,
+        preferred_language: language,
+        business_name: businessName,
+        business_type: businessType,
+        city,
         trial_start_date: isGrowth ? null : trialStart,
         trial_end_date: isGrowth ? null : trialEnd,
         onboarding_complete: false,
         referred_by: referralCode || null,
       }).eq("user_id", authData.user.id);
 
-      // 4. Insert user role
+      // 4. Insert user role (ignore conflict)
       await (supabase.from("user_roles") as any).insert({
         user_id: authData.user.id,
         role: "business",
@@ -141,26 +156,22 @@ export default function Business() {
     // 6. Build request
     await (supabase.from("build_requests") as any).insert({
       business_id: authData?.user?.id || null,
-      business_name: form.businessName,
-      business_type: form.businessType,
-      city: form.city,
-      owner_name: form.ownerName,
+      business_name: businessName,
+      business_type: businessType,
+      city,
+      owner_name: ownerName,
       owner_whatsapp: digits,
-      plan_selected: form.plan,
+      plan_selected: plan,
       status: "pending",
       deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
     });
 
-    // 7. WhatsApp admin notification
-    const msg = `🔔 NEW LEADPE SIGNUP\n━━━━━━━━━━━━\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nWhatsApp: ${digits}\nOwner: ${form.ownerName}\nPlan: ${form.plan}\nCode: ${code}\nLogin: ${email}\nPassword: ${code}\n━━━━━━━━━━━━\nLeadPe ⚡`;
-    window.open(`https://wa.me/919973383902?text=${encodeURIComponent(msg)}`, "_blank");
-
-    // Background AI generation
-    generateSEO({ name: form.businessName, type: form.businessType, city: form.city, ownerName: form.ownerName })
+    // 7. Background AI generation (no WhatsApp redirect)
+    generateSEO({ name: businessName, type: businessType, city, ownerName })
       .then(async (seoData) => {
         await (supabase.from("business_seo") as any).insert({
           business_id: authData?.user?.id || "",
-          business_name: form.businessName,
+          business_name: businessName,
           page_title: seoData.pageTitle,
           meta_description: seoData.metaDescription,
           keywords: seoData.keywords.join(", "),
@@ -173,8 +184,8 @@ export default function Business() {
       .catch((err) => console.log("SEO generation error:", err));
 
     generateWelcomeMessage({
-      name: form.businessName, type: form.businessType, city: form.city,
-      ownerName: form.ownerName, plan: form.plan, trialCode: code, language: form.language,
+      name: businessName, type: businessType, city,
+      ownerName, plan, trialCode: code, language,
     })
       .then(async (welcomeMsg) => {
         await (supabase.from("scheduled_messages") as any).insert({
@@ -186,6 +197,16 @@ export default function Business() {
       })
       .catch((err) => console.log("Welcome message error:", err));
 
+    // Send admin notification via edge function instead of opening WhatsApp
+    try {
+      const msg = `🔔 NEW LEADPE SIGNUP\n━━━━━━━━━━━━\nBusiness: ${businessName}\nType: ${businessType}\nCity: ${city}\nWhatsApp: ${digits}\nOwner: ${ownerName}\nPlan: ${plan}\nCode: ${code}\n━━━━━━━━━━━━`;
+      await supabase.functions.invoke("send-whatsapp", {
+        body: { to: "919973383902", message: msg },
+      });
+    } catch (e) {
+      console.log("Admin notification error (non-blocking):", e);
+    }
+
     return { code, authData };
   };
 
@@ -196,12 +217,10 @@ export default function Business() {
     try {
       const { code } = await createAccount();
 
-      if (form.plan === "growth") {
-        // Growth Plan → redirect to Razorpay payment
+      if (plan === "growth") {
         sessionStorage.setItem("upgrade_intent", "growth");
         navigate(`/payment?plan=growth&amount=${MONTHLY_PRICE}`, { replace: true });
       } else {
-        // Free Trial → show success screen
         setTrialCode(code);
         setShowSuccess(true);
       }
@@ -241,10 +260,10 @@ export default function Business() {
           </div>
 
           <p className="text-sm mb-3" style={{ color: "#666666" }}>
-            Your login: <strong>{form.whatsappNumber.replace(/\D/g, "")}@leadpe.com</strong>
+            Your login: <strong>{whatsappNumber.replace(/\D/g, "")}@leadpe.com</strong>
           </p>
           <p className="text-sm mb-8" style={{ color: "#666666" }}>
-            Our team will WhatsApp you on +91{form.whatsappNumber.replace(/\D/g, "")} within 2 hours to start building your website.
+            Our team will WhatsApp you on +91{whatsappNumber.replace(/\D/g, "")} within 2 hours to start building your website.
           </p>
 
           <Button onClick={() => navigate("/client/dashboard")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
@@ -254,20 +273,6 @@ export default function Business() {
       </div>
     );
   }
-
-  // INPUT HELPER
-  const Field = ({ label, hint, error: fieldError, children }: { label: string; hint: string; error?: string; children: React.ReactNode }) => (
-    <div>
-      <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>
-        {label} <span className="text-xs block" style={{ color: "#666666" }}>{hint}</span>
-      </label>
-      {children}
-      {fieldError && <p className="text-xs text-red-500 mt-1">{fieldError}</p>}
-    </div>
-  );
-
-  const inputStyle = "rounded-xl h-12 text-base";
-  const inputCSS: React.CSSProperties = { backgroundColor: "#FFFFFF", border: "1px solid #E0E0E0", borderRadius: "10px", padding: "12px 16px", color: "#1A1A1A", fontSize: "16px" };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
@@ -294,131 +299,132 @@ export default function Business() {
               ))}
             </div>
 
-            <AnimatePresence>
-              {step === 1 && (
-                <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                  <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#1A1A1A" }}>Tell us about your business</h2>
-                  <p className="text-sm text-center mb-6" style={{ color: "#666666" }}>Takes 2 minutes</p>
+            {/* Step 1 */}
+            {step === 1 && (
+              <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
+                <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#1A1A1A" }}>Tell us about your business</h2>
+                <p className="text-sm text-center mb-6" style={{ color: "#666666" }}>Takes 2 minutes</p>
 
-                  <Field label="Business Name" hint="Apne business ka naam" error={errors.businessName}>
-                    <Input value={form.businessName} onChange={(e) => update("businessName", e.target.value)} placeholder="e.g. Shiva Study Centre"
-                      className={inputStyle} style={inputCSS} />
-                  </Field>
+                <Field label="Business Name" hint="Apne business ka naam" error={errors.businessName}>
+                  <Input value={businessName} onChange={(e) => { setBusinessName(e.target.value); clearError("businessName"); }} placeholder="e.g. Shiva Study Centre"
+                    className={inputStyle} style={inputCSS} />
+                </Field>
 
-                  <Field label="Business Type" hint="Aap kya karte hain?" error={errors.businessType}>
-                    <div className="relative">
-                      <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className="w-full text-left flex items-center justify-between"
-                        style={{ ...inputCSS, display: "flex", cursor: "pointer", border: errors.businessType ? "1px solid #ef4444" : "1px solid #E0E0E0" }}>
-                        <span style={{ color: form.businessType ? "#1A1A1A" : "#9ca3af" }}>{form.businessType || "Choose type"}</span>
-                        <ChevronDown size={16} className={dropdownOpen ? "rotate-180" : ""} style={{ color: "#666666" }} />
-                      </button>
-                      {dropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border max-h-60 overflow-y-auto" style={{ borderColor: "#E0E0E0", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
-                          {businessTypes.map((t) => (
-                            <div key={t} onClick={() => { update("businessType", t); setDropdownOpen(false); }}
-                              className="px-4 py-3 cursor-pointer hover:bg-[#F0FFF4] text-sm" style={{ color: "#1A1A1A" }}>{t}</div>
-                          ))}
-                        </div>
-                      )}
+                <Field label="Business Type" hint="Aap kya karte hain?" error={errors.businessType}>
+                  <div className="relative">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="w-full text-left flex items-center justify-between"
+                      style={{ ...inputCSS, display: "flex", cursor: "pointer", border: errors.businessType ? "1px solid #ef4444" : "1px solid #E0E0E0" }}>
+                      <span style={{ color: businessType ? "#1A1A1A" : "#9ca3af" }}>{businessType || "Choose type"}</span>
+                      <ChevronDown size={16} className={dropdownOpen ? "rotate-180" : ""} style={{ color: "#666666" }} />
+                    </button>
+                    {dropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border max-h-60 overflow-y-auto" style={{ borderColor: "#E0E0E0", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                        {businessTypes.map((t) => (
+                          <div key={t} onClick={() => { setBusinessType(t); clearError("businessType"); setDropdownOpen(false); }}
+                            className="px-4 py-3 cursor-pointer hover:bg-[#F0FFF4] text-sm" style={{ color: "#1A1A1A" }}>{t}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Field>
+
+                <Field label="City / Town" hint="Which city?" error={errors.city}>
+                  <Input value={city} onChange={(e) => { setCity(e.target.value); clearError("city"); }} placeholder="e.g. Vaishali, Bihar"
+                    className={inputStyle} style={inputCSS} />
+                </Field>
+
+                <Field label="WhatsApp Number" hint="Leads will come to this number" error={errors.whatsappNumber}>
+                  <Input value={whatsappNumber} onChange={(e) => { setWhatsappNumber(e.target.value.replace(/\D/g, "").slice(0, 10)); clearError("whatsappNumber"); }}
+                    placeholder="98765 43210" type="tel" className={inputStyle} style={inputCSS} />
+                </Field>
+
+                <Field label="Owner Name" hint="Your name" error={errors.ownerName}>
+                  <Input value={ownerName} onChange={(e) => { setOwnerName(e.target.value); clearError("ownerName"); }} placeholder="e.g. Sanjay Singhania"
+                    className={inputStyle} style={inputCSS} />
+                </Field>
+
+                <Button onClick={handleNext} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Next →</Button>
+              </motion.div>
+            )}
+
+            {/* Step 2 */}
+            {step === 2 && (
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
+                <h2 className="text-xl font-bold text-center mb-1" style={{ color: "#1A1A1A" }}>Choose your plan</h2>
+                <p className="text-sm text-center mb-6" style={{ color: "#666666" }}>Start free. Upgrade anytime.</p>
+
+                {[
+                  { value: "trial", name: "Free Trial", desc: `${TRIAL_DAYS} days — no credit card`, price: "₹0", priceColor: "#1A1A1A" },
+                  { value: "growth", name: "Growth Plan", desc: "Unlimited customers + WhatsApp alert", price: `₹${MONTHLY_PRICE}/mo`, priceColor: "#00C853" },
+                ].map((p) => (
+                  <div key={p.value} onClick={() => setPlan(p.value)}
+                    className="rounded-2xl p-5 cursor-pointer transition-all flex items-center gap-4"
+                    style={{ backgroundColor: "#FFFFFF", border: plan === p.value ? "2px solid #00C853" : "2px solid #E0E0E0" }}>
+                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                      style={{ borderColor: plan === p.value ? "#00C853" : "#ccc" }}>
+                      {plan === p.value && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#00C853" }} />}
                     </div>
-                  </Field>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-sm" style={{ color: "#1A1A1A" }}>{p.name}</h3>
+                      <p className="text-xs" style={{ color: "#666666" }}>{p.desc}</p>
+                    </div>
+                    <span className="font-bold" style={{ color: p.priceColor }}>{p.price}</span>
+                  </div>
+                ))}
 
-                  <Field label="City / Town" hint="Which city?" error={errors.city}>
-                    <Input value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Vaishali, Bihar"
-                      className={inputStyle} style={inputCSS} />
-                  </Field>
+                <div className="flex gap-4 pt-2">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
+                  <Button onClick={handleNext} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Continue →</Button>
+                </div>
+              </motion.div>
+            )}
 
-                  <Field label="WhatsApp Number" hint="Leads will come to this number" error={errors.whatsappNumber}>
-                    <Input value={form.whatsappNumber} onChange={(e) => update("whatsappNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                      placeholder="98765 43210" type="tel" className={inputStyle} style={inputCSS} />
-                  </Field>
+            {/* Step 3 */}
+            {step === 3 && (
+              <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
+                <h2 className="text-xl font-bold text-center mb-6" style={{ color: "#1A1A1A" }}>Almost done! 🎉</h2>
 
-                  <Field label="Owner Name" hint="Your name" error={errors.ownerName}>
-                    <Input value={form.ownerName} onChange={(e) => update("ownerName", e.target.value)} placeholder="e.g. Sanjay Singhania"
-                      className={inputStyle} style={inputCSS} />
-                  </Field>
-
-                  <Button onClick={handleNext} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Next →</Button>
-                </motion.div>
-              )}
-
-              {step === 2 && (
-                <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                  <h2 className="text-xl font-bold text-center mb-1" style={{ color: "#1A1A1A" }}>Choose your plan</h2>
-                  <p className="text-sm text-center mb-6" style={{ color: "#666666" }}>Start free. Upgrade anytime.</p>
-
+                <div className="rounded-xl p-5 space-y-2" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
                   {[
-                    { value: "trial", name: "Free Trial", desc: `${TRIAL_DAYS} days — no credit card`, price: "₹0", priceColor: "#1A1A1A" },
-                    { value: "growth", name: "Growth Plan", desc: "Unlimited customers + WhatsApp alert", price: `₹${MONTHLY_PRICE}/mo`, priceColor: "#00C853" },
-                  ].map((p) => (
-                    <div key={p.value} onClick={() => update("plan", p.value)}
-                      className="rounded-2xl p-5 cursor-pointer transition-all flex items-center gap-4"
-                      style={{ backgroundColor: "#FFFFFF", border: form.plan === p.value ? "2px solid #00C853" : "2px solid #E0E0E0" }}>
-                      <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                        style={{ borderColor: form.plan === p.value ? "#00C853" : "#ccc" }}>
-                        {form.plan === p.value && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#00C853" }} />}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-sm" style={{ color: "#1A1A1A" }}>{p.name}</h3>
-                        <p className="text-xs" style={{ color: "#666666" }}>{p.desc}</p>
-                      </div>
-                      <span className="font-bold" style={{ color: p.priceColor }}>{p.price}</span>
+                    ["Business", businessName],
+                    ["Type", businessType],
+                    ["City", city],
+                    ["Plan", plan === "growth" ? "Growth Plan" : "Free Trial"],
+                    ["WhatsApp", "+91 " + whatsappNumber],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between text-sm">
+                      <span style={{ color: "#666666" }}>{k}:</span>
+                      <span className="font-medium" style={{ color: "#1A1A1A" }}>{v}</span>
                     </div>
                   ))}
+                </div>
 
-                  <div className="flex gap-4 pt-2">
-                    <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
-                    <Button onClick={handleNext} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Continue →</Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 3 && (
-                <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                  <h2 className="text-xl font-bold text-center mb-6" style={{ color: "#1A1A1A" }}>Almost done! 🎉</h2>
-
-                  <div className="rounded-xl p-5 space-y-2" style={{ backgroundColor: "#F0FFF4", border: "1px solid #E0E0E0" }}>
-                    {[
-                      ["Business", form.businessName],
-                      ["Type", form.businessType],
-                      ["City", form.city],
-                      ["Plan", form.plan === "growth" ? "Growth Plan" : "Free Trial"],
-                      ["WhatsApp", "+91 " + form.whatsappNumber],
-                    ].map(([k, v]) => (
-                      <div key={k} className="flex justify-between text-sm">
-                        <span style={{ color: "#666666" }}>{k}:</span>
-                        <span className="font-medium" style={{ color: "#1A1A1A" }}>{v}</span>
-                      </div>
+                <div>
+                  <label className="text-sm font-medium block mb-3" style={{ color: "#1A1A1A" }}>WhatsApp messages in:</label>
+                  <div className="flex gap-3">
+                    {languages.map((l) => (
+                      <button key={l.code} onClick={() => setLanguage(l.code)}
+                        className="px-4 py-2 rounded-full text-sm font-medium transition-all"
+                        style={language === l.code
+                          ? { backgroundColor: "#00C853", color: "white" }
+                          : { backgroundColor: "white", border: "1px solid #E0E0E0", color: "#1A1A1A" }}>
+                        {l.label}
+                      </button>
                     ))}
                   </div>
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium block mb-3" style={{ color: "#1A1A1A" }}>WhatsApp messages in:</label>
-                    <div className="flex gap-3">
-                      {languages.map((l) => (
-                        <button key={l.code} onClick={() => update("language", l.code)}
-                          className="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                          style={form.language === l.code
-                            ? { backgroundColor: "#00C853", color: "white" }
-                            : { backgroundColor: "white", border: "1px solid #E0E0E0", color: "#1A1A1A" }}>
-                          {l.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-                  {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-
-                  <div className="flex gap-4">
-                    <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
-                    <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-                      {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : form.plan === "growth" ? `Pay ₹${MONTHLY_PRICE} & Go Live →` : "Get My Website Free →"}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <div className="flex gap-4">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
+                  <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+                    {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : plan === "growth" ? `Pay ₹${MONTHLY_PRICE} & Go Live →` : "Get My Website Free →"}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
