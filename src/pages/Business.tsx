@@ -166,7 +166,7 @@ export default function Business() {
           keywords: seoData.keywords.join(", "),
           google_description: seoData.googleDescription,
           whatsapp_bio: seoData.whatsappBio,
-          h1_heaing: seoData.h1,
+          h1_heading: seoData.h1,
           about_text: seoData.aboutText,
         });
       })
