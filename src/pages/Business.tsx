@@ -413,7 +413,7 @@ export default function Business() {
                   <div className="flex gap-4">
                     <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
                     <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-                      {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : "Get My Website Free →"}
+                      {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : form.plan === "growth" ? `Pay ₹${MONTHLY_PRICE} & Go Live →` : "Get My Website Free →"}
                     </Button>
                   </div>
                 </motion.div>
