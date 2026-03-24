@@ -60,152 +60,154 @@ export default function Business() {
   const handleNext = () => { if (validate()) setStep((s) => Math.min(s + 1, 3)); };
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
+  const createAccount = async () => {
     const code = "LP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
     const digits = form.whatsappNumber.replace(/\D/g, "");
     const email = `${digits}@leadpe.com`;
     const trialStart = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString();
+    const isGrowth = form.plan === "growth";
 
-    try {
-      // 1. Insert to signups table
-      const { error: dbError } = await supabase.from("signups").insert({
-        business_name: form.businessName,
-        business_type: form.businessType,
-        city: form.city,
-        whatsapp_number: digits,
-        owner_name: form.ownerName,
-        plan_selected: form.plan,
-        preferred_language: form.language,
-        status: "trial",
-        trial_code: code,
-        trial_start_date: trialStart,
-        trial_end_date: trialEnd,
-      });
+    // 1. Insert to signups table
+    const { error: dbError } = await supabase.from("signups").insert({
+      business_name: form.businessName,
+      business_type: form.businessType,
+      city: form.city,
+      whatsapp_number: digits,
+      owner_name: form.ownerName,
+      plan_selected: form.plan,
+      preferred_language: form.language,
+      status: isGrowth ? "pending_payment" : "trial",
+      trial_code: code,
+      trial_start_date: trialStart,
+      trial_end_date: trialEnd,
+    });
 
-      if (dbError) {
-        console.log("Supabase signups error:", dbError);
-        setError("Error: " + dbError.message);
-        setLoading(false);
-        return;
-      }
+    if (dbError) {
+      throw new Error(dbError.message);
+    }
 
-      // 2. Auto create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: code,
-        options: {
-          data: {
-            full_name: form.ownerName,
-            whatsapp_number: digits,
-            role: "business",
-            trial_code: code,
-          },
-        },
-      });
-
-      if (authError) {
-        console.log("Auth signup error:", authError);
-        // If user already exists, try sign in
-        if (authError.message.includes("already registered")) {
-          setError("This WhatsApp number is already registered. Please sign in at /auth");
-          setLoading(false);
-          return;
-        }
-        setError("Error: " + authError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (authData.user) {
-        // 3. Update the auto-created profile with full details
-        await (supabase.from("profiles") as any).update({
+    // 2. Auto create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password: code,
+      options: {
+        data: {
           full_name: form.ownerName,
           whatsapp_number: digits,
-          email,
           role: "business",
-          status: "trial",
-          subscription_plan: form.plan,
           trial_code: code,
-          preferred_language: form.language,
-          business_name: form.businessName,
-          business_type: form.businessType,
-          city: form.city,
-          trial_start_date: trialStart,
-          trial_end_date: trialEnd,
-          onboarding_complete: false,
-          referred_by: referralCode || null,
-        }).eq("user_id", authData.user.id);
+        },
+      },
+    });
 
-        // 4. Insert user role
-        await (supabase.from("user_roles") as any).insert({
-          user_id: authData.user.id,
-          role: "business",
-        });
-
-        // 5. Auto sign in immediately
-        await supabase.auth.signInWithPassword({ email, password: code });
+    if (authError) {
+      if (authError.message.includes("already registered")) {
+        throw new Error("This WhatsApp number is already registered. Please sign in at /auth");
       }
+      throw new Error(authError.message);
+    }
 
-      // 6. Auto create build request
-      await (supabase.from("build_requests") as any).insert({
-        business_id: authData?.user?.id || null,
+    if (authData.user) {
+      // 3. Update profile
+      await (supabase.from("profiles") as any).update({
+        full_name: form.ownerName,
+        whatsapp_number: digits,
+        email,
+        role: "business",
+        status: isGrowth ? "pending_payment" : "trial",
+        subscription_plan: form.plan,
+        trial_code: code,
+        preferred_language: form.language,
         business_name: form.businessName,
         business_type: form.businessType,
         city: form.city,
-        owner_name: form.ownerName,
-        owner_whatsapp: digits,
-        plan_selected: form.plan,
-        status: "pending",
-        deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+        trial_start_date: isGrowth ? null : trialStart,
+        trial_end_date: isGrowth ? null : trialEnd,
+        onboarding_complete: false,
+        referred_by: referralCode || null,
+      }).eq("user_id", authData.user.id);
+
+      // 4. Insert user role
+      await (supabase.from("user_roles") as any).insert({
+        user_id: authData.user.id,
+        role: "business",
       });
-      console.log("Build request created!");
 
-      // 7. WhatsApp admin notification
-      const msg = `🔔 NEW LEADPE SIGNUP\n━━━━━━━━━━━━\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nWhatsApp: ${digits}\nOwner: ${form.ownerName}\nPlan: ${form.plan}\nCode: ${code}\nLogin: ${email}\nPassword: ${code}\n━━━━━━━━━━━━\nLeadPe ⚡`;
-      window.open(`https://wa.me/919973383902?text=${encodeURIComponent(msg)}`, "_blank");
+      // 5. Auto sign in
+      await supabase.auth.signInWithPassword({ email, password: code });
+    }
 
-      setTrialCode(code);
-      setShowSuccess(true);
+    // 6. Build request
+    await (supabase.from("build_requests") as any).insert({
+      business_id: authData?.user?.id || null,
+      business_name: form.businessName,
+      business_type: form.businessType,
+      city: form.city,
+      owner_name: form.ownerName,
+      owner_whatsapp: digits,
+      plan_selected: form.plan,
+      status: "pending",
+      deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    });
 
-      // AI generation in background — don't block UI
-      generateSEO({ name: form.businessName, type: form.businessType, city: form.city, ownerName: form.ownerName })
-        .then(async (seoData) => {
-          await (supabase.from("business_seo") as any).insert({
-            business_id: authData?.user?.id || "",
-            business_name: form.businessName,
-            page_title: seoData.pageTitle,
-            meta_description: seoData.metaDescription,
-            keywords: seoData.keywords.join(", "),
-            google_description: seoData.googleDescription,
-            whatsapp_bio: seoData.whatsappBio,
-            h1_heaing: seoData.h1,
-            about_text: seoData.aboutText,
-          });
-          console.log("SEO generated:", seoData);
-        })
-        .catch((err) => console.log("SEO generation error:", err));
+    // 7. WhatsApp admin notification
+    const msg = `🔔 NEW LEADPE SIGNUP\n━━━━━━━━━━━━\nBusiness: ${form.businessName}\nType: ${form.businessType}\nCity: ${form.city}\nWhatsApp: ${digits}\nOwner: ${form.ownerName}\nPlan: ${form.plan}\nCode: ${code}\nLogin: ${email}\nPassword: ${code}\n━━━━━━━━━━━━\nLeadPe ⚡`;
+    window.open(`https://wa.me/919973383902?text=${encodeURIComponent(msg)}`, "_blank");
 
-      generateWelcomeMessage({
-        name: form.businessName, type: form.businessType, city: form.city,
-        ownerName: form.ownerName, plan: form.plan, trialCode: code, language: form.language,
+    // Background AI generation
+    generateSEO({ name: form.businessName, type: form.businessType, city: form.city, ownerName: form.ownerName })
+      .then(async (seoData) => {
+        await (supabase.from("business_seo") as any).insert({
+          business_id: authData?.user?.id || "",
+          business_name: form.businessName,
+          page_title: seoData.pageTitle,
+          meta_description: seoData.metaDescription,
+          keywords: seoData.keywords.join(", "),
+          google_description: seoData.googleDescription,
+          whatsapp_bio: seoData.whatsappBio,
+          h1_heaing: seoData.h1,
+          about_text: seoData.aboutText,
+        });
       })
-        .then(async (welcomeMsg) => {
-          await (supabase.from("scheduled_messages") as any).insert({
-            to: digits,
-            message: welcomeMsg,
-            type: "welcome",
-            status: "pending",
-          });
-          console.log("Welcome message ready:", welcomeMsg);
-        })
-        .catch((err) => console.log("Welcome message error:", err));
+      .catch((err) => console.log("SEO generation error:", err));
 
+    generateWelcomeMessage({
+      name: form.businessName, type: form.businessType, city: form.city,
+      ownerName: form.ownerName, plan: form.plan, trialCode: code, language: form.language,
+    })
+      .then(async (welcomeMsg) => {
+        await (supabase.from("scheduled_messages") as any).insert({
+          to: digits,
+          message: welcomeMsg,
+          type: "welcome",
+          status: "pending",
+        });
+      })
+      .catch((err) => console.log("Welcome message error:", err));
+
+    return { code, authData };
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const { code } = await createAccount();
+
+      if (form.plan === "growth") {
+        // Growth Plan → redirect to Razorpay payment
+        sessionStorage.setItem("upgrade_intent", "growth");
+        navigate(`/payment?plan=growth&amount=${MONTHLY_PRICE}`, { replace: true });
+      } else {
+        // Free Trial → show success screen
+        setTrialCode(code);
+        setShowSuccess(true);
+      }
     } catch (err: any) {
       console.log("Error:", err);
-      setError("Something went wrong: " + (err?.message || err));
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -411,7 +413,7 @@ export default function Business() {
                   <div className="flex gap-4">
                     <Button onClick={handleBack} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#00C853", color: "#00C853" }}>← Back</Button>
                     <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
-                      {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : "Get My Website Free →"}
+                      {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processing...</span> : form.plan === "growth" ? `Pay ₹${MONTHLY_PRICE} & Go Live →` : "Get My Website Free →"}
                     </Button>
                   </div>
                 </motion.div>

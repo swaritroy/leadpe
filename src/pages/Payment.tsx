@@ -163,7 +163,12 @@ export default function Payment() {
           setShowCelebration(true);
           setPaying(false);
         },
-        modal: { ondismiss: () => setPaying(false) },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            toast({ title: "Payment cancelled", description: "Payment failed or cancelled. Please try again.", variant: "destructive" });
+          },
+        },
       };
       new (window as any).Razorpay(options).open();
     } catch (e: any) { toast({ title: "Error", description: e.message, variant: "destructive" }); setPaying(false); }
