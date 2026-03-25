@@ -115,7 +115,7 @@ export const getMessage = (
         `Our team will contact you\n` +
         `within 2 hours to start\n` +
         `building your website.\n\n` +
-        `LeadPe ⚡ leadpe.online`,
+        `LeadPe ⚡ leadpe.tech`,
 
       hindi:
         `LeadPe में स्वागत है! 🎉\n\n` +
@@ -124,7 +124,7 @@ export const getMessage = (
         `Trial Code: ${data.trialCode}\n\n` +
         `हमारी team 2 घंटे में\n` +
         `आपसे WhatsApp करेगी।\n\n` +
-        `LeadPe ⚡ leadpe.online`,
+        `LeadPe ⚡ leadpe.tech`,
 
       hinglish:
         `Welcome to LeadPe! 🎉\n\n` +
@@ -133,7 +133,7 @@ export const getMessage = (
         `Trial Code: ${data.trialCode}\n\n` +
         `Our team will contact you\n` +
         `via WhatsApp within 2 hours.\n\n` +
-        `LeadPe ⚡ leadpe.online` 
+        `LeadPe ⚡ leadpe.tech` 
     },
 
     siteDeployed: {

@@ -165,7 +165,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           <div>
             <div style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A" }}>🌐 Your website is live</div>
             <div style={{ fontFamily: font.body, fontSize: 12, color: "#00C853" }}>
-              {businessSlug}.leadpe.online
+              {businessSlug}.leadpe.tech
             </div>
           </div>
           <button onClick={() => window.open(liveUrl, "_blank")}

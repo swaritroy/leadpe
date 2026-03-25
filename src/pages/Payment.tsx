@@ -197,7 +197,7 @@ export default function Payment() {
           <div className="rounded-2xl mb-5" style={{ backgroundColor: "#E8F5E9", padding: 20 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 12 }}>After payment:</p>
             {[
-              `Real domain: ${businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.online`,
+              `Real domain: ${businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.tech`,
               "Watermark removed",
               "Google can find you",
               "Customers start flowing",

@@ -149,7 +149,7 @@ serve(async (req) => {
           await supabase.functions.invoke("send-whatsapp", {
             body: {
               to: data.ownerWhatsapp,
-              message: `Your website preview is ready! Login to review it: leadpe.online`,
+              message: `Your website preview is ready! Login to review it: leadpe.tech`,
             },
           });
         } catch (e) {

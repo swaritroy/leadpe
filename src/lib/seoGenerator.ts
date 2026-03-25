@@ -83,7 +83,7 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
       addressLocality: city,
       addressCountry: "IN",
     },
-    url: `https://${slug}.leadpe.online`,
+    url: `https://${slug}.leadpe.tech`,
     areaServed: {
       "@type": "City",
       name: city,
@@ -96,7 +96,7 @@ export function generateSEO(business: BusinessData): GeneratedSEO {
     title: title,
     description: metaDesc,
     type: "business.business",
-    url: `https://${slug}.leadpe.online`,
+    url: `https://${slug}.leadpe.tech`,
   };
 
   return {
@@ -141,6 +141,6 @@ export function generateSearchPreview(business: BusinessData, keyword: string): 
   return {
     title: `${keyword} — ${business.name}`,
     description: seo.description,
-    url: `https://${seo.slug}.leadpe.online`,
+    url: `https://${seo.slug}.leadpe.tech`,
   };
 }

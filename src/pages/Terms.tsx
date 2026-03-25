@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import LeadPeLogo from "@/components/LeadPeLogo";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function Terms() {
   const sectionStyle = "mb-8";
@@ -9,12 +10,7 @@ export default function Terms() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b" style={{ borderColor: "#E0F2E9" }}>
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2"><LeadPeLogo theme="light" size="sm" /></Link>
-          <Link to="/auth" className="text-sm font-medium" style={{ color: "#00C853" }}>← Back to Login</Link>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-[680px] mx-auto bg-white rounded-2xl p-8" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
@@ -91,6 +87,7 @@ export default function Terms() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
