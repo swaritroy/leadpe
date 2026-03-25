@@ -22,6 +22,11 @@ import DemoPreview from "./pages/DemoPreview";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Terms from "./pages/Terms";
+import About from "./pages/About";
+import Services from "./pages/Services";
+import Privacy from "./pages/Privacy";
+import Refund from "./pages/Refund";
+import Contact from "./pages/Contact";
 
 // Protected pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
@@ -56,6 +61,11 @@ const AppContent = () => {
 
             {/* Public pages */}
             <Route path="/terms" element={<Terms />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/refund" element={<Refund />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Onboarding — protected, business only */}

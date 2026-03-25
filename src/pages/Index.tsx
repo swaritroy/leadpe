@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import Footer from "@/components/Footer";
 
 const businessTypes = [
   { icon: "🏫", name: "Coaching Centre" },
@@ -395,21 +396,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-12 bg-white border-t" style={{ borderColor: "#E0E0E0" }}>
-        <div className="container px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <LeadPeLogo theme="light" size="sm" />
-            </div>
-            <div className="flex items-center gap-6 text-sm" style={{ color: "#666666" }}>
-              <a href="#how-it-works">How it Works</a>
-              <a href="#pricing">Pricing</a>
-            </div>
-            <p className="text-sm" style={{ color: "#666666" }}>© 2026 LeadPe. Made in India 🇮🇳</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
       <WhatsAppButton />
     </div>
   );
