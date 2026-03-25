@@ -97,10 +97,10 @@ const ClientSettings = () => {
               </div>
               <div>
                 <label className="text-sm font-medium block mb-1">Subdomain</label>
-                <span className="text-xs text-muted-foreground block mb-2">Your website address — {form.slug || "yourname"}.leadpe.online</span>
+                <span className="text-xs text-muted-foreground block mb-2">Your website address — {form.slug || "yourname"}.leadpe.tech</span>
                 <div className="flex items-center gap-0">
                   <Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} className="rounded-l-xl rounded-r-none border-r-0 bg-secondary border-border flex-1" placeholder="yourbusiness" />
-                  <span className="h-10 px-3 flex items-center bg-muted border border-border rounded-r-xl text-xs text-muted-foreground whitespace-nowrap">.leadpe.online</span>
+                  <span className="h-10 px-3 flex items-center bg-muted border border-border rounded-r-xl text-xs text-muted-foreground whitespace-nowrap">.leadpe.tech</span>
                 </div>
               </div>
               <div>

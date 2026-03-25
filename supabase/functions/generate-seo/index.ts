@@ -63,7 +63,7 @@ Return this exact JSON structure:
   "citations_list": ["JustDial", "Sulekha", "IndiaMart", "Google Business", "Bing Places", "Apple Maps", "Facebook Business", "Instagram", "WhatsApp Business", "Yellow Pages India"],
   "review_message": "WhatsApp message business owner can send to happy customers asking for Google review",
   "sitemap_content": "Complete sitemap.xml string",
-  "robots_content": "User-agent: *\\nAllow: /\\nSitemap: https://[slug].leadpe.online/sitemap.xml"
+  "robots_content": "User-agent: *\\nAllow: /\\nSitemap: https://[slug].leadpe.tech/sitemap.xml"
 }
 
 Fill ALL fields with real, specific data for this exact business. Keywords should be highly local.`;

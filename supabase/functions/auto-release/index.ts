@@ -44,7 +44,7 @@ serve(async (req) => {
               "Package: " + build.package_id + "\n" +
               "24 hours passed.\n" +
               "No coder accepted.\n" +
-              "Build manually: leadpe.online/admin"
+              "Build manually: leadpe.tech/admin"
           }
         });
       } catch (e) {
@@ -147,7 +147,7 @@ serve(async (req) => {
               "Business: " + build.business_name + "\n" +
               "4 hour emergency window open.\n" +
               "Build manually NOW:\n" +
-              "leadpe.online/admin"
+              "leadpe.tech/admin"
           }
         });
       } catch (e) {

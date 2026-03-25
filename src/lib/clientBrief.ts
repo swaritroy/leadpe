@@ -97,10 +97,10 @@ DELIVERABLES:
   ];
 
   const exampleSites = [
-    "coaching.leadpe.online (example)",
-    "clinic.leadpe.online (example)",
-    "salon.leadpe.online (example)",
-    "gym.leadpe.online (example)"
+    "coaching.leadpe.tech (example)",
+    "clinic.leadpe.tech (example)",
+    "salon.leadpe.tech (example)",
+    "gym.leadpe.tech (example)"
   ];
 
   return {
