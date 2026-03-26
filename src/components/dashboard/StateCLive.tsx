@@ -3,11 +3,9 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ADMIN_WHATSAPP } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
-const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 interface Lead {
   id: string;
@@ -30,17 +28,18 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Rating state
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingFeedback, setRatingFeedback] = useState("");
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
-
-  // Feedback card state
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // Guard: only render when truly live
+  const liveUrl = buildRequest?.deploy_url || buildRequest?.live_url || "";
+  if (!liveUrl || buildRequest?.status !== "live") return null;
 
   const isExpired = trial?.isExpired;
   const isPaid = profile?.status === "active" && !trial?.isTrial;
@@ -56,12 +55,12 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   thisWeekStart.setHours(0, 0, 0, 0);
   const weekLeads = leads.filter(l => new Date(l.created_at) >= thisWeekStart);
 
-  const liveUrl = buildRequest?.live_url || buildRequest?.deploy_url || "";
   const businessSlug = business?.slug || profile?.business_name?.toLowerCase().replace(/\s+/g, "-") || "";
 
   const deployedAt = buildRequest?.deployed_at ? new Date(buildRequest.deployed_at) : null;
   const daysSinceLive = deployedAt ? Math.floor((Date.now() - deployedAt.getTime()) / 86400000) : 0;
-  const showFeedbackCard = daysSinceLive >= 7 && !(profile as any)?.feedback_given && !feedbackSubmitted;
+  const showRating = !ratingSubmitted && daysSinceLive >= 7 && daysSinceLive <= 30;
+  const showFeedbackCard = daysSinceLive >= 14 && !(profile as any)?.feedback_given && !feedbackSubmitted;
 
   const timeAgo = (date: string) => {
     const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
@@ -77,7 +76,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
     navigate("/payment?plan=growth&amount=299");
   };
 
-  // Submit rating
   const handleSubmitRating = async () => {
     if (!ratingValue || !buildRequest) return;
     setSubmittingRating(true);
@@ -88,14 +86,16 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
       rating: ratingValue,
       feedback: ratingFeedback || null,
     } as any);
-    const msg = `⭐ Rating: ${ratingValue}/5 from ${profile?.business_name}\n${ratingFeedback || "No comment"}`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+    try {
+      await supabase.functions.invoke("send-whatsapp", {
+        body: { to: "919973383902", message: `⭐ Rating: ${ratingValue}/5 from ${profile?.business_name}\n${ratingFeedback || "No comment"}` },
+      });
+    } catch {}
     setRatingSubmitted(true);
     setSubmittingRating(false);
     toast({ title: "⭐ Rating submitted!", description: "Thank you!" });
   };
 
-  // Submit feedback
   const handleSubmitFeedback = async () => {
     if (!feedbackRating) return;
     setSubmittingFeedback(true);
@@ -104,8 +104,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
       rating: feedbackRating, comment: feedbackComment || null,
     } as any);
     await supabase.from("profiles").update({ feedback_given: true } as any).eq("user_id", user?.id);
-    const msg = `📝 Feedback: ${feedbackRating}/5 from ${profile?.business_name}\n${feedbackComment || ""}`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
     setFeedbackSubmitted(true);
     setSubmittingFeedback(false);
     toast({ title: "Thank you! 🙏" });
@@ -114,7 +112,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   return (
     <div style={{ backgroundColor: "#FFFFFF", minHeight: "calc(100vh - 56px)", paddingBottom: 80 }}>
 
-      {/* ═══ FEEDBACK CARD (replaces compact bar temporarily) ═══ */}
+      {/* ═══ FEEDBACK CARD ═══ */}
       {showFeedbackCard ? (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -123,7 +121,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             borderTop: "3px solid #00C853", boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
           }}
         >
-          <h3 style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700, color: "#1A1A1A" }}>
+          <h3 style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A" }}>
             How is LeadPe working? ⭐
           </h3>
           <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 16 }}>
@@ -157,7 +155,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           )}
         </motion.div>
       ) : (
-        /* ═══ SECTION 1 — COMPACT WEBSITE BAR ═══ */
+        /* ═══ COMPACT WEBSITE BAR ═══ */
         <div style={{
           margin: 16, backgroundColor: "#E8F5E9", borderRadius: 12, padding: "14px 16px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -175,8 +173,8 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         </div>
       )}
 
-      {/* ═══ RATING (first time live only) ═══ */}
-      {!ratingSubmitted && daysSinceLive <= 7 && (
+      {/* ═══ RATING (only after 7 days live) ═══ */}
+      {showRating && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           style={{
@@ -216,7 +214,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         </motion.div>
       )}
 
-      {/* ═══ SECTION 2 — CUSTOMERS RECEIVED ═══ */}
+      {/* ═══ CUSTOMERS RECEIVED ═══ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         style={{
@@ -225,10 +223,8 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         }}
       >
         <p style={{ fontFamily: font.body, fontSize: 14, color: "#666", marginBottom: 8 }}>Customers This Month</p>
-
-        {/* GIANT NUMBER */}
         <div style={{
-          fontFamily: font.heaing, fontSize: 72, fontWeight: 700, color: "#1A1A1A",
+          fontFamily: font.heading, fontSize: 72, fontWeight: 700, color: "#1A1A1A",
           textAlign: "center", lineHeight: 1, filter: isExpired ? "blur(8px)" : "none",
         }}>
           {thisMonthLeads.length}
@@ -236,11 +232,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         <p style={{ fontFamily: font.body, fontSize: 14, color: "#666", textAlign: "center", marginTop: 4 }}>
           people contacted you
         </p>
-
-        {/* Divider */}
         <div style={{ height: 1, backgroundColor: "#F5F5F5", margin: "16px 0" }} />
-
-        {/* 3 mini stats */}
         <div style={{ display: "flex" }}>
           {[
             { val: todayLeads.length, label: "Today", color: "#00C853" },
@@ -248,13 +240,11 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             { val: leads.length, label: "All Time", color: "#1A1A1A" },
           ].map(s => (
             <div key={s.label} style={{ flex: 1, textAlign: "center" }}>
-              <div style={{ fontFamily: font.heaing, fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
+              <div style={{ fontFamily: font.heading, fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
               <div style={{ fontFamily: font.body, fontSize: 11, color: "#999", marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
-
-        {/* Lock overlay for expired trial */}
         {isExpired && (
           <div style={{
             position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.9)",
@@ -262,7 +252,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           }}>
             <div style={{ textAlign: "center", padding: "0 24px" }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div>
-              <p style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>
+              <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>
                 {leads.length} customers tried to contact you
               </p>
               <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 16 }}>
@@ -279,7 +269,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         )}
       </motion.div>
 
-      {/* ═══ SECTION 3 — RECENT CUSTOMERS ═══ */}
+      {/* ═══ RECENT CUSTOMERS ═══ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         style={{
@@ -288,7 +278,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         }}
       >
         <p style={{ fontFamily: font.body, fontSize: 14, color: "#666", marginBottom: 16 }}>Recent Customers 👥</p>
-
         {leads.length === 0 ? (
           <div style={{ textAlign: "center", padding: "16px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>📬</div>
@@ -319,16 +308,13 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
                   display: "flex", alignItems: "center", padding: "12px 0",
                   borderBottom: "1px solid #F8F8F8",
                 }}>
-                  {/* Avatar */}
                   <div style={{
                     width: 40, height: 40, borderRadius: "50%", backgroundColor: "#00C853",
                     color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: font.heaing, fontSize: 16, fontWeight: 700, flexShrink: 0,
+                    fontFamily: font.heading, fontSize: 16, fontWeight: 700, flexShrink: 0,
                   }}>
                     {lead.customer_name[0]?.toUpperCase()}
                   </div>
-
-                  {/* Info */}
                   <div style={{ flex: 1, marginLeft: 12, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       {isNew && (
@@ -348,8 +334,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
                     </p>
                     <p style={{ fontFamily: font.body, fontSize: 11, color: "#999", marginTop: 2 }}>{timeAgo(lead.created_at)}</p>
                   </div>
-
-                  {/* Call button */}
                   {lead.phone && (
                     <a href={`https://wa.me/91${lead.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
                       style={{
@@ -365,8 +349,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             })}
           </div>
         )}
-
-        {/* Lock for expired */}
         {isExpired && leads.length > 0 && (
           <div style={{
             position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.85)",
@@ -386,7 +368,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         )}
       </motion.div>
 
-      {/* ═══ SECTION 4 — QUICK ACTIONS ═══ */}
+      {/* ═══ QUICK ACTIONS ═══ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
         style={{
@@ -413,7 +395,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           📤 Share My Website
         </button>
       </motion.div>
-      <WhatsAppButton />
     </div>
   );
 }

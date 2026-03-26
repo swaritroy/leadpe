@@ -38,30 +38,25 @@ export default function ClientDashboard() {
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
-  // Compute trial status
   useEffect(() => {
     if (!profile) return;
     setTrial(getTrialStatus(profile));
   }, [profile]);
 
-  // Fetch all data ONCE on mount
   useEffect(() => {
     if (!user || dataFetched.current) return;
     dataFetched.current = true;
 
     const init = async () => {
-      // Fetch build request
       const { data: br } = await supabase.from("build_requests")
         .select("*").eq("business_id", user.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (br) setBuildRequest(br as Record<string, unknown>);
 
-      // Fetch business
       const { data: biz } = await supabase.from("businesses")
         .select("*").eq("owner_id", user.id).maybeSingle();
       if (biz) {
         setBusiness(biz as Record<string, unknown>);
-        // Fetch leads
         const { data: leadsData } = await supabase.from("leads")
           .select("*").eq("business_id", biz.id)
           .order("created_at", { ascending: false }).limit(50);
@@ -73,23 +68,14 @@ export default function ClientDashboard() {
     init();
   }, [user]);
 
-  // Realtime subscriptions — set up once
   useEffect(() => {
     if (!user) return;
-
     const channel = supabase.channel("dashboard-realtime")
       .on("postgres_changes", {
         event: "*", schema: "public", table: "build_requests",
         filter: `business_id=eq.${user.id}`,
       }, (payload) => {
-        const updated = payload.new as Record<string, unknown>;
-        setBuildRequest(updated);
-
-        // Sync profile website_status based on build status
-        const newStatus = updated.status as string;
-        if (newStatus === "building" || newStatus === "demo_ready" || newStatus === "live") {
-          // Force profile re-read isn't needed since we derive state from buildRequest
-        }
+        setBuildRequest(payload.new as Record<string, unknown>);
       })
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "profiles",
@@ -100,14 +86,11 @@ export default function ClientDashboard() {
         }
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user, profile?.status, toast]);
 
-  // Realtime leads subscription
   useEffect(() => {
     if (!business?.id) return;
-
     const channel = supabase.channel("client-leads")
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "leads",
@@ -118,7 +101,6 @@ export default function ClientDashboard() {
         setNewLeadAlert(newLead);
         setTimeout(() => setNewLeadAlert(null), 3000);
       }).subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [business?.id]);
 
@@ -127,18 +109,18 @@ export default function ClientDashboard() {
     navigate("/", { replace: true });
   };
 
-  // Determine dashboard state
+  // Determine dashboard state strictly
   const status = (buildRequest?.status as string) || null;
   const websiteStatus = profile?.website_status || null;
-  const isLive = status === "live";
+  
   const isExpiredOrder = status === "expired" || websiteStatus === "expired";
-  const isBuilding = !isExpiredOrder && (status === "pending" || status === "building" || status === "demo_ready");
+  const isLive = status === "live" && !isExpiredOrder;
+  const isBuilding = !isExpiredOrder && !isLive && (status === "pending" || status === "building" || status === "demo_ready");
   const hasNoWebsite = !buildRequest && !websiteStatus;
 
   const isExpired = trial?.isExpired;
   const isPaid = profile?.status === "active" && !trial?.isTrial;
 
-  // Trial bar config
   const getTrialBar = () => {
     if (isPaid) return null;
     if (!trial) return null;
@@ -223,7 +205,7 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* DASHBOARD STATES */}
+      {/* DASHBOARD STATES — strictly one at a time */}
       {hasNoWebsite && (
         <StateANoWebsite
           firstName={firstName}

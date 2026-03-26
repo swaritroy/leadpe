@@ -20,9 +20,15 @@ BUSINESS DETAILS:
 - One line: ${data.one_line_description || ""}
 - Brand color: ${data.color_preference || "#00C853"}
 - Special requirements: ${data.special_requirements || "None"}
+- Logo URL: ${data.logo_url || "No logo provided — create text-based logo"}
+- Business Photos: ${data.photos_urls || "No photos — use relevant stock photos"}
 
 PACKAGE: ${data.package_name || "Standard"}
 Package includes: ${data.package_features || "5 pages, WhatsApp button, Mobile friendly"}
+
+IMAGES INSTRUCTION:
+${data.logo_url ? `The business has provided their logo at: ${data.logo_url}\nDownload and use it in the header/navbar prominently.` : "No logo provided — create a text-based logo using the business name."}
+${data.photos_urls ? `The business has provided actual photos. Use these INSTEAD of stock photos:\n${data.photos_urls}\nUse in hero section and gallery.` : "No photos provided — use relevant free stock photos for this business type."}
 
 The prompt must include ALL of these sections in this exact order:
 
