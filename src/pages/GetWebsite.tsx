@@ -102,7 +102,38 @@ export default function GetWebsite() {
       const customerName = profile?.full_name || name || businessName;
       const customerWhatsapp = whatsapp.replace(/\D/g, "");
 
-      // 1. Insert order (customer_name and customer_whatsapp are required NOT NULL)
+      // Upload images to Supabase Storage
+      let logoUrl: string | null = null;
+      const photoUrls: string[] = [];
+
+      if (logoFile && user) {
+        const ext = logoFile.name.split(".").pop();
+        const path = `${user.id}/logo/logo.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("business-assets")
+          .upload(path, logoFile, { upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from("business-assets").getPublicUrl(path);
+          logoUrl = urlData.publicUrl;
+        }
+      }
+
+      if (photoFiles.length > 0 && user) {
+        for (let i = 0; i < photoFiles.length; i++) {
+          const file = photoFiles[i];
+          const ext = file.name.split(".").pop();
+          const path = `${user.id}/photos/photo-${i}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("business-assets")
+            .upload(path, file, { upsert: true });
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage.from("business-assets").getPublicUrl(path);
+            photoUrls.push(urlData.publicUrl);
+          }
+        }
+      }
+
+      // 1. Insert order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -116,6 +147,8 @@ export default function GetWebsite() {
           total_price: pkg.price,
           color_preference: colorPref,
           special_requirements: additionalDetails || null,
+          logo_url: logoUrl,
+          photos_urls: photoUrls.length > 0 ? photoUrls : null,
           status: "pending",
           payment_status: "pending",
         })
@@ -143,7 +176,7 @@ export default function GetWebsite() {
 async function submitLeadPeLead(){var n=document.getElementById('lp-name').value;var p=document.getElementById('lp-phone').value;var i=document.getElementById('lp-interest').value;if(!n||!p){alert('Please fill name and phone');return}var btn=document.querySelector('#leadpe-widget button');btn.textContent='Sending...';btn.disabled=true;try{var res=await fetch('${supabaseUrl}/rest/v1/leads',{method:'POST',headers:{'Content-Type':'application/json','apikey':'${supabaseKey}','Authorization':'Bearer ${supabaseKey}','Prefer':'return=minimal'},body:JSON.stringify({business_id:'${user?.id}',customer_name:n,phone:p.replace(/\\D/g,''),message:i,source:'website',status:'new'})});if(res.ok){document.getElementById('leadpe-widget').innerHTML='<div style="text-align:center;padding:40px 20px;background:#F0FFF4;border-radius:16px;border:2px solid #00C853"><div style="font-size:48px">✅</div><h3 style="color:#1A1A1A">Request Received!</h3><p style="color:#666">We will call you back within 2 hours.</p></div>'}else{btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}catch(e){btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}
 </script>`;
 
-      // 3. Call AI to generate detailed build prompt
+      // 3. Generate AI build prompt with image URLs
       let aiPrompt = "";
       try {
         const { data: aiData } = await supabase.functions.invoke("ai-generate", {
@@ -161,6 +194,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
               package_name: pkg.name,
               package_features: pkg.features.join(", "),
               lead_widget_html: leadWidgetHtml,
+              logo_url: logoUrl || "",
+              photos_urls: photoUrls.join(", "),
             },
           },
         });
@@ -169,9 +204,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
         console.log("AI prompt generation failed, using fallback");
       }
 
-      // Fallback if AI failed
       if (!aiPrompt) {
-        aiPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
+        aiPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n${logoUrl ? `\nLOGO: ${logoUrl}` : ""}\n${photoUrls.length > 0 ? `\nPHOTOS: ${photoUrls.join(", ")}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
       }
 
       // 4. Insert build request
@@ -192,7 +226,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
 
       if (brError) throw brError;
 
-      // 4. Create businesses row (required for leads RLS)
+      // 5. Create businesses row (required for leads RLS)
       if (user) {
         const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
         await supabase.from("businesses").upsert({
@@ -208,7 +242,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
         }, { onConflict: "id" });
       }
 
-      // 5. Update profile
+      // 6. Update profile
       if (user) {
         await supabase
           .from("profiles")
@@ -222,7 +256,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           .eq("user_id", user.id);
       }
 
-      // 5. Navigate to dashboard
+      // 7. Navigate to dashboard
       navigate("/client/dashboard", { replace: true });
     } catch (err: unknown) {
       console.error("Order error:", err);
