@@ -28,10 +28,6 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Guard: only render when truly live
-  const liveUrl = buildRequest?.deploy_url || buildRequest?.live_url || "";
-  if (!liveUrl || buildRequest?.status !== "live") return null;
-
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingFeedback, setRatingFeedback] = useState("");
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
@@ -40,6 +36,10 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // Guard: only render when truly live
+  const liveUrl = buildRequest?.deploy_url || buildRequest?.live_url || "";
+  if (!liveUrl || buildRequest?.status !== "live") return null;
 
   const isExpired = trial?.isExpired;
   const isPaid = profile?.status === "active" && !trial?.isTrial;
