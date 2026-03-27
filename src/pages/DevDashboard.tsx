@@ -285,8 +285,16 @@ export default function DevDashboard() {
 
   const handleRequestPayout = async () => {
     if (!user) return;
+    // Validate UPI
+    const upiRegex = /^[\w.\-]+@[\w]+$/;
+    if (!upiRegex.test(payoutUpi)) {
+      toast({ title: "Invalid UPI ID", description: "Enter a valid UPI ID (e.g. name@paytm)", variant: "destructive" });
+      return;
+    }
     setRequestingPayout(true);
-    await supabase.from("profiles").update({ upi_id: payoutUpi }).eq("user_id", user.id);
+    // Save UPI to profile
+    await supabase.from("profiles").update({ upi_id: payoutUpi } as any).eq("user_id", user.id);
+    // Record payout request
     await supabase.from("earnings").insert({
       vibe_coder_id: user.id,
       amount: eligiblePayout,
@@ -294,7 +302,16 @@ export default function DevDashboard() {
       month: new Date().toISOString().slice(0, 7),
       paid: false
     });
-    toast({ title: "Payout Requested", description: `Requested ₹${eligiblePayout}` });
+    // Notify admin via WhatsApp
+    try {
+      await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          to: "919973383902",
+          message: `💰 PAYOUT REQUEST\nCoder: ${profile?.full_name || "Unknown"}\nAmount: ₹${eligiblePayout}\nUPI: ${payoutUpi}\nApprove in admin panel.`
+        }
+      });
+    } catch (e) { console.error("WhatsApp notify error:", e); }
+    toast({ title: "Payout Requested!", description: `₹${eligiblePayout} will be sent to ${payoutUpi} within 24 hours.` });
     setRequestingPayout(false);
     setShowPayoutModal(false);
     fetchData();
@@ -747,7 +764,7 @@ export default function DevDashboard() {
                   </div>
                 </div>
                 
-                {/* Payout */}
+              {/* Payout */}
                 <div className="rounded-2xl p-6 border border-[#E0F2E9] bg-white shadow-sm">
                   <h3 className="text-lg font-bold mb-4 text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>Payout Status</h3>
                   <div className="space-y-3 text-sm mb-5">
@@ -761,12 +778,20 @@ export default function DevDashboard() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#666] flex items-center gap-2"><Wallet size={14}/> UPI ID</span>
-                      <span className="font-medium">{profile?.whatsapp_number || "Not set"}</span>
+                      <span className="font-medium">{profile?.upi_id || "Not set"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#666] flex items-center gap-2"><DollarSign size={14}/> Eligible</span>
+                      <span className="font-bold text-[#00C853]">₹{eligiblePayout}</span>
                     </div>
                   </div>
-                  <Button className="w-full font-semibold text-white" style={{ backgroundColor: "#00C853" }} disabled={eligiblePayout < 200} onClick={() => { setPayoutUpi(profile?.whatsapp_number || ""); setShowPayoutModal(true); }}>
-                    Request Payout →
-                  </Button>
+                  {earnings.filter(e => !e.paid).length === 0 ? (
+                    <div className="text-center py-3 text-sm text-[#999]">No payouts yet. Complete your first build to earn.</div>
+                  ) : (
+                    <Button className="w-full font-semibold text-white" style={{ backgroundColor: "#00C853" }} disabled={eligiblePayout < 200} onClick={() => { setPayoutUpi(profile?.upi_id || ""); setShowPayoutModal(true); }}>
+                      {eligiblePayout < 200 ? `Minimum ₹200 needed` : `Request Payout — ₹${eligiblePayout} →`}
+                    </Button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -801,8 +826,8 @@ export default function DevDashboard() {
                     <div className="mt-2 space-y-2">
                        <Input value={editNameValue} onChange={e => setEditNameValue(e.target.value)} className="h-10 text-sm" />
                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-[#666]">{} of 2 changes left this month</span>
-                          <Button size="sm" onClick={() => handleUpdateProfile("name")} style={{backgroundColor:"#00C853"}} className="h-8">Save</Button>
+                       <span className="text-xs text-[#666]">{nameChangesLeft} of 2 changes left this month</span>
+                           <Button size="sm" onClick={() => handleUpdateProfile("name")} style={{backgroundColor:"#00C853"}} className="h-8">Save</Button>
                        </div>
                     </div>
                   ) : <p className="text-[15px] font-medium mt-1">{profile?.full_name || "Coder"}</p>}
@@ -810,14 +835,14 @@ export default function DevDashboard() {
 
                 <div className="border-b border-[#f0f0f0] pb-4">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-semibold text-[#999] uppercase tracking-wider">WhatsApp Number / UPI</label>
+                    <label className="text-xs font-semibold text-[#999] uppercase tracking-wider">WhatsApp Number</label>
                     <button onClick={() => { setEditingNumber(!editingNumber); setEditNumberValue(profile?.whatsapp_number || ""); }} className="text-[#00C853]"><Edit2 size={14}/></button>
                   </div>
                   {editingNumber ? (
                     <div className="mt-2 space-y-2">
                        <Input value={editNumberValue} onChange={e => setEditNumberValue(e.target.value)} className="h-10 text-sm" />
                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-[#666]">{} of 2 changes left this month</span>
+                          <span className="text-xs text-[#666]">{numberChangesLeft} of 2 changes left this month</span>
                           <Button size="sm" onClick={() => handleUpdateProfile("number")} style={{backgroundColor:"#00C853"}} className="h-8">Save</Button>
                        </div>
                     </div>
@@ -916,6 +941,60 @@ export default function DevDashboard() {
             onClose={() => { setShowBriefModal(false); setSelectedRequest(null); setGithubSubmitUrl(""); setQualityReport(null); }}
             onRefresh={() => { fetchData(); setActiveTab("home"); }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Payout Modal */}
+      <AnimatePresence>
+        {showPayoutModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+            onClick={() => setShowPayoutModal(false)}>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25 }}
+              className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6"
+              onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-4" style={{ fontFamily: "Syne, sans-serif", color: "#1A1A1A" }}>Request Payout</h3>
+              
+              <div className="mb-4">
+                <label className="text-sm font-semibold text-[#666] mb-1 block">Your UPI ID</label>
+                <Input value={payoutUpi} onChange={e => setPayoutUpi(e.target.value)} placeholder="yourname@upi" className="h-12 text-base" />
+                <p className="text-xs text-[#999] mt-1">Double-check your UPI ID. Wrong ID = lost payment.</p>
+                {payoutUpi && !/^[\w.\-]+@[\w]+$/.test(payoutUpi) && (
+                  <p className="text-xs text-red-500 mt-1">Enter a valid UPI ID (e.g. name@paytm)</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm font-semibold text-[#666] mb-1 block">Payout Amount</label>
+                <div className="text-3xl font-bold text-[#00C853]" style={{ fontFamily: "Syne, sans-serif" }}>₹{eligiblePayout}</div>
+              </div>
+
+              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#F8F9FA" }}>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-[#666]">Building Fees</span>
+                  <span className="font-medium">₹{buildingFees}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-[#666]">Passive Income</span>
+                  <span className="font-medium">₹{passiveTotal}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t border-[#E0E0E0]">
+                  <span className="font-bold">Total</span>
+                  <span className="font-bold text-[#00C853]">₹{eligiblePayout}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-12" onClick={() => setShowPayoutModal(false)}>Cancel</Button>
+                <Button className="flex-1 h-12 font-semibold text-white" style={{ backgroundColor: "#00C853" }}
+                  disabled={requestingPayout || !payoutUpi || !/^[\w.\-]+@[\w]+$/.test(payoutUpi)}
+                  onClick={handleRequestPayout}>
+                  {requestingPayout ? "Requesting..." : "Confirm Payout →"}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
       

@@ -8,7 +8,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 
-const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 interface BriefModalProps {
   request: any;
@@ -240,7 +240,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
         {/* TOP BAR */}
         <div className="flex items-center justify-between px-5 border-b" style={{ height: 56, borderColor: "#F0F0F0" }}>
           <div>
-            <span style={{ fontFamily: font.heaing, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
+            <span style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
           </div>
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 14, color: "#666" }}>{request.business_name}</span>
@@ -334,7 +334,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
           {activeTab === "info" && (
             <div className="p-4 space-y-3">
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                <p style={{ fontFamily: font.heaing, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{request.business_name}</p>
+                <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{request.business_name}</p>
                 <p style={{ fontSize: 13, color: "#666" }}>{request.business_type} • {request.city}</p>
                 <div className="flex items-center gap-2 mt-3">
                   <span style={{ fontSize: 13, color: "#666" }}>WhatsApp: +91{request.owner_whatsapp}</span>
@@ -363,10 +363,27 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
 
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
                 <span style={{ fontSize: 13, color: "#666" }}>Logo:</span>
-                <span style={{ fontSize: 13, color: "#1A1A1A", marginLeft: 8 }}>
-                  {(request as any).logo_url ? "Uploaded" : "Text logo"}
-                </span>
+                {(request as any).logo_url ? (
+                  <div className="mt-2">
+                    <img src={(request as any).logo_url} alt="Business Logo" className="max-h-20 rounded-lg border border-[#E0E0E0]" />
+                    <p className="text-xs text-[#00C853] mt-1 font-medium">Use this logo on the website</p>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 13, color: "#1A1A1A", marginLeft: 8 }}>No logo — create text logo</span>
+                )}
               </div>
+
+              {(request as any).photos_urls && (request as any).photos_urls.length > 0 && (
+                <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                  <p style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>Business Photos ({(request as any).photos_urls.length}):</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(request as any).photos_urls.map((url: string, i: number) => (
+                      <img key={i} src={url} alt={`Photo ${i + 1}`} className="w-full h-20 object-cover rounded-lg border border-[#E0E0E0]" />
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#00C853] mt-2 font-medium">Use these photos — not stock images</p>
+                </div>
+              )}
 
               {request.special_requirements && (
                 <div className="rounded-xl p-4" style={{ backgroundColor: "#F0F0F0" }}>
@@ -428,7 +445,7 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
           {/* ═══ SUBMIT TAB ═══ */}
           {activeTab === "submit" && (
             <div className="p-4">
-              <h3 style={{ fontFamily: font.heaing, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
+              <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
                 Submit Your Website
               </h3>
 
