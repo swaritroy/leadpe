@@ -943,6 +943,60 @@ export default function DevDashboard() {
           />
         )}
       </AnimatePresence>
+
+      {/* Payout Modal */}
+      <AnimatePresence>
+        {showPayoutModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+            onClick={() => setShowPayoutModal(false)}>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25 }}
+              className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6"
+              onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-4" style={{ fontFamily: "Syne, sans-serif", color: "#1A1A1A" }}>Request Payout</h3>
+              
+              <div className="mb-4">
+                <label className="text-sm font-semibold text-[#666] mb-1 block">Your UPI ID</label>
+                <Input value={payoutUpi} onChange={e => setPayoutUpi(e.target.value)} placeholder="yourname@upi" className="h-12 text-base" />
+                <p className="text-xs text-[#999] mt-1">Double-check your UPI ID. Wrong ID = lost payment.</p>
+                {payoutUpi && !/^[\w.\-]+@[\w]+$/.test(payoutUpi) && (
+                  <p className="text-xs text-red-500 mt-1">Enter a valid UPI ID (e.g. name@paytm)</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm font-semibold text-[#666] mb-1 block">Payout Amount</label>
+                <div className="text-3xl font-bold text-[#00C853]" style={{ fontFamily: "Syne, sans-serif" }}>₹{eligiblePayout}</div>
+              </div>
+
+              <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#F8F9FA" }}>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-[#666]">Building Fees</span>
+                  <span className="font-medium">₹{buildingFees}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-[#666]">Passive Income</span>
+                  <span className="font-medium">₹{passiveTotal}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t border-[#E0E0E0]">
+                  <span className="font-bold">Total</span>
+                  <span className="font-bold text-[#00C853]">₹{eligiblePayout}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-12" onClick={() => setShowPayoutModal(false)}>Cancel</Button>
+                <Button className="flex-1 h-12 font-semibold text-white" style={{ backgroundColor: "#00C853" }}
+                  disabled={requestingPayout || !payoutUpi || !/^[\w.\-]+@[\w]+$/.test(payoutUpi)}
+                  onClick={handleRequestPayout}>
+                  {requestingPayout ? "Requesting..." : "Confirm Payout →"}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Suppress WhatsApp button on these tabs except on profile maybe, wait the requirements said
         "remove WhatsApp floating button from all other Studio tabs — Home, Builds, Earnings
