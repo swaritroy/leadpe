@@ -363,10 +363,27 @@ After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe
 
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
                 <span style={{ fontSize: 13, color: "#666" }}>Logo:</span>
-                <span style={{ fontSize: 13, color: "#1A1A1A", marginLeft: 8 }}>
-                  {(request as any).logo_url ? "Uploaded" : "Text logo"}
-                </span>
+                {(request as any).logo_url ? (
+                  <div className="mt-2">
+                    <img src={(request as any).logo_url} alt="Business Logo" className="max-h-20 rounded-lg border border-[#E0E0E0]" />
+                    <p className="text-xs text-[#00C853] mt-1 font-medium">Use this logo on the website</p>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 13, color: "#1A1A1A", marginLeft: 8 }}>No logo — create text logo</span>
+                )}
               </div>
+
+              {(request as any).photos_urls && (request as any).photos_urls.length > 0 && (
+                <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
+                  <p style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>Business Photos ({(request as any).photos_urls.length}):</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(request as any).photos_urls.map((url: string, i: number) => (
+                      <img key={i} src={url} alt={`Photo ${i + 1}`} className="w-full h-20 object-cover rounded-lg border border-[#E0E0E0]" />
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#00C853] mt-2 font-medium">Use these photos — not stock images</p>
+                </div>
+              )}
 
               {request.special_requirements && (
                 <div className="rounded-xl p-4" style={{ backgroundColor: "#F0F0F0" }}>
