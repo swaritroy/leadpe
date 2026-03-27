@@ -8,7 +8,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 
-const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
 interface BriefModalProps {
   request: any;
