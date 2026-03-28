@@ -107,6 +107,34 @@ export default function ClientDashboard() {
     return () => { supabase.removeChannel(channel); };
   }, [business?.id]);
 
+  // Tab visibility handler — only refetch if stale (>5 min)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && dataLoaded) {
+        const lastFetch = localStorage.getItem('client_last_fetch_time');
+        const fiveMinutes = 5 * 60 * 1000;
+        const isStale = !lastFetch || Date.now() - parseInt(lastFetch) > fiveMinutes;
+        if (isStale) {
+          dataFetched.current = false;
+          // Re-trigger init
+          if (user) {
+            const refetch = async () => {
+              const { data: br } = await supabase.from("build_requests")
+                .select("*").eq("business_id", user.id)
+                .order("created_at", { ascending: false }).limit(1).maybeSingle();
+              if (br) setBuildRequest(br as Record<string, unknown>);
+              localStorage.setItem('client_last_fetch_time', Date.now().toString());
+            };
+            refetch();
+          }
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLoaded, user]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/", { replace: true });
@@ -138,7 +166,7 @@ export default function ClientDashboard() {
   };
   const trialBar = getTrialBar();
 
-  if (loading) {
+  if (loading && !dataLoaded) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F5FFF7" }}>
         <div style={{ width: 32, height: 32, border: "2px solid #E0E0E0", borderTopColor: "#00C853", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
