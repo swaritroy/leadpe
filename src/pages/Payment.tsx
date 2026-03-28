@@ -194,14 +194,15 @@ export default function Payment() {
             <p style={{ fontSize: 14, color: "#666" }}>See who contacted you and call them directly.</p>
           </div>
 
-          {/* What changes */}
+          {/* What unlocks */}
           <div className="rounded-2xl mb-5" style={{ backgroundColor: "#E8F5E9", padding: 20 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 12 }}>After payment:</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 12 }}>What unlocks:</p>
             {[
-              `Real domain: ${businessName.toLowerCase().replace(/\s+/g, "")}.leadpe.tech`,
-              "Watermark removed",
-              "Google can find you",
-              "Customers start flowing",
+              "See all customer names + numbers",
+              "Call them directly from dashboard",
+              "New customer WhatsApp alerts",
+              "Appear on Google + Google Maps",
+              "Weekly Monday performance report",
             ].map(f => (
               <div key={f} className="flex items-center gap-2 mb-2">
                 <Check size={16} style={{ color: "#00C853", flexShrink: 0 }} />
@@ -215,7 +216,7 @@ export default function Payment() {
             <p style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Growth Plan 💚</p>
             <p style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹{MONTHLY_PRICE} / month</p>
             <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>GST included. Cancel anytime.</p>
-            {["Unlimited customers", "WhatsApp alert on every inquiry", "Custom subdomain", "Appear on Google", "Priority support"].map(f => (
+            {["Unlimited customers", "WhatsApp alert on every inquiry", "Custom subdomain", "Appear on Google", "Priority support", "Weekly Monday report"].map(f => (
               <div key={f} className="flex items-center gap-2 mb-1.5">
                 <Check size={14} style={{ color: "#00C853" }} />
                 <span style={{ fontSize: 13, color: "#1A1A1A" }}>{f}</span>
