@@ -288,31 +288,30 @@ export default function Index() {
         <div className="container px-4">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#1A1A1A" }}>Simple, Honest Pricing</h2>
-            <p style={{ color: "#666666" }}>Try free for {TRIAL_DAYS} days. No credit card needed.</p>
+            <p style={{ color: "#666666" }}>Start free. Upgrade when you're ready.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start mb-8">
-            {/* FREE TRIAL */}
+            {/* FREE PLAN */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
               whileHover={{ y: -8, boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="rounded-2xl p-8 bg-white border cursor-pointer" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Try Free</span>
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Start Free</span>
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
-              <p className="text-sm mb-1" style={{ color: "#1A1A1A" }}>{TRIAL_DAYS} days free</p>
-              <p className="text-xs mb-6" style={{ color: "#999999" }}>No credit card needed</p>
+              <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS} days. No card needed.</p>
               <ul className="space-y-2.5 mb-6">
-                {["Website built in 48 hours", "All customers visible", "WhatsApp alert active", "Full account", "Appear on Google + Google Maps", "Cancel anytime"].map((f) => (
+                {["Professional website in 48 hours", "Website goes live on leadpe.tech", "See before paying anything", "Cancel anytime"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#999999" }}>After {TRIAL_DAYS} days — continue to keep customers</p>
+              <p className="text-xs mb-6" style={{ color: "#999999" }}>After {TRIAL_DAYS} days — ₹{MONTHLY_PRICE}/month to keep your website live</p>
               <Button onClick={() => navigate("/business")} className="w-full h-12 rounded-xl text-sm font-semibold border bg-white hover:bg-[#F0FFF4]" style={{ borderColor: "#00C853", color: "#00C853" }}>
                 Start Free →
               </Button>
             </motion.div>
 
-            {/* GROWTH */}
+            {/* GROWTH PLAN */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
               whileHover={{ y: -8, boxShadow: "0 24px 80px rgba(0,200,83,0.25)" }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -322,23 +321,24 @@ export default function Index() {
                 <span className="text-5xl font-bold" style={{ fontFamily: "Syne", color: "#1A1A1A" }}>₹{MONTHLY_PRICE}</span>
                 <span className="text-base ml-1" style={{ color: "#666666" }}>/month</span>
               </div>
-              <p className="text-xs mb-1" style={{ color: "#666666" }}>GST included</p>
-              <p className="text-xs mb-6" style={{ color: "#666666" }}>Cancel anytime</p>
+              <p className="text-xs mb-6" style={{ color: "#666666" }}>GST included • Cancel anytime</p>
               <ul className="space-y-2.5 mb-4">
-                {["Everything in Free Trial", "Unlimited customers forever", "Instant WhatsApp alert 🔔", "Custom domain", "Weekly Monday report", "Priority support"].map((f) => (
+                {["Everything in Free Plan", "New customers on WhatsApp instantly", "Appear on Google + Google Maps", "Weekly Monday performance report", "Priority support", "Custom domain option"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#00C853" }}>1 customer = ₹1,500+ • LeadPe = ₹{MONTHLY_PRICE}/mo</p>
-              <Button onClick={() => navigate(`/payment?plan=growth&amount=${MONTHLY_PRICE}`)} className="w-full h-12 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+              <p className="text-xs mb-6" style={{ color: "#00C853" }}>1 customer = ₹1,500+ revenue • LeadPe = ₹{MONTHLY_PRICE}/month</p>
+              <Button onClick={() => {
+                sessionStorage.setItem("upgrade_intent", "true");
+                navigate(`/payment?plan=growth&amount=${MONTHLY_PRICE}`);
+              }} className="w-full h-12 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
                 Get Growth Plan →
               </Button>
             </motion.div>
           </div>
 
           <p className="text-center text-sm" style={{ color: "#666666" }}>
-            Start with{" "}
-            <Link to="/business" className="underline" style={{ color: "#00C853" }}>free trial first →</Link>
+            No hidden fees. No contracts. Cancel with one click anytime.
           </p>
         </div>
       </section>

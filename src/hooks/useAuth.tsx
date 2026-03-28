@@ -32,6 +32,7 @@ interface Profile {
   plan_status: string | null;
   plan_renewal_date: string | null;
   avatar_url: string | null;
+  plan_type: string | null;
 }
 
 interface AuthContextType {
