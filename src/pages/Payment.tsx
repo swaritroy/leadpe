@@ -162,10 +162,11 @@ export default function Payment() {
   if (showCelebration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-sm">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="text-center max-w-sm">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }} className="text-7xl mb-6">🎉</motion.div>
-          <h2 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>You're on Growth Plan! 🚀</h2>
-          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>All customers visible now!</p>
+          <h2 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Customers Unlocked! 🚀</h2>
+          <p style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>You're now on the Growth Plan.</p>
+          <p style={{ fontSize: 13, color: "#999", marginBottom: 24 }}>See all customer names and call them directly.</p>
           <Link to="/client/dashboard">
             <Button className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>Go to Dashboard →</Button>
           </Link>
@@ -189,8 +190,8 @@ export default function Payment() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {/* Hero */}
           <div className="text-center mb-6">
-            <h1 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>One Step to Go Live! 🚀</h1>
-            <p style={{ fontSize: 14, color: "#666" }}>Your website is built and ready.</p>
+            <h1 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Unlock Your Customers 🚀</h1>
+            <p style={{ fontSize: 14, color: "#666" }}>See who contacted you and call them directly.</p>
           </div>
 
           {/* What changes */}
