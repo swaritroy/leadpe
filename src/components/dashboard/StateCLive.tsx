@@ -512,7 +512,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             background: "none", border: "none", fontFamily: font.body, fontSize: 13, fontWeight: 600,
             color: "#fff", cursor: "pointer", flex: 1, textAlign: "left",
           }}>
-            Get customers on WhatsApp — ₹299/mo →
+            Your website is live — connect with customers on WhatsApp ₹299/mo →
           </button>
           <button onClick={handleDismissFomo} style={{
             background: "none", border: "none", color: "rgba(255,255,255,0.7)",
