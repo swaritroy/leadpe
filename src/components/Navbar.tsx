@@ -32,6 +32,11 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
+              {profile?.plan_type === "free" && (
+                <Button size="sm" variant="outline" className="rounded-xl border-[#00C853] text-[#00C853] hover:bg-[#F0FFF4]" asChild>
+                  <Link to="/payment?plan=growth&amount=299" onClick={() => sessionStorage.setItem("upgrade_intent", "true")}>Upgrade →</Link>
+                </Button>
+              )}
               <Link to={dashboardLink} className="hidden md:flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ backgroundColor: "#00E676", color: "#000" }}>
                   {user.email?.[0].toUpperCase() || "U"}
