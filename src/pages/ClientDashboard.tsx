@@ -118,16 +118,20 @@ export default function ClientDashboard() {
   const isBuilding = !isExpiredOrder && !isLive && (status === "pending" || status === "building" || status === "demo_ready");
   const hasNoWebsite = !buildRequest && !websiteStatus;
 
+  const planType = profile?.plan_type || "free";
+  const isGrowthPlan = planType === "growth";
+  const isTrialPlan = planType === "trial";
+  const isFreePlanUser = planType === "free";
   const isExpired = trial?.isExpired;
-  const isPaid = profile?.status === "active" && !trial?.isTrial;
 
   const getTrialBar = () => {
-    if (isPaid) return null;
+    if (isGrowthPlan) return null;
+    if (isFreePlanUser && !isExpired) return { bg: "#FFEBEE", text: "Your free trial ended — upgrade to see customers", color: "#C62828", btnText: "Unlock Customers →", btnColor: "#FF5252" };
     if (!trial) return null;
-    if (isExpired) return { bg: "#FFEBEE", text: "Your free period ended", color: "#C62828", btnText: "Continue →", btnColor: "#FF5252" };
-    if (trial.isTrialEning) return { bg: "#FFF3E0", text: `⚠️ Free period ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Continue →", btnColor: "#FF6B00" };
-    if (trial.daysLeft <= 7 && trial.daysLeft > 3) return { bg: "#FFF3E0", text: `⚠️ Free period ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Continue →", btnColor: "#FF6B00" };
-    return { bg: "#E8F5E9", text: `🟢 Free — ${trial.daysLeft} days left`, color: "#1A1A1A", btnText: null, btnColor: null };
+    if (isExpired) return { bg: "#FFEBEE", text: "Your free period ended", color: "#C62828", btnText: "Unlock Customers →", btnColor: "#FF5252" };
+    if (trial.isTrialEning) return { bg: "#FFF3E0", text: `⚠️ Free trial ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
+    if (trial.daysLeft <= 7 && trial.daysLeft > 3) return { bg: "#FFF3E0", text: `⚠️ Free trial ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
+    return { bg: "#E8F5E9", text: `🟢 Free trial — ${trial.daysLeft} days left`, color: "#1A1A1A", btnText: null, btnColor: null };
   };
   const trialBar = getTrialBar();
 

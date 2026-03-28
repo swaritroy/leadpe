@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 const Navbar = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, role } = useAuth();
+  const { user, role, profile } = useAuth();
 
   const dashboardLink = role === "developer" || role === "vibe_coder" ? "/dev/dashboard" : role === "business" ? "/client/dashboard" : role === "admin" ? "/admin" : "/auth";
 

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,13 +36,27 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [fomoBarDismissed, setFomoBarDismissed] = useState(false);
+
+  // Check localStorage for FOMO bar dismissal
+  useEffect(() => {
+    const dismissed = localStorage.getItem("fomo_bar_dismissed");
+    if (dismissed) {
+      const dismissedAt = parseInt(dismissed);
+      if (Date.now() - dismissedAt < 86400000) setFomoBarDismissed(true);
+    }
+  }, []);
 
   // Guard: only render when truly live
   const liveUrl = buildRequest?.deploy_url || buildRequest?.live_url || "";
   if (!liveUrl || buildRequest?.status !== "live") return null;
 
-  const isExpired = trial?.isExpired;
-  const isPaid = profile?.status === "active" && !trial?.isTrial;
+  // Plan type logic
+  const planType = profile?.plan_type || "free";
+  const isFreePlan = planType === "free";
+  const isGrowthPlan = planType === "growth";
+  const isTrialPlan = planType === "trial";
+  const showFullFeatures = isGrowthPlan || isTrialPlan;
 
   const now = new Date();
   const thisMonthLeads = leads.filter(l => {
@@ -59,8 +73,8 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
 
   const deployedAt = buildRequest?.deployed_at ? new Date(buildRequest.deployed_at) : null;
   const daysSinceLive = deployedAt ? Math.floor((Date.now() - deployedAt.getTime()) / 86400000) : 0;
-  const showRating = !ratingSubmitted && daysSinceLive >= 7 && daysSinceLive <= 30;
-  const showFeedbackCard = daysSinceLive >= 14 && !(profile as any)?.feedback_given && !feedbackSubmitted;
+  const showRating = showFullFeatures && !ratingSubmitted && daysSinceLive >= 7 && daysSinceLive <= 30;
+  const showFeedbackCard = showFullFeatures && daysSinceLive >= 14 && !(profile as any)?.feedback_given && !feedbackSubmitted;
 
   const timeAgo = (date: string) => {
     const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
@@ -74,6 +88,11 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const handleUpgrade = () => {
     sessionStorage.setItem("upgrade_intent", "true");
     navigate("/payment?plan=growth&amount=299");
+  };
+
+  const handleDismissFomo = () => {
+    localStorage.setItem("fomo_bar_dismissed", Date.now().toString());
+    setFomoBarDismissed(true);
   };
 
   const handleSubmitRating = async () => {
@@ -110,10 +129,27 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   };
 
   return (
-    <div style={{ backgroundColor: "#FFFFFF", minHeight: "calc(100vh - 56px)", paddingBottom: 80 }}>
+    <div style={{ backgroundColor: "#FFFFFF", minHeight: "calc(100vh - 56px)", paddingBottom: isFreePlan ? 120 : 80 }}>
 
-      {/* ═══ FEEDBACK CARD ═══ */}
-      {showFeedbackCard ? (
+      {/* ═══ WEBSITE LIVE BAR — always visible ═══ */}
+      <div style={{
+        margin: 16, backgroundColor: "#E8F5E9", borderRadius: 12, padding: "14px 16px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div>
+          <div style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A" }}>🌐 Your website is live</div>
+          <div style={{ fontFamily: font.body, fontSize: 12, color: "#00C853" }}>
+            {businessSlug}.leadpe.tech
+          </div>
+        </div>
+        <button onClick={() => window.open(liveUrl, "_blank")}
+          style={{ background: "none", border: "none", fontFamily: font.body, fontSize: 13, fontWeight: 700, color: "#00C853", cursor: "pointer" }}>
+          Visit →
+        </button>
+      </div>
+
+      {/* ═══ FEEDBACK CARD (growth/trial only, 14+ days) ═══ */}
+      {showFeedbackCard && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           style={{
@@ -154,26 +190,9 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             </>
           )}
         </motion.div>
-      ) : (
-        /* ═══ COMPACT WEBSITE BAR ═══ */
-        <div style={{
-          margin: 16, backgroundColor: "#E8F5E9", borderRadius: 12, padding: "14px 16px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div>
-            <div style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A" }}>🌐 Your website is live</div>
-            <div style={{ fontFamily: font.body, fontSize: 12, color: "#00C853" }}>
-              {businessSlug}.leadpe.tech
-            </div>
-          </div>
-          <button onClick={() => window.open(liveUrl, "_blank")}
-            style={{ background: "none", border: "none", fontFamily: font.body, fontSize: 13, fontWeight: 700, color: "#00C853", cursor: "pointer" }}>
-            Visit →
-          </button>
-        </div>
       )}
 
-      {/* ═══ RATING (only after 7 days live) ═══ */}
+      {/* ═══ RATING (growth/trial, 7-30 days live) ═══ */}
       {showRating && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -214,7 +233,47 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         </motion.div>
       )}
 
-      {/* ═══ CUSTOMERS RECEIVED ═══ */}
+      {/* ═══ FOMO: Blurred visitor counter (free plan only) ═══ */}
+      {isFreePlan && leads.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            margin: "0 16px 16px", backgroundColor: "#F5F5F5", borderRadius: 16, padding: "16px 20px",
+          }}
+        >
+          <p style={{ fontFamily: font.body, fontSize: 14, color: "#666" }}>
+            👥 {weekLeads.length > 0 ? weekLeads.length : leads.length} people {weekLeads.length > 0 ? "visited your website this week" : "have contacted you"}
+          </p>
+          <p style={{ fontFamily: font.body, fontSize: 12, color: "#999", marginTop: 4 }}>
+            Upgrade to connect with them
+          </p>
+        </motion.div>
+      )}
+
+      {/* ═══ FOMO: Missed call indicator (free plan, has leads) ═══ */}
+      {isFreePlan && todayLeads.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            margin: "0 16px 16px", backgroundColor: "#FFF8E1", borderRadius: 12, padding: "12px 16px",
+          }}
+        >
+          <p style={{ fontFamily: font.body, fontSize: 13, color: "#F57F17", fontWeight: 600 }}>
+            📱 Someone tried to contact you today
+          </p>
+          <p style={{ fontFamily: font.body, fontSize: 12, color: "#999", filter: "blur(4px)", marginTop: 4 }}>
+            {todayLeads[0]?.customer_name || "New Customer"}
+          </p>
+          <button onClick={handleUpgrade} style={{
+            background: "none", border: "none", fontFamily: font.body, fontSize: 12, fontWeight: 700,
+            color: "#00C853", cursor: "pointer", marginTop: 4, padding: 0,
+          }}>
+            Upgrade to see who →
+          </button>
+        </motion.div>
+      )}
+
+      {/* ═══ CUSTOMERS COUNT ═══ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         style={{
@@ -225,7 +284,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         <p style={{ fontFamily: font.body, fontSize: 14, color: "#666", marginBottom: 8 }}>Customers This Month</p>
         <div style={{
           fontFamily: font.heading, fontSize: 72, fontWeight: 700, color: "#1A1A1A",
-          textAlign: "center", lineHeight: 1, filter: isExpired ? "blur(8px)" : "none",
+          textAlign: "center", lineHeight: 1, filter: isFreePlan ? "blur(8px)" : "none",
         }}>
           {thisMonthLeads.length}
         </div>
@@ -233,7 +292,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           people contacted you
         </p>
         <div style={{ height: 1, backgroundColor: "#F5F5F5", margin: "16px 0" }} />
-        <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", filter: isFreePlan ? "blur(6px)" : "none" }}>
           {[
             { val: todayLeads.length, label: "Today", color: "#00C853" },
             { val: weekLeads.length, label: "This Week", color: "#1A1A1A" },
@@ -245,24 +304,24 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             </div>
           ))}
         </div>
-        {isExpired && (
+        {isFreePlan && (
           <div style={{
-            position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.9)",
+            position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.85)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{ textAlign: "center", padding: "0 24px" }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div>
+              <Lock size={32} style={{ color: "#999", margin: "0 auto 8px" }} />
               <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>
-                {leads.length} customers tried to contact you
+                {leads.length > 0 ? `${leads.length} customers tried to contact you` : "Customers will appear here"}
               </p>
               <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 16 }}>
-                Pay ₹299/month to see them
+                Upgrade to Growth Plan to see their names and call them
               </p>
               <button onClick={handleUpgrade} style={{
-                width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none",
+                width: "100%", maxWidth: 260, backgroundColor: "#00C853", color: "#fff", border: "none",
                 borderRadius: 12, height: 52, fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: "pointer",
               }}>
-                See My Customers →
+                Unlock Customers →
               </button>
             </div>
           </div>
@@ -282,7 +341,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           <div style={{ textAlign: "center", padding: "16px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>📬</div>
             <p style={{ fontFamily: font.body, fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>
-              No customers today yet
+              No customers yet
             </p>
             <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", maxWidth: 240, margin: "0 auto 16px", lineHeight: 1.6 }}>
               Share your website to get your first customer!
@@ -300,7 +359,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             </button>
           </div>
         ) : (
-          <div style={isExpired ? { filter: "blur(5px)", pointerEvents: "none" as const } : {}}>
+          <div style={isFreePlan ? { filter: "blur(6px)", pointerEvents: "none" as const } : {}}>
             {leads.slice(0, 5).map(lead => {
               const isNew = (Date.now() - new Date(lead.created_at).getTime()) < 3600000;
               return (
@@ -334,7 +393,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
                     </p>
                     <p style={{ fontFamily: font.body, fontSize: 11, color: "#999", marginTop: 2 }}>{timeAgo(lead.created_at)}</p>
                   </div>
-                  {lead.phone && (
+                  {showFullFeatures && lead.phone && (
                     <a href={`https://wa.me/91${lead.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
                       style={{
                         backgroundColor: "#E8F5E9", color: "#00C853", fontFamily: font.body,
@@ -349,28 +408,74 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             })}
           </div>
         )}
-        {isExpired && leads.length > 0 && (
+        {isFreePlan && leads.length > 0 && (
           <div style={{
             position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.85)",
             display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 16,
           }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
-              <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>Unlock to see details</p>
+              <Lock size={24} style={{ color: "#999", margin: "0 auto 8px" }} />
+              <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>
+                These customers tried to contact you
+              </p>
+              <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", marginTop: 4 }}>
+                Upgrade to Growth Plan to see their names and call them
+              </p>
               <button onClick={handleUpgrade} style={{
                 color: "#00C853", fontFamily: font.body, fontSize: 13, fontWeight: 700,
-                background: "none", border: "none", cursor: "pointer", marginTop: 8,
+                background: "none", border: "none", cursor: "pointer", marginTop: 12,
               }}>
-                Continue →
+                Unlock Customers →
               </button>
             </div>
           </div>
         )}
       </motion.div>
 
+      {/* ═══ GOOGLE VISIBILITY (growth/trial only) ═══ */}
+      {showFullFeatures && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          style={{
+            margin: "0 16px 16px", backgroundColor: "#fff", borderRadius: 16, padding: 20,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>
+            ✅ Google Visibility
+          </p>
+          <p style={{ fontFamily: font.body, fontSize: 13, color: "#666" }}>
+            Your website is submitted to Google and Google Maps. Customers in your city can find you online.
+          </p>
+        </motion.div>
+      )}
+
+      {/* ═══ LOCKED GOOGLE (free plan) ═══ */}
+      {isFreePlan && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          style={{
+            margin: "0 16px 16px", backgroundColor: "#F5F5F5", borderRadius: 16, padding: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <Lock size={16} style={{ color: "#999" }} />
+            <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: "#999" }}>
+              Appear on Google
+            </p>
+          </div>
+          <button onClick={handleUpgrade} style={{
+            background: "none", border: "none", fontFamily: font.body, fontSize: 12, fontWeight: 700,
+            color: "#00C853", cursor: "pointer", padding: 0, marginTop: 4,
+          }}>
+            Upgrade to Growth Plan →
+          </button>
+        </motion.div>
+      )}
+
       {/* ═══ QUICK ACTIONS ═══ */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         style={{
           margin: 16, backgroundColor: "#fff", borderRadius: 16, padding: 20,
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
@@ -395,6 +500,28 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
           📤 Share My Website
         </button>
       </motion.div>
+
+      {/* ═══ STICKY FOMO BOTTOM BAR (free plan only) ═══ */}
+      {isFreePlan && !fomoBarDismissed && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40,
+          backgroundColor: "#00C853", padding: "12px 16px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <button onClick={handleUpgrade} style={{
+            background: "none", border: "none", fontFamily: font.body, fontSize: 13, fontWeight: 600,
+            color: "#fff", cursor: "pointer", flex: 1, textAlign: "left",
+          }}>
+            Get customers on WhatsApp — ₹299/mo →
+          </button>
+          <button onClick={handleDismissFomo} style={{
+            background: "none", border: "none", color: "rgba(255,255,255,0.7)",
+            cursor: "pointer", padding: "0 4px", fontSize: 18,
+          }}>
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }
