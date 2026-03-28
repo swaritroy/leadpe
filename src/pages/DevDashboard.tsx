@@ -276,15 +276,32 @@ export default function DevDashboard() {
 
   const eligiblePayout = earnings.filter(e => !e.paid && e.type !== "payout_request").reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  // Realtime earnings listener inside useEffect (actually can just rely on basic fetch for now, but realtime added)
+  // Realtime earnings listener
   useEffect(() => {
     if (!user) return;
     const earnSub = supabase.channel('earnings_tab')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'earnings', filter: `vibe_coder_id=eq.${user.id}` }, 
-      () => fetchData() ).subscribe();
+      () => fetchData(true) ).subscribe();
     return () => { supabase.removeChannel(earnSub); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Tab visibility handler — only refetch if stale (>5 min)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && dataLoaded) {
+        const lastFetch = localStorage.getItem('dev_last_fetch_time');
+        const fiveMinutes = 5 * 60 * 1000;
+        const isStale = !lastFetch || Date.now() - parseInt(lastFetch) > fiveMinutes;
+        if (isStale) {
+          fetchData(true);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLoaded]);
 
   const handleRequestPayout = async () => {
     if (!user) return;
@@ -502,7 +519,7 @@ export default function DevDashboard() {
     }
   };
 
-  if (loading) {
+  if (loading && !dataLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
         <div className="animate-spin w-8 h-8 border-2 border-[#00C853] border-t-transparent rounded-full" />
