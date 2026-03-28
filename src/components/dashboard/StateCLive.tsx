@@ -137,9 +137,9 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div>
-          <div style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A" }}>🌐 Your website is live</div>
+          <div style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A" }}>🌐 Your website is live forever</div>
           <div style={{ fontFamily: font.body, fontSize: 12, color: "#00C853" }}>
-            {businessSlug}.leadpe.tech
+            {businessSlug}.leadpe.tech — we never take it down
           </div>
         </div>
         <button onClick={() => window.open(liveUrl, "_blank")}
@@ -312,10 +312,10 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             <div style={{ textAlign: "center", padding: "0 24px" }}>
               <Lock size={32} style={{ color: "#999", margin: "0 auto 8px" }} />
               <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>
-                {leads.length > 0 ? `${leads.length} customers tried to contact you` : "Customers will appear here"}
+                {leads.length > 0 ? `${leads.length} customers couldn't reach you` : "Customers will appear here"}
               </p>
               <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 16 }}>
-                Upgrade to Growth Plan to see their names and call them
+                Your website is live but customers cannot reach you yet. Upgrade to connect with them.
               </p>
               <button onClick={handleUpgrade} style={{
                 width: "100%", maxWidth: 260, backgroundColor: "#00C853", color: "#fff", border: "none",
@@ -416,10 +416,10 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             <div style={{ textAlign: "center" }}>
               <Lock size={24} style={{ color: "#999", margin: "0 auto 8px" }} />
               <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>
-                These customers tried to contact you
+                Your website is live but customers cannot reach you yet
               </p>
               <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", marginTop: 4 }}>
-                Upgrade to Growth Plan to see their names and call them
+                Upgrade to Growth Plan to receive them on WhatsApp
               </p>
               <button onClick={handleUpgrade} style={{
                 color: "#00C853", fontFamily: font.body, fontSize: 13, fontWeight: 700,
@@ -512,7 +512,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
             background: "none", border: "none", fontFamily: font.body, fontSize: 13, fontWeight: 600,
             color: "#fff", cursor: "pointer", flex: 1, textAlign: "left",
           }}>
-            Get customers on WhatsApp — ₹299/mo →
+            Your website is live — connect with customers on WhatsApp ₹299/mo →
           </button>
           <button onClick={handleDismissFomo} style={{
             background: "none", border: "none", color: "rgba(255,255,255,0.7)",
