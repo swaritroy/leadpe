@@ -101,6 +101,7 @@ export default function DevDashboard() {
   const [activeTab, setActiveTab] = useState<"home" | "builds" | "earnings" | "profile">("home");
   
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
@@ -195,9 +196,9 @@ export default function DevDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const fetchData = async () => {
+  const fetchData = async (isBackground = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!isBackground) setLoading(true);
 
     const { data: profileData } = await supabase.from("profiles")
       .select("*")
@@ -254,6 +255,8 @@ export default function DevDashboard() {
     setActiveBuilds((activeData as BuildRequest[]) || []);
 
     setLoading(false);
+    setDataLoaded(true);
+    localStorage.setItem('dev_last_fetch_time', Date.now().toString());
   };
 
   const totalEarned = earnings.reduce((sum, e) => sum + e.amount, 0);
