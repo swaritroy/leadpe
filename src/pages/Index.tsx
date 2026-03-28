@@ -301,11 +301,11 @@ export default function Index() {
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
               <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS} days. No card needed.</p>
               <ul className="space-y-2.5 mb-6">
-                {["Professional website in 48 hours", "Website goes live on leadpe.tech", "See before paying anything", "Cancel anytime"].map((f) => (
+                {["Website built in 48 hours", "Website live FOREVER on leadpe.tech", "Never taken down", "See before paying anything"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#999999" }}>After {TRIAL_DAYS} days — ₹{MONTHLY_PRICE}/month to keep your website live</p>
+              <p className="text-xs mb-6" style={{ color: "#999999" }}>Growth Plan ₹{MONTHLY_PRICE}/month to get customers on WhatsApp</p>
               <Button onClick={() => navigate("/business")} className="w-full h-12 rounded-xl text-sm font-semibold border bg-white hover:bg-[#F0FFF4]" style={{ borderColor: "#00C853", color: "#00C853" }}>
                 Start Free →
               </Button>

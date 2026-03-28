@@ -126,9 +126,9 @@ export default function ClientDashboard() {
 
   const getTrialBar = () => {
     if (isGrowthPlan) return null;
-    if (isFreePlanUser && !isExpired) return { bg: "#FFEBEE", text: "Your free trial ended — upgrade to see customers", color: "#C62828", btnText: "Unlock Customers →", btnColor: "#FF5252" };
+    if (isFreePlanUser && !isExpired) return { bg: "#FFF3E0", text: "Your website is live forever — upgrade to receive customers on WhatsApp", color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     if (!trial) return null;
-    if (isExpired) return { bg: "#FFEBEE", text: "Your free period ended", color: "#C62828", btnText: "Unlock Customers →", btnColor: "#FF5252" };
+    if (isExpired) return { bg: "#FFF3E0", text: "Your website is still live — upgrade to connect with customers", color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     if (trial.isTrialEning) return { bg: "#FFF3E0", text: `⚠️ Free trial ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     if (trial.daysLeft <= 7 && trial.daysLeft > 3) return { bg: "#FFF3E0", text: `⚠️ Free trial ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     return { bg: "#E8F5E9", text: `🟢 Free trial — ${trial.daysLeft} days left`, color: "#1A1A1A", btnText: null, btnColor: null };
