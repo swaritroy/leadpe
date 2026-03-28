@@ -774,6 +774,7 @@ export type Database = {
           onboarding_complete: boolean | null
           plan_renewal_date: string | null
           plan_status: string | null
+          plan_type: string | null
           preferred_fee: number | null
           preferred_language: string | null
           referral_count: number | null
@@ -813,6 +814,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
+          plan_type?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
           referral_count?: number | null
@@ -852,6 +854,7 @@ export type Database = {
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
           plan_status?: string | null
+          plan_type?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
           referral_count?: number | null
