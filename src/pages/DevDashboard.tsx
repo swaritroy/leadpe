@@ -217,13 +217,22 @@ export default function DevDashboard() {
       .eq("vibe_coder_id", user.id);
     setEarnings(earnData || []);
     
-    const { data: pendingData } = await supabase.from("build_requests")
+    const { data: pendingData, error: pendingError } = await supabase.from("build_requests")
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
       .gt("hard_deadline", new Date().toISOString())
       .order("hard_deadline", { ascending: true });
-    setBuildRequests(pendingData || []);
+    
+    if (pendingError) {
+      console.error("Build requests fetch error:", pendingError);
+      toast({ title: "Could not load requests", description: pendingError.message, variant: "destructive" });
+    } else {
+      if (!pendingData || pendingData.length === 0) {
+        console.log("No pending requests found");
+      }
+      setBuildRequests(pendingData || []);
+    }
     
     
     const { data: compData } = await supabase.from("build_requests")
