@@ -29,6 +29,7 @@ export default function ClientDashboard() {
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [trial, setTrial] = useState<TrialStatus | null>(null);
   const [buildRequest, setBuildRequest] = useState<Record<string, unknown> | null>(null);
   const [business, setBusiness] = useState<Record<string, unknown> | null>(null);
@@ -64,6 +65,8 @@ export default function ClientDashboard() {
       }
 
       setLoading(false);
+      setDataLoaded(true);
+      localStorage.setItem('client_last_fetch_time', Date.now().toString());
     };
     init();
   }, [user]);
