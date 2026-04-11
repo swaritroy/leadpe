@@ -661,15 +661,15 @@ export default function DevDashboard() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-4">
                   {activeBuilds.map((request) => (
                     <div key={request.id} className="rounded-xl border border-[#E0F2E9] p-5 bg-white shadow-sm flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                            <div>
-                              <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
-                              <p className="text-xs text-[#666]">{request.package_id ? getPackageById(request.package_id).badge : request.plan_selected}</p>
-                            </div>
-                          </div>
+                       <div>
+                         <div className="flex items-center justify-between mb-3">
+                           <div className="flex items-center gap-3 min-w-0 flex-1">
+                             <div className="text-2xl flex-shrink-0">{getBusinessIcon(request.business_type)}</div>
+                             <div className="min-w-0">
+                               <h4 className="font-bold text-[#1A1A1A] truncate" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
+                               <p className="text-xs text-[#666] truncate">{request.package_id ? getPackageById(request.package_id).badge : request.plan_selected}</p>
+                             </div>
+                           </div>
                           <span className="text-xs font-semibold px-2 py-1 rounded bg-green-50 text-[#00C853] border border-green-200">
                             ACCEPTED ✓
                           </span>
