@@ -7,7 +7,9 @@ const corsHeaders = {
 };
 
 function buildPromptTemplate(data: Record<string, string>): { system: string; user: string } {
-  const system = `You are an expert web developer creating detailed build instructions for a professional Indian business website. Generate a complete, specific, actionable Lovable.dev prompt. Return ONLY the prompt text. No explanation. No preamble.`;
+  const system = `You are an expert web developer creating detailed build instructions for a professional Indian business website. Generate a complete, specific, actionable Lovable.dev prompt. Return ONLY the prompt text. No explanation. No preamble.
+
+CRITICAL: The prompt you generate MUST include the EXACT LeadPe Lead Capture Widget HTML/JS code provided in the user message. Copy it AS-IS into the prompt output. This widget is the MOST IMPORTANT part — it captures customer leads. Without it the website is USELESS.`;
 
   const user = `Generate a complete Lovable.dev website build prompt for this Indian business:
 
@@ -55,17 +57,52 @@ The prompt must include ALL of these sections in this exact order:
 
 5. WHATSAPP INTEGRATION (CRITICAL)
    Fixed floating WhatsApp button bottom-right corner.
-   Lead capture widget MUST be embedded:
-   ${data.lead_widget_html || "<!-- Lead widget will be added -->"}
+   Pulse animation, z-index 9999.
+   Links to: https://wa.me/91${data.whatsapp_number}
 
-6. SEO META TAGS
-7. GOOGLE MAPS for "${data.business_name} ${data.city}"
-8. TRUST ELEMENTS based on ${data.business_type}
-9. CONTACT SECTION with WhatsApp: ${data.whatsapp_number}, City: ${data.city}
-10. FOOTER with "Powered by LeadPe"
-11. PERFORMANCE REQUIREMENTS - 90+ mobile PageSpeed
-12. LEAD WIDGET embedded as-is:
+6. DEMO MODE
+   Check VITE_LEADPE_MODE env var.
+   If "demo": show orange bar "⚠️ This is a preview", disable contact buttons.
+   If "live" or not set: normal mode.
+
+7. SEO META TAGS
+   <title>${data.business_name} - Best ${data.business_type} in ${data.city}</title>
+   Meta description, keywords, OG tags, LocalBusiness schema JSON-LD.
+
+8. GOOGLE MAPS for "${data.business_name} ${data.city}"
+
+9. TRUST ELEMENTS based on ${data.business_type}
+   Testimonials, years of experience, happy customers count.
+
+10. CONTACT SECTION with WhatsApp: ${data.whatsapp_number}, City: ${data.city}
+
+11. FOOTER with "Powered by LeadPe 🌱"
+
+12. PERFORMANCE REQUIREMENTS - 90+ mobile PageSpeed
+
+13. ⚠️ LEADPE LEAD CAPTURE WIDGET — MOST CRITICAL SECTION ⚠️
+    
+    You MUST include this EXACT HTML/JavaScript widget code in the contact section or before the footer.
+    This widget captures customer inquiries and sends them to the LeadPe CRM database.
+    WITHOUT this widget, the entire website is USELESS.
+    
+    DO NOT modify, summarize, or create your own version. Include this EXACTLY AS-IS:
+    
     ${data.lead_widget_html || "<!-- Lead widget will be added -->"}
+    
+    IMPORTANT NOTES:
+    - The business_id is pre-configured — DO NOT change it
+    - The Supabase API URL and key are pre-configured — DO NOT change them
+    - The widget submits leads to the "leads" table
+    - On success shows "Request Received!" confirmation
+    - "Powered by LeadPe 🌱" footer MUST remain visible
+    
+    If building with React, you can either:
+    a) Embed this HTML in index.html directly
+    b) Create a React component that makes the SAME POST request to the SAME URL with SAME headers/body
+
+14. GITHUB SETUP
+    After building: Connect GitHub → Create PUBLIC repo → Branch "main" → Copy URL → Submit in LeadPe
 
 Generate the complete prompt now. Make it specific to ${data.business_type}. Use real Indian context.`;
 
