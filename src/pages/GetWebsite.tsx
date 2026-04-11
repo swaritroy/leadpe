@@ -623,7 +623,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                     <ArrowLeft size={16} className="mr-2" /> Back
                   </Button>
                   <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-14 rounded-xl text-white font-bold text-base" style={{ backgroundColor: "#00C853" }}>
-                    {loading ? "Placing Order..." : "Place Free Order →"}
+                    {loading ? (uploadProgress > 0 && uploadProgress < 100 ? `Uploading ${uploadProgress}%...` : "Placing Order...") : "Place Free Order →"}
                   </Button>
                 </div>
                 <button onClick={handleSubmit} disabled={loading} className="w-full text-center text-sm py-2" style={{ color: "#999" }}>
