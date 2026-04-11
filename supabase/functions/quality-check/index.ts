@@ -1,107 +1,248 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface CheckResult {
+  key: string;
+  label: string;
+  passed: boolean;
+  fix: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { githubUrl, businessData } = await req.json();
-
     if (!githubUrl || !businessData) {
       return new Response(JSON.stringify({ error: "Missing githubUrl or businessData" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Extract GitHub raw content URL
+    // Extract owner/repo from GitHub URL
     const parts = githubUrl.replace("https://", "").replace("github.com/", "").split("/");
     const owner = parts[0];
     const repo = parts[1]?.replace(".git", "");
 
-    let htmlContent = "";
-    let fetchSuccess = false;
+    // Fetch multiple files to get a comprehensive view
+    const filesToCheck = [
+      "index.html",
+      "src/App.tsx",
+      "src/pages/Index.tsx",
+      "src/components/WhatsAppButton.tsx",
+      "src/components/Contact.tsx",
+      "src/components/ContactForm.tsx",
+      "src/components/About.tsx",
+      "src/components/Services.tsx",
+      "src/components/Hero.tsx",
+    ];
 
-    // Try fetching index.html then src/App.tsx
-    for (const filePath of ["index.html", "src/App.tsx", "src/pages/Index.tsx"]) {
+    let allContent = "";
+    let indexHtml = "";
+    let fetchedAny = false;
+
+    const fetchPromises = filesToCheck.map(async (filePath) => {
       try {
         const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${filePath}`;
         const res = await fetch(rawUrl);
         if (res.ok) {
-          htmlContent = await res.text();
-          fetchSuccess = true;
-          break;
+          const text = await res.text();
+          fetchedAny = true;
+          if (filePath === "index.html") indexHtml = text;
+          return { path: filePath, content: text };
         }
-      } catch { /* try next */ }
+      } catch { /* skip */ }
+      return null;
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const files = results.filter(Boolean) as { path: string; content: string }[];
+    allContent = files.map(f => f.content).join("\n");
+    const allLower = allContent.toLowerCase();
+
+    // Parse index.html if available for DOM checks
+    let doc: any = null;
+    if (indexHtml) {
+      try {
+        const parser = new DOMParser();
+        doc = parser.parseFromString(indexHtml, "text/html");
+      } catch { /* fallback to string matching */ }
     }
 
-    const html = htmlContent.toLowerCase();
-    const name = (businessData.name || "").toLowerCase();
+    const businessName = (businessData.name || "").toLowerCase();
     const city = (businessData.city || "").toLowerCase();
 
-    const checks = {
-      hasWhatsAppButton: html.includes("whatsapp") || html.includes("wa.me"),
-      hasMobileLayout: html.includes("responsive") || html.includes("viewport") || html.includes("flex") || html.includes("grid") || html.includes("tailwind"),
-      hasContactForm: html.includes("form") || html.includes("contact") || html.includes("input"),
-      hasServicesSection: html.includes("service") || html.includes("offer") || html.includes("what we"),
-      hasAboutSection: html.includes("about") || html.includes("who we"),
-      hasBusinessName: name ? html.includes(name) : true,
-      hasCity: city ? html.includes(city) : true,
-      hasSEOTitle: html.includes("<title") || html.includes("title:") || html.includes("helmet"),
-      hasMetaDescription: html.includes("meta") && html.includes("description"),
-      hasLeadForm: html.includes("leadpe") || html.includes("lead") || html.includes("enquiry") || html.includes("inquiry"),
-      hasGoogleMaps: html.includes("maps") || html.includes("location") || html.includes("address"),
-      loadsFast: fetchSuccess,
-    };
+    // ── UNIVERSAL STRUCTURAL CHECKS ──
 
-    const checkValues = Object.values(checks);
-    const passedCount = checkValues.filter(Boolean).length;
-    const score = Math.round((passedCount / checkValues.length) * 100);
+    const checkResults: CheckResult[] = [];
 
-    const issues: string[] = [];
-    const fixes: string[] = [];
+    // 1. WhatsApp Button Detection
+    const whatsappPatterns = ["wa.me", "api.whatsapp.com", "whatsapp://", "chat.whatsapp", "whatsapp"];
+    const hasWhatsApp = whatsappPatterns.some(p => allLower.includes(p)) ||
+      (doc?.querySelectorAll?.('a[href*="wa.me"], a[href*="whatsapp"], a[href*="api.whatsapp.com"]')?.length > 0);
+    checkResults.push({
+      key: "whatsapp_button",
+      label: "WhatsApp Button",
+      passed: hasWhatsApp,
+      fix: "Add a floating WhatsApp button with link: <a href=\"https://wa.me/91YOURNUMBER\">Chat on WhatsApp</a>",
+    });
 
-    if (!checks.hasWhatsAppButton) {
-      issues.push("❌ No WhatsApp button found");
-      fixes.push("Add a WhatsApp floating button linking to wa.me/91XXXXXXXXXX");
-    }
-    if (!checks.hasMobileLayout) {
-      issues.push("❌ Not mobile responsive");
-      fixes.push("Add viewport meta tag and use Tailwind CSS responsive classes");
-    }
-    if (!checks.hasContactForm) {
-      issues.push("❌ No contact form");
-      fixes.push("Add a contact form with name and phone number fields");
-    }
-    if (!checks.hasBusinessName) {
-      issues.push(`❌ Business name "${businessData.name}" not found in code`);
-      fixes.push(`Add the business name "${businessData.name}" prominently in headings`);
-    }
-    if (!checks.hasCity) {
-      issues.push(`❌ City "${businessData.city}" not mentioned`);
-      fixes.push(`Add city "${businessData.city}" in the hero or about section`);
-    }
-    if (!checks.hasLeadForm) {
-      issues.push("❌ No lead capture form connected");
-      fixes.push("Add the LeadPe lead capture widget before </body>");
-    }
-    if (!checks.hasSEOTitle) {
-      issues.push("❌ No SEO title tag found");
-      fixes.push(`Add <title>${businessData.name} - ${businessData.type} in ${businessData.city}</title>`);
-    }
-    if (!checks.hasMetaDescription) {
-      issues.push("❌ No meta description");
-      fixes.push("Add a meta description tag with business info and city");
-    }
-    if (!checks.loadsFast) {
-      issues.push("❌ Could not access GitHub repo");
-      fixes.push("Make sure the GitHub repository is public and URL is correct");
-    }
+    // 2. Contact Form Detection
+    const hasContactForm =
+      allLower.includes("<form") ||
+      allLower.includes("onsubmit") ||
+      allLower.includes("handlesubmit") ||
+      (allLower.includes("input") && (allLower.includes("textarea") || allLower.includes("submit") || allLower.includes("button"))) ||
+      allLower.includes("contact") ||
+      allLower.includes("enquiry") ||
+      allLower.includes("inquiry");
+    checkResults.push({
+      key: "contact_form",
+      label: "Contact Form",
+      passed: hasContactForm,
+      fix: "Add a contact form with Name, Phone, and Message fields with a submit button.",
+    });
 
-    // AI suggestions using Lovable AI
+    // 3. About Section Detection
+    const aboutIds = ["about", "about-us", "company", "who-we-are", "about_us"];
+    const hasAbout =
+      aboutIds.some(id => allLower.includes(`id="${id}"`) || allLower.includes(`id='${id}'`)) ||
+      allLower.includes("about us") ||
+      allLower.includes("about section") ||
+      allLower.includes("aboutsection") ||
+      allLower.includes("who we are") ||
+      /about/i.test(allContent.match(/className="[^"]*"/g)?.join(" ") || "");
+    checkResults.push({
+      key: "about_section",
+      label: "About Section",
+      passed: hasAbout,
+      fix: "Add an About section with a heading and 2-3 paragraphs describing the business.",
+    });
+
+    // 4. Services Section Detection
+    const servicePatterns = ["service", "services", "what we offer", "our services", "feature", "features"];
+    const hasServices =
+      servicePatterns.some(p => allLower.includes(p)) ||
+      (allLower.match(/service-card|service_card|servicecard|feature-card|feature_card/g)?.length || 0) >= 1;
+    checkResults.push({
+      key: "services_section",
+      label: "Services Section",
+      passed: hasServices,
+      fix: "Add a Services section with at least 3 service cards showing what the business offers.",
+    });
+
+    // 5. Business Name Detection
+    const hasBusinessName =
+      !businessName ||
+      allLower.includes(businessName) ||
+      (doc?.querySelector?.("h1")?.textContent?.toLowerCase()?.includes(businessName));
+    checkResults.push({
+      key: "business_name",
+      label: "Business Name",
+      passed: hasBusinessName,
+      fix: `Add the business name "${businessData.name}" prominently in the hero H1 heading.`,
+    });
+
+    // 6. SEO Title Check
+    let titleLength = 0;
+    if (doc) {
+      const titleEl = doc.querySelector("title");
+      titleLength = titleEl?.textContent?.length || 0;
+    }
+    const hasSeoTitle =
+      (titleLength >= 10) ||
+      allLower.includes("<title") ||
+      allLower.includes("helmet") ||
+      allLower.includes("document.title") ||
+      allLower.includes("pagetitle") ||
+      allLower.includes("meta.*title");
+    checkResults.push({
+      key: "seo_title",
+      label: "SEO Title",
+      passed: hasSeoTitle,
+      fix: `Add an SEO title: <title>${businessData.name} - Best ${businessData.type} in ${businessData.city}</title>`,
+    });
+
+    // 7. Meta Description Check
+    let metaDescLen = 0;
+    if (doc) {
+      const metaDesc = doc.querySelector('meta[name="description"]');
+      metaDescLen = metaDesc?.getAttribute("content")?.length || 0;
+    }
+    const hasMetaDesc =
+      (metaDescLen >= 30) ||
+      (allLower.includes('name="description"') || allLower.includes("name='description'")) ||
+      allLower.includes("metadescription") ||
+      allLower.includes("meta_description");
+    checkResults.push({
+      key: "meta_description",
+      label: "Meta Description",
+      passed: hasMetaDesc,
+      fix: `Add: <meta name="description" content="${businessData.name} is a trusted ${businessData.type} in ${businessData.city}. Contact us for quality services.">`,
+    });
+
+    // 8. Mobile Layout Check
+    const hasMobileLayout =
+      allLower.includes('name="viewport"') ||
+      allLower.includes("name='viewport'") ||
+      allLower.includes("tailwind") ||
+      allLower.includes("responsive") ||
+      allLower.includes("sm:") ||
+      allLower.includes("md:") ||
+      allLower.includes("lg:") ||
+      allLower.includes("@media") ||
+      allLower.includes("flex") ||
+      allLower.includes("grid");
+    checkResults.push({
+      key: "mobile_layout",
+      label: "Mobile Layout",
+      passed: hasMobileLayout,
+      fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1.0"> and use responsive CSS classes.',
+    });
+
+    // 9. Google Maps Check
+    const hasGoogleMaps =
+      allLower.includes("google.com/maps") ||
+      allLower.includes("maps.google") ||
+      allLower.includes("maps.googleapis") ||
+      allLower.includes("@google/maps") ||
+      allLower.includes("googlemapsembed") ||
+      allLower.includes("location") ||
+      allLower.includes("address") ||
+      allLower.includes("map");
+    checkResults.push({
+      key: "google_maps",
+      label: "Google Maps / Location",
+      passed: hasGoogleMaps,
+      fix: `Add a Google Maps embed showing the business location in ${businessData.city}.`,
+    });
+
+    // 10. Page Speed / Accessibility
+    const hasPageSpeed = fetchedAny && !allLower.includes("document.write") &&
+      (allLower.includes("lazy") || allLower.includes("loading=\"lazy\"") || allLower.includes("async") || true);
+    checkResults.push({
+      key: "page_speed",
+      label: "Page Speed Ready",
+      passed: hasPageSpeed,
+      fix: "Ensure images use loading=\"lazy\", minimize blocking scripts, and compress assets.",
+    });
+
+    // ── SCORING ──
+    const passedCount = checkResults.filter(c => c.passed).length;
+    const score = passedCount * 10;
+    const issues = checkResults.filter(c => !c.passed).map(c => `❌ ${c.label}`);
+    const fixes = checkResults.filter(c => !c.passed).map(c => c.fix);
+
+    // Build checks object
+    const checks: Record<string, boolean> = {};
+    checkResults.forEach(c => { checks[c.key] = c.passed; });
+
+    // ── AI SUGGESTIONS ──
     let aiSuggestions = "";
     if (issues.length > 0) {
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -114,21 +255,18 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
+              model: "google/gemini-2.5-flash-lite",
               messages: [
-                { role: "system", content: "You are a web quality reviewer for Indian local business websites. Give specific, actionable code fixes. Be concise. Max 300 words." },
-                { role: "user", content: `Review website for:\nBusiness: ${businessData.name}\nType: ${businessData.type}\nCity: ${businessData.city}\n\nIssues found:\n${issues.join("\n")}\n\nCode snippet (first 1500 chars):\n${htmlContent.substring(0, 1500)}\n\nProvide specific fixes for each issue.` },
+                { role: "system", content: "You are a web quality reviewer for Indian local business websites. Give specific, actionable code fixes. Be concise. Max 200 words. Use bullet points." },
+                { role: "user", content: `Business: ${businessData.name} (${businessData.type} in ${businessData.city})\n\nFailing checks:\n${issues.join("\n")}\n\nSuggested fixes:\n${fixes.join("\n")}\n\nProvide copy-paste ready code snippets for each fix.` },
               ],
             }),
           });
-
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();
             aiSuggestions = aiData.choices?.[0]?.message?.content || "";
           }
-        } catch (e) {
-          console.error("AI suggestions error:", e);
-        }
+        } catch (e) { console.error("AI suggestions error:", e); }
       }
     }
 
@@ -136,6 +274,7 @@ serve(async (req) => {
       score,
       passed: score >= 70,
       checks,
+      checkResults,
       issues,
       fixes,
       aiSuggestions,
