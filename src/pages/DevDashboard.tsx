@@ -53,14 +53,12 @@ interface Earning {
 const LiveTimer = ({ deadline }: { deadline: string }) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [color, setColor] = useState("#00C853");
-  const [canAccept, setCanAccept] = useState(true);
   useEffect(() => {
     const tick = () => {
       const diff = new Date(deadline).getTime() - Date.now();
       if (diff <= 0) {
-        setTimeLeft("⚠️ Urgent");
+        setTimeLeft("⏰ Expired");
         setColor("#EF4444");
-        setCanAccept(true);
         return;
       }
       const hrs = Math.floor(diff / (1000 * 60 * 60));
@@ -71,15 +69,12 @@ const LiveTimer = ({ deadline }: { deadline: string }) => {
       if (diff < 6 * 60 * 60 * 1000) {
         setTimeLeft(formatted);
         setColor("#EF4444");
-        setCanAccept(false);
       } else if (diff < 12 * 60 * 60 * 1000) {
         setTimeLeft(formatted);
         setColor("#F57F17");
-        setCanAccept(true);
       } else {
         setTimeLeft(`${formatted} left ⏰`);
         setColor("#00C853");
-        setCanAccept(true);
       }
     };
     tick();
@@ -89,7 +84,6 @@ const LiveTimer = ({ deadline }: { deadline: string }) => {
   return (
     <span style={{ color, fontWeight: 700 }}>
       {timeLeft}
-      {!canAccept && <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: "#999" }}>Cannot accept — too little time</span>}
     </span>
   );
 };
@@ -150,22 +144,22 @@ export default function DevDashboard() {
       }, (payload) => {
         const updated = payload.new as BuildRequest;
 
-        // If someone accepted this request, remove from available pool
-        if (updated.assigned_coder_id && updated.status === "building") {
-          setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
-        }
-
-        // If status changed to expired, remove from available pool
-        if (updated.status === "expired") {
+        // If accepted or expired, remove from available pool instantly
+        if (updated.assigned_coder_id || updated.status !== "pending") {
           setBuildRequests(prev => prev.filter(r => r.id !== updated.id));
         }
 
         // If current coder's build was updated
         if (updated.assigned_coder_id === user?.id) {
-          setActiveBuilds(prev =>
-            prev.map(r => r.id === updated.id ? { ...r, ...updated } : r)
-          );
+          setActiveBuilds(prev => {
+            const exists = prev.some(r => r.id === updated.id);
+            if (exists) return prev.map(r => r.id === updated.id ? { ...r, ...updated } : r);
+            return [...prev, updated as BuildRequest];
+          });
         }
+
+        // Update notification count
+        setNotifications([]);
       })
       .on("postgres_changes", {
         event: "INSERT",
@@ -174,12 +168,16 @@ export default function DevDashboard() {
       }, (payload) => {
         const newRow = payload.new as BuildRequest;
         if (!newRow.assigned_coder_id && newRow.status === "pending") {
-          setBuildRequests(prev => [newRow, ...prev]);
+          // Only add if not expired
+          const hdl = (newRow as any).hard_deadline || newRow.deadline;
+          if (!hdl || new Date(hdl).getTime() > Date.now()) {
+            setBuildRequests(prev => [newRow, ...prev]);
+          }
         }
       })
       .subscribe();
 
-    // Auto-remove expired cards every 60 seconds
+    // Auto-remove expired cards every 30 seconds
     const expiryInterval = setInterval(() => {
       setBuildRequests(prev =>
         prev.filter(r => {
@@ -187,7 +185,7 @@ export default function DevDashboard() {
           return !hdl || new Date(hdl).getTime() > Date.now();
         })
       );
-    }, 60000);
+    }, 30000);
 
     return () => {
       supabase.removeChannel(channel);
@@ -227,10 +225,13 @@ export default function DevDashboard() {
       console.error("Build requests fetch error:", pendingError);
       toast({ title: "Could not load requests", description: pendingError.message, variant: "destructive" });
     } else {
-      if (!pendingData || pendingData.length === 0) {
-        console.log("No pending requests found");
-      }
-      setBuildRequests(pendingData || []);
+      // Filter out expired requests client-side
+      const now = Date.now();
+      const validRequests = (pendingData || []).filter(r => {
+        const hdl = (r as any).hard_deadline || (r as any).deadline;
+        return !hdl || new Date(hdl).getTime() > now;
+      });
+      setBuildRequests(validRequests);
     }
     
     
@@ -371,7 +372,7 @@ export default function DevDashboard() {
   const handleAcceptRequest = async (request: BuildRequest) => {
     if (!user || acceptingId) return;
 
-    // Step 1: Check active builds limit via DB count
+    // Check active builds limit
     const { count } = await supabase
       .from("build_requests")
       .select("id", { count: "exact", head: true })
@@ -379,51 +380,32 @@ export default function DevDashboard() {
       .in("status", ["building", "demo_ready", "revision"]);
 
     if ((count ?? 0) >= 3) {
-      toast({
-        title: "Limit reached",
-        description: "Complete one of your 3 active builds first.",
-        variant: "destructive"
-      });
+      toast({ title: "Limit reached", description: "Complete one of your 3 active builds first.", variant: "destructive" });
       return;
     }
 
     setAcceptingId(request.id);
 
-    // Step 2: Remove from UI immediately (optimistic)
+    // Optimistic UI removal
     setBuildRequests(prev => prev.filter(r => r.id !== request.id));
 
-    // Step 3: Attempt database update
-    const { data, error } = await (supabase as any).from("build_requests")
-      .update({
-        status: "building",
-        assigned_coder_id: user.id,
-        assigned_coder_name: profile?.full_name || "Unknown",
-      })
-      .eq("id", request.id)
-      .is("assigned_coder_id", null)
-      .eq("status", "pending")
-      .select();
+    // Atomic RPC call — only one coder can win
+    const { data: success, error } = await supabase.rpc("accept_build_request", {
+      _request_id: request.id,
+      _coder_id: user.id,
+      _coder_name: profile?.full_name || "Unknown",
+    });
 
-    // Step 4: Handle result
-    if (error || !data || data.length === 0) {
-      // Failed — someone else got it. Card already removed — do NOT add back.
-      toast({
-        title: "Already taken",
-        description: "Another builder accepted this request.",
-        variant: "destructive"
-      });
+    if (error || !success) {
+      // Someone else got it — card stays removed (no ghost reappearance)
+      toast({ title: "Already taken", description: "Another builder accepted this request.", variant: "destructive" });
       setAcceptingId(null);
       return;
     }
 
-    // Step 5: Success
-    toast({
-      title: "Build accepted!",
-      description: "Open the brief and start building.",
-    });
-
-    // Step 6: Add to my builds
-    setActiveBuilds(prev => [...prev, data[0]]);
+    // Success — add to active builds
+    toast({ title: "Build accepted!", description: "Open the brief and start building." });
+    setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
     setAcceptingId(null);
   };
   
@@ -625,42 +607,35 @@ export default function DevDashboard() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {buildRequests.map((request) => {
                     const hdl = (request as any).hard_deadline || request.deadline;
-                    const isTimeUp = hdl && new Date(hdl).getTime() < Date.now();
-                    const diff = hdl ? new Date(hdl).getTime() - Date.now() : Infinity;
-                    const tooLittleTime = diff > 0 && diff < 6 * 60 * 60 * 1000;
+                    const isExpired = hdl && new Date(hdl).getTime() < Date.now();
+                    if (isExpired) return null;
                     return (
-                    <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
+                    <div key={request.id} className="rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow border border-[#E0F2E9]">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
-                          <p className="text-xs text-[#666]">{request.business_type} · {request.city}</p>
+                        <div className="text-2xl flex-shrink-0">{getBusinessIcon(request.business_type)}</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-[#1A1A1A] truncate" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
+                          <p className="text-xs text-[#666] truncate">{request.business_type} · {request.city}</p>
                         </div>
-                        {isTimeUp && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ Urgent</span>
-                        )}
                       </div>
                       <div className="space-y-2 mb-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-[#666]">You earn:</span>
                           <span className="font-bold text-[#00C853]">₹{(request.coder_earning || getBuildingFee(request.plan_selected)).toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-[#666]">Deadline:</span>
-                          <LiveTimer deadline={(request as any).hard_deadline || request.deadline} />
+                          <LiveTimer deadline={hdl} />
                         </div>
                       </div>
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2">
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id || tooLittleTime} className="flex-1 font-semibold text-white" style={{ backgroundColor: tooLittleTime ? "#999" : "#00C853" }}>
-                          {acceptingId === request.id ? "Accepting..." : tooLittleTime ? "Too late" : "Accept ✓"}
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={!!acceptingId} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
                         </Button>
                       </div>
-                      {tooLittleTime && (
-                        <p className="text-xs mt-1" style={{ color: "#999" }}>Less than 6 hours remaining. Cannot guarantee quality delivery.</p>
-                      )}
                     </div>
                     );
                   })}
@@ -686,15 +661,15 @@ export default function DevDashboard() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-4">
                   {activeBuilds.map((request) => (
                     <div key={request.id} className="rounded-xl border border-[#E0F2E9] p-5 bg-white shadow-sm flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                            <div>
-                              <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
-                              <p className="text-xs text-[#666]">{request.package_id ? getPackageById(request.package_id).badge : request.plan_selected}</p>
-                            </div>
-                          </div>
+                       <div>
+                         <div className="flex items-center justify-between mb-3">
+                           <div className="flex items-center gap-3 min-w-0 flex-1">
+                             <div className="text-2xl flex-shrink-0">{getBusinessIcon(request.business_type)}</div>
+                             <div className="min-w-0">
+                               <h4 className="font-bold text-[#1A1A1A] truncate" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
+                               <p className="text-xs text-[#666] truncate">{request.package_id ? getPackageById(request.package_id).badge : request.plan_selected}</p>
+                             </div>
+                           </div>
                           <span className="text-xs font-semibold px-2 py-1 rounded bg-green-50 text-[#00C853] border border-green-200">
                             ACCEPTED ✓
                           </span>
