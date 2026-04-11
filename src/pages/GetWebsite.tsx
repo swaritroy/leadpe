@@ -96,45 +96,74 @@ export default function GetWebsite() {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== idx));
   }, []);
 
+  // Compress image before upload
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.7): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ratio = Math.min(maxWidth / img.width, 1);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob || file), "image/jpeg", quality);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const handleSubmit = async () => {
     setLoading(true);
+    setUploadProgress(0);
     try {
       const customerName = profile?.full_name || name || businessName;
       const customerWhatsapp = whatsapp.replace(/\D/g, "");
 
-      // Upload images to Supabase Storage
+      // Upload images asynchronously with compression
       let logoUrl: string | null = null;
       const photoUrls: string[] = [];
+      const totalFiles = (logoFile ? 1 : 0) + photoFiles.length;
+      let uploaded = 0;
 
       if (logoFile && user) {
-        const ext = logoFile.name.split(".").pop();
-        const path = `${user.id}/logo/logo.${ext}`;
+        const compressed = await compressImage(logoFile);
+        const path = `${user.id}/logo/logo.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from("business-assets")
-          .upload(path, logoFile, { upsert: true });
+          .upload(path, compressed, { upsert: true, contentType: "image/jpeg" });
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from("business-assets").getPublicUrl(path);
           logoUrl = urlData.publicUrl;
         }
+        uploaded++;
+        setUploadProgress(Math.round((uploaded / Math.max(totalFiles, 1)) * 100));
       }
 
       if (photoFiles.length > 0 && user) {
-        for (let i = 0; i < photoFiles.length; i++) {
-          const file = photoFiles[i];
-          const ext = file.name.split(".").pop();
-          const path = `${user.id}/photos/photo-${i}.${ext}`;
+        // Upload all photos in parallel
+        const photoPromises = photoFiles.map(async (file, i) => {
+          const compressed = await compressImage(file);
+          const path = `${user.id}/photos/photo-${i}.jpg`;
           const { error: uploadErr } = await supabase.storage
             .from("business-assets")
-            .upload(path, file, { upsert: true });
+            .upload(path, compressed, { upsert: true, contentType: "image/jpeg" });
           if (!uploadErr) {
             const { data: urlData } = supabase.storage.from("business-assets").getPublicUrl(path);
-            photoUrls.push(urlData.publicUrl);
+            return urlData.publicUrl;
           }
-        }
+          return null;
+        });
+        const results = await Promise.all(photoPromises);
+        results.forEach(url => { if (url) photoUrls.push(url); });
+        setUploadProgress(100);
       }
 
       // 1. Insert order
-      const { data: order, error: orderError } = await supabase
+      const { error: orderError } = await supabase
         .from("orders")
         .insert({
           customer_name: customerName,
@@ -259,8 +288,11 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           .eq("user_id", user.id);
       }
 
-      // 7. Navigate to dashboard
-      navigate("/client/dashboard", { replace: true });
+      // 7. Show success animation then redirect
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate("/client/dashboard", { replace: true });
+      }, 2500);
     } catch (err: unknown) {
       console.error("Order error:", err);
       toast({
@@ -271,6 +303,21 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
       setLoading(false);
     }
   };
+
+  // --- SUCCESS ANIMATION ---
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }} className="text-7xl mb-6">🎉</motion.div>
+          <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Order Placed!</h1>
+          <p className="text-[#666]">Your website is being assigned to a builder...</p>
+          <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 2 }}
+            className="h-1 rounded-full mt-6 mx-auto max-w-[200px]" style={{ backgroundColor: "#00C853" }} />
+        </motion.div>
+      </div>
+    );
+  }
 
   // --- SUCCESS PAGE ---
   if (submitted && orderResult) {
