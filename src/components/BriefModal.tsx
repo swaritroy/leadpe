@@ -98,10 +98,18 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
   };
 
   const getFallbackPrompt = () => {
-    return `Build a professional website for a real Indian local business.
-Use React + Tailwind CSS. Mobile-first. Fast loading. Beautiful.
+    const widgetCode = generateLeadWidgetCode({
+      id: request.business_id || request.id,
+      name: request.business_name,
+      whatsapp: request.owner_whatsapp,
+    });
 
-BUSINESS:
+    return `Build a professional website for a real Indian local business.
+Use React + Vite + Tailwind CSS. Mobile-first. Fast loading. Beautiful.
+
+═══════════════════════════════════════════
+BUSINESS DETAILS
+═══════════════════════════════════════════
 Name: ${request.business_name}
 Type: ${request.business_type}
 City: ${request.city}, India
@@ -110,31 +118,66 @@ WhatsApp: +91${request.owner_whatsapp}
 Color: ${(request as any).color_preference || "green"}
 Style: ${(request as any).style_preference || "modern"}
 
-PAGES TO BUILD:
-
-HOME PAGE:
+═══════════════════════════════════════════
+HOME PAGE
+═══════════════════════════════════════════
 - Hero: "Best ${request.business_type} in ${request.city}"
 - Big green WhatsApp button → wa.me/91${request.owner_whatsapp}
-- 4 service cards for ${request.business_type}
-- About section
+- 4-6 service cards specific to ${request.business_type}
+- About section with owner name
+- Testimonials from ${request.city} customers
 - Contact section with WhatsApp
 
-DESIGN:
+═══════════════════════════════════════════
+DESIGN
+═══════════════════════════════════════════
 Primary: #00C853 (or chosen color)
-Mobile-first, 44px+ buttons, 16px radius
+Mobile-first, 48px+ buttons, 16px radius
+Font: Syne headings, Inter body
 
-SEO:
+═══════════════════════════════════════════
+FLOATING WHATSAPP BUTTON
+═══════════════════════════════════════════
+Fixed bottom-right, green, pulse animation, z-index 9999
+Links to: https://wa.me/91${request.owner_whatsapp}
+
+═══════════════════════════════════════════
+SEO
+═══════════════════════════════════════════
 <title>${request.business_name} - Best ${request.business_type} in ${request.city}</title>
 <meta name="description" content="Best ${request.business_type} in ${request.city}. Contact ${request.business_name} on WhatsApp.">
+LocalBusiness schema JSON-LD
 
-DEMO MODE:
-Check VITE_LEADPE_MODE env var. If "demo": show orange bar "Preview Only", disable contact buttons.
+═══════════════════════════════════════════
+DEMO MODE
+═══════════════════════════════════════════
+Check VITE_LEADPE_MODE env var.
+If "demo": show orange bar "⚠️ This is a preview", disable contact buttons.
+If "live" or not set: normal mode.
 
-LEAD WIDGET (REQUIRED):
-Add lead capture form with name, phone, interest. Submit to Supabase.
-business_id: "${request.business_id || request.id}"
+═══════════════════════════════════════════
+⚠️ LEADPE LEAD CAPTURE WIDGET — CRITICAL ⚠️
+═══════════════════════════════════════════
+This is the MOST IMPORTANT part of the website.
+It captures customer leads and sends them to the LeadPe database.
+WITHOUT this widget, the website is USELESS.
 
-After building: Connect GitHub in Lovable → Copy repo URL → Submit in LeadPe.`;
+Embed this EXACT code in the contact section or before footer:
+
+${widgetCode}
+
+DO NOT modify the business_id, Supabase URL, or API key.
+"Powered by LeadPe 🌱" must remain visible.
+
+═══════════════════════════════════════════
+FOOTER
+═══════════════════════════════════════════
+Business info, quick links, "Powered by LeadPe 🌱"
+
+═══════════════════════════════════════════
+AFTER BUILDING
+═══════════════════════════════════════════
+Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL → Submit in LeadPe Studio.`;
   };
 
   const handleCopy = async () => {
