@@ -1110,6 +1110,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_build_request: {
+        Args: { _coder_id: string; _coder_name: string; _request_id: string }
+        Returns: boolean
+      }
+      expire_stale_requests: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
