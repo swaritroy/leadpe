@@ -221,8 +221,7 @@ export default function DevDashboard() {
       .select("*")
       .eq("status", "pending")
       .is("assigned_coder_id", null)
-      .gt("hard_deadline", new Date().toISOString())
-      .order("hard_deadline", { ascending: true });
+      .order("created_at", { ascending: false });
     
     if (pendingError) {
       console.error("Build requests fetch error:", pendingError);

@@ -209,6 +209,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
       }
 
       // 4. Insert build request
+      const hardDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       const { error: brError } = await supabase.from("build_requests").insert({
         business_id: user?.id || null,
         business_name: businessName,
@@ -222,6 +223,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
         ai_prompt: aiPrompt,
         special_requirements: additionalDetails || null,
         status: "pending",
+        hard_deadline: hardDeadline,
+        deadline: hardDeadline,
       });
 
       if (brError) throw brError;
