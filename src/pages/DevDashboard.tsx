@@ -607,42 +607,35 @@ export default function DevDashboard() {
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {buildRequests.map((request) => {
                     const hdl = (request as any).hard_deadline || request.deadline;
-                    const isTimeUp = hdl && new Date(hdl).getTime() < Date.now();
-                    const diff = hdl ? new Date(hdl).getTime() - Date.now() : Infinity;
-                    const tooLittleTime = diff > 0 && diff < 6 * 60 * 60 * 1000;
+                    const isExpired = hdl && new Date(hdl).getTime() < Date.now();
+                    if (isExpired) return null;
                     return (
-                    <div key={request.id} className={`rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow ${isTimeUp ? "border-2 border-red-400" : "border border-[#E0F2E9]"}`}>
+                    <div key={request.id} className="rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow border border-[#E0F2E9]">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="text-2xl">{getBusinessIcon(request.business_type)}</div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-[#1A1A1A]" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
-                          <p className="text-xs text-[#666]">{request.business_type} · {request.city}</p>
+                        <div className="text-2xl flex-shrink-0">{getBusinessIcon(request.business_type)}</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-[#1A1A1A] truncate" style={{ fontFamily: "Syne, sans-serif" }}>{request.business_name}</h4>
+                          <p className="text-xs text-[#666] truncate">{request.business_type} · {request.city}</p>
                         </div>
-                        {isTimeUp && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600">⚠️ Urgent</span>
-                        )}
                       </div>
                       <div className="space-y-2 mb-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-[#666]">You earn:</span>
                           <span className="font-bold text-[#00C853]">₹{(request.coder_earning || getBuildingFee(request.plan_selected)).toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-[#666]">Deadline:</span>
-                          <LiveTimer deadline={(request as any).hard_deadline || request.deadline} />
+                          <LiveTimer deadline={hdl} />
                         </div>
                       </div>
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2">
                         <Button variant="outline" className="flex-1 font-semibold text-[#00C853] border-2 border-[#00C853]" onClick={() => handleViewBrief(request)}>
                           Details →
                         </Button>
-                        <Button onClick={() => handleAcceptRequest(request)} disabled={acceptingId === request.id || tooLittleTime} className="flex-1 font-semibold text-white" style={{ backgroundColor: tooLittleTime ? "#999" : "#00C853" }}>
-                          {acceptingId === request.id ? "Accepting..." : tooLittleTime ? "Too late" : "Accept ✓"}
+                        <Button onClick={() => handleAcceptRequest(request)} disabled={!!acceptingId} className="flex-1 font-semibold text-white" style={{ backgroundColor: "#00C853" }}>
+                          {acceptingId === request.id ? "Accepting..." : "Accept ✓"}
                         </Button>
                       </div>
-                      {tooLittleTime && (
-                        <p className="text-xs mt-1" style={{ color: "#999" }}>Less than 6 hours remaining. Cannot guarantee quality delivery.</p>
-                      )}
                     </div>
                     );
                   })}
