@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, Copy, Loader2, CheckCircle, XCircle, Shield, AlertCircle, ClipboardCopy } from "lucide-react";
+import { X, Loader2, CheckCircle, XCircle, AlertCircle, ImageIcon, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qualityChecker";
@@ -18,40 +18,118 @@ interface BriefModalProps {
   onRefresh: () => void;
 }
 
+type ErrorType = "private_repo" | "invalid_url" | "empty_repo" | "no_build" | "build_failed" | "network" | "timeout" | "quality_failed" | "domain_taken" | null;
+
+interface DeployError {
+  type: ErrorType;
+  message: string;
+  detail?: string;
+}
+
+function getErrorCard(err: DeployError, onRetry: () => void) {
+  const configs: Record<string, { icon: string; title: string; steps?: string[]; retryLabel?: string }> = {
+    private_repo: {
+      icon: "🔒", title: "Repository is private",
+      steps: ["Go to your GitHub repo", "Settings → scroll to bottom", "Change visibility to Public", "Come back and submit again"],
+      retryLabel: "I made it public — Try again →",
+    },
+    invalid_url: {
+      icon: "🔗", title: "Invalid GitHub URL",
+      steps: ["Enter a valid GitHub repository URL", "Example: github.com/yourname/business-website", "NOT: github.com (just the homepage)"],
+    },
+    empty_repo: {
+      icon: "📭", title: "Repository is empty",
+      steps: ["Your GitHub repo has no files", "Push your website code first", "Then submit the URL"],
+    },
+    no_build: {
+      icon: "⚙️", title: "Build setup missing",
+      steps: ["Your project needs a package.json with a build command", "If using plain HTML: just needs index.html at root"],
+    },
+    build_failed: {
+      icon: "🔴", title: "Build failed",
+      steps: ["Your website has code errors", "Fix the errors and push again"],
+      retryLabel: "I fixed it — Try again →",
+    },
+    network: {
+      icon: "📡", title: "Connection error",
+      steps: ["Check your internet connection and try again"],
+      retryLabel: "Retry →",
+    },
+    timeout: {
+      icon: "⏳", title: "Taking longer than expected",
+      steps: ["Deployment is still running", "Check back in 5 minutes", "If still not done, contact admin"],
+    },
+    quality_failed: {
+      icon: "📊", title: "Quality check failed",
+      steps: ["Fix the issues listed below and resubmit"],
+      retryLabel: "I fixed it — Try again →",
+    },
+    domain_taken: {
+      icon: "🌐", title: "Website address taken",
+      steps: ["Go back and choose a different website address"],
+    },
+  };
+
+  const cfg = configs[err.type || "network"] || configs.network;
+
+  return (
+    <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: "#FEF2F2", border: "2px solid #EF4444" }}>
+      <div className="flex items-center gap-2 mb-2">
+        <span style={{ fontSize: 24 }}>{cfg.icon}</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: "#DC2626" }}>❌ {cfg.title}</span>
+      </div>
+      {err.detail && <p style={{ fontSize: 13, color: "#991B1B", marginBottom: 8 }}>{err.detail}</p>}
+      {cfg.steps && (
+        <div className="space-y-1 mb-3">
+          {cfg.steps.map((s, i) => (
+            <p key={i} style={{ fontSize: 13, color: "#7F1D1D" }}>{i + 1}. {s}</p>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {cfg.retryLabel && (
+          <button onClick={onRetry} style={{ flex: 1, backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", minHeight: 44 }}>
+            {cfg.retryLabel}
+          </button>
+        )}
+        <button onClick={() => window.open("https://wa.me/919973383902?text=Help%20with%20deployment%20error", "_blank")}
+          style={{ flex: cfg.retryLabel ? 0 : 1, backgroundColor: "#fff", color: "#666", border: "1px solid #E0E0E0", borderRadius: 10, padding: "12px", fontSize: 13, cursor: "pointer", minHeight: 44, whiteSpace: "nowrap" }}>
+          Contact Support
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function BriefModal({ request, profile, userId, onClose, onRefresh }: BriefModalProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"prompt" | "info" | "submit">("prompt");
   const [prompt, setPrompt] = useState("");
-  const [promptLoaing, setPromptLoaing] = useState(true);
+  const [promptLoading, setPromptLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [githubUrl, setGithubUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [qualityChecking, setQualityChecking] = useState(false);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [widgetCopied, setWidgetCopied] = useState(false);
+  const [deployError, setDeployError] = useState<DeployError | null>(null);
 
-  // Generate AI prompt on mount
   useEffect(() => {
     generatePrompt();
   }, [request.id]);
 
   const generatePrompt = async () => {
-    setPromptLoaing(true);
+    setPromptLoading(true);
     try {
-      // 1. Check if ai_prompt already exists in the database
-      const { data: existingRequest, error: fetchError } = await (supabase as any)
-        .from("build_requests")
-        .select("ai_prompt")
-        .eq("id", request.id)
-        .maybeSingle();
+      const { data: existingRequest } = await (supabase as any)
+        .from("build_requests").select("ai_prompt").eq("id", request.id).maybeSingle();
 
       if (existingRequest?.ai_prompt) {
         setPrompt(existingRequest.ai_prompt);
-        setPromptLoaing(false);
+        setPromptLoading(false);
         return;
       }
 
-      // 2. Fetch SEO and generate new prompt
       const { data: seoData } = await (supabase as any).from("business_seo")
         .select("*").eq("business_id", request.business_id || request.id).maybeSingle();
 
@@ -59,11 +137,8 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
         body: {
           type: "prompt",
           data: {
-            name: request.business_name,
-            type: request.business_type,
-            city: request.city,
-            ownerName: request.owner_name,
-            whatsapp: request.owner_whatsapp?.replace(/\D/g, ""),
+            name: request.business_name, type: request.business_type, city: request.city,
+            ownerName: request.owner_name, whatsapp: request.owner_whatsapp?.replace(/\D/g, ""),
             colorPreference: (request as any).color_preference || "green",
             stylePreference: (request as any).style_preference || "modern",
             specialRequirements: request.special_requirements || "",
@@ -77,32 +152,31 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
 
       let generatedPrompt = "";
       if (error || data?.error || !data?.result) {
-        console.error("Prompt generation error:", error || data?.error);
         generatedPrompt = getFallbackPrompt();
       } else {
         generatedPrompt = data.result;
       }
-      
       setPrompt(generatedPrompt);
 
-      // 3. Save to database for next time
-      await (supabase as any).from("build_requests")
-        .update({ ai_prompt: generatedPrompt })
-        .eq("id", request.id);
-
-    } catch (e) {
-      console.error("Prompt error:", e);
+      await (supabase as any).from("build_requests").update({ ai_prompt: generatedPrompt }).eq("id", request.id);
+    } catch {
       setPrompt(getFallbackPrompt());
     }
-    setPromptLoaing(false);
+    setPromptLoading(false);
   };
 
   const getFallbackPrompt = () => {
     const widgetCode = generateLeadWidgetCode({
-      id: request.business_id || request.id,
-      name: request.business_name,
-      whatsapp: request.owner_whatsapp,
+      id: request.business_id || request.id, name: request.business_name, whatsapp: request.owner_whatsapp,
     });
+
+    const logoSection = (request as any).logo_url
+      ? `\n════ LOGO ════\nUSE THIS LOGO: ${(request as any).logo_url}\nPlace in navbar prominently.\n`
+      : "\n════ LOGO ════\nNo logo — create text logo using business name.\n";
+
+    const photosSection = (request as any).photos_urls?.length > 0
+      ? `\n════ BUSINESS PHOTOS ════\nUSE THESE ACTUAL PHOTOS:\n${(request as any).photos_urls.join("\n")}\nUse in hero and gallery. Do NOT use stock photos.\n`
+      : "";
 
     return `Build a professional website for a real Indian local business.
 Use React + Vite + Tailwind CSS. Mobile-first. Fast loading. Beautiful.
@@ -116,8 +190,7 @@ City: ${request.city}, India
 Owner: ${request.owner_name}
 WhatsApp: +91${request.owner_whatsapp}
 Color: ${(request as any).color_preference || "green"}
-Style: ${(request as any).style_preference || "modern"}
-
+${logoSection}${photosSection}
 ═══════════════════════════════════════════
 HOME PAGE
 ═══════════════════════════════════════════
@@ -129,23 +202,15 @@ HOME PAGE
 - Contact section with WhatsApp
 
 ═══════════════════════════════════════════
-DESIGN
-═══════════════════════════════════════════
-Primary: #00C853 (or chosen color)
-Mobile-first, 48px+ buttons, 16px radius
-Font: Syne headings, Inter body
-
-═══════════════════════════════════════════
 FLOATING WHATSAPP BUTTON
 ═══════════════════════════════════════════
-Fixed bottom-right, green, pulse animation, z-index 9999
+Fixed bottom-right, green #25D366, pulse animation, z-index 9999
 Links to: https://wa.me/91${request.owner_whatsapp}
 
 ═══════════════════════════════════════════
 SEO
 ═══════════════════════════════════════════
 <title>${request.business_name} - Best ${request.business_type} in ${request.city}</title>
-<meta name="description" content="Best ${request.business_type} in ${request.city}. Contact ${request.business_name} on WhatsApp.">
 LocalBusiness schema JSON-LD
 
 ═══════════════════════════════════════════
@@ -153,21 +218,21 @@ DEMO MODE
 ═══════════════════════════════════════════
 Check VITE_LEADPE_MODE env var.
 If "demo": show orange bar "⚠️ This is a preview", disable contact buttons.
-If "live" or not set: normal mode.
 
 ═══════════════════════════════════════════
 ⚠️ LEADPE LEAD CAPTURE WIDGET — CRITICAL ⚠️
 ═══════════════════════════════════════════
-This is the MOST IMPORTANT part of the website.
-It captures customer leads and sends them to the LeadPe database.
-WITHOUT this widget, the website is USELESS.
-
-Embed this EXACT code in the contact section or before footer:
+Embed this EXACT code in the contact section:
 
 ${widgetCode}
 
-DO NOT modify the business_id, Supabase URL, or API key.
-"Powered by LeadPe 🌱" must remain visible.
+═══════════════════════════════════════════
+VIRAL FOOTER (REQUIRED)
+═══════════════════════════════════════════
+At the very bottom of every page footer:
+"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+Font size: 12px, Color: #999999
+"leadpe.tech" must be a clickable link to https://leadpe.tech (new tab)
 
 ═══════════════════════════════════════════
 FOOTER
@@ -177,7 +242,7 @@ Business info, quick links, "Powered by LeadPe 🌱"
 ═══════════════════════════════════════════
 AFTER BUILDING
 ═══════════════════════════════════════════
-Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL → Submit in LeadPe Studio.`;
+Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
   };
 
   const handleCopy = async () => {
@@ -187,35 +252,53 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const detectErrorType = (error: string): DeployError => {
+    const e = error.toLowerCase();
+    if (e.includes("not found") || e.includes("403") || e.includes("private")) return { type: "private_repo", message: error };
+    if (e.includes("empty") || e.includes("no files")) return { type: "empty_repo", message: error };
+    if (e.includes("package.json") || e.includes("build script") || e.includes("no build")) return { type: "no_build", message: error };
+    if (e.includes("build fail") || e.includes("compilation") || e.includes("syntax")) return { type: "build_failed", message: error, detail: error };
+    if (e.includes("timeout") || e.includes("timed out")) return { type: "timeout", message: error };
+    if (e.includes("network") || e.includes("fetch") || e.includes("ECONNREFUSED")) return { type: "network", message: error };
+    if (e.includes("domain") || e.includes("taken") || e.includes("already")) return { type: "domain_taken", message: error };
+    return { type: "build_failed", message: error, detail: error };
+  };
+
+  const validateGithubUrl = (url: string): DeployError | null => {
+    if (!url) return { type: "invalid_url", message: "URL is empty" };
+    const cleaned = url.replace(/https?:\/\//, "").replace(/\/$/, "");
+    if (!cleaned.includes("github.com")) return { type: "invalid_url", message: "Not a GitHub URL" };
+    const parts = cleaned.split("/").filter(Boolean);
+    if (parts.length < 3) return { type: "invalid_url", message: "Missing username or repo name" };
+    return null;
+  };
+
   const handleSubmitGithub = async () => {
-    // Validate GitHub URL format
-    const isValidGithub = githubUrl.includes("github.com") && githubUrl.split("/").filter(Boolean).length >= 2;
-    if (!isValidGithub) {
-      toast({ title: "Invalid URL", description: "Enter a valid GitHub URL. Example: github.com/username/repo-name", variant: "destructive" });
+    setDeployError(null);
+    const urlError = validateGithubUrl(githubUrl);
+    if (urlError) {
+      setDeployError(urlError);
       return;
     }
+
     setSubmitting(true);
     setQualityChecking(true);
     setQualityReport(null);
 
     try {
       const report = await checkWebsiteQuality(githubUrl, {
-        name: request.business_name,
-        type: request.business_type,
-        city: request.city,
+        name: request.business_name, type: request.business_type, city: request.city,
       });
       setQualityReport(report);
       setQualityChecking(false);
 
       await (supabase as any).from("quality_reports").insert({
-        build_request_id: request.id,
-        score: report.score, passed: report.passed,
-        checks: report.checks, issues: report.issues,
-        fixes: report.fixes, ai_suggestions: report.aiSuggestions,
+        build_request_id: request.id, score: report.score, passed: report.passed,
+        checks: report.checks, issues: report.issues, fixes: report.fixes, ai_suggestions: report.aiSuggestions,
       });
 
       if (!report.passed) {
-        toast({ title: `⚠️ Score: ${report.score}/100`, description: "Fix issues and resubmit.", variant: "destructive" });
+        setDeployError({ type: "quality_failed", message: `Score: ${report.score}/100`, detail: report.issues.join("\n") });
         setSubmitting(false);
         return;
       }
@@ -226,21 +309,20 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
         status: "review", github_url: githubUrl, submitted_at: new Date().toISOString(),
       }).eq("id", request.id);
 
-      const deployResult = await deployWebsite({
-        id: request.id,
-        businessName: request.business_name,
-        businessType: request.business_type,
-        city: request.city,
-        githubUrl,
-        trialCode: "",
+      // Deploy with timeout
+      const deployPromise = deployWebsite({
+        id: request.id, businessName: request.business_name, businessType: request.business_type,
+        city: request.city, githubUrl, trialCode: "",
       });
+      const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Deployment timeout")), 180000));
+
+      const deployResult = await Promise.race([deployPromise, timeoutPromise]).catch((err) => {
+        return { success: false, error: err.message || "Deployment failed", deployUrl: null };
+      }) as any;
 
       if (deployResult.success && deployResult.deployUrl) {
         await (supabase as any).from("build_requests").update({
-          status: "demo_ready",
-          deploy_url: deployResult.deployUrl,
-          deployed_at: new Date().toISOString(),
-          github_url: githubUrl,
+          status: "demo_ready", deploy_url: deployResult.deployUrl, deployed_at: new Date().toISOString(), github_url: githubUrl,
         }).eq("id", request.id);
 
         const coderEarn = request.coder_earning || 640;
@@ -250,15 +332,20 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
         window.open(`https://wa.me/919973383902?text=${encodeURIComponent(`✅ DEPLOYED\nBusiness: ${request.business_name}\nURL: ${deployResult.deployUrl}\nScore: ${report.score}/100\nCoder: ${profile?.full_name}\nLeadPe ⚡`)}`, "_blank");
 
         toast({ title: "🚀 Deployed!", description: `${deployResult.deployUrl} — ₹${coderEarn} earned!` });
+        onClose();
+        onRefresh();
       } else {
-        toast({ title: "⚠️ Auto deploy failed", description: deployResult.error || "Admin will deploy.", variant: "destructive" });
+        setDeployError(detectErrorType(deployResult.error || "Deployment failed"));
       }
-
-      onClose();
-      onRefresh();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Submit error:", e);
-      toast({ title: "Error", description: "Failed to submit", variant: "destructive" });
+      if (e.message?.includes("timeout")) {
+        setDeployError({ type: "timeout", message: "Deployment timed out" });
+      } else if (e.message?.includes("fetch") || e.message?.includes("network")) {
+        setDeployError({ type: "network", message: e.message });
+      } else {
+        setDeployError(detectErrorType(e.message || "Unknown error"));
+      }
     } finally {
       setSubmitting(false);
       setQualityChecking(false);
@@ -273,31 +360,24 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
-      onClick={onClose}>
-      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 25 }}
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25 }}
         className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-[720px] sm:rounded-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}>
 
         {/* TOP BAR */}
         <div className="flex items-center justify-between px-5 border-b" style={{ height: 56, borderColor: "#F0F0F0" }}>
-          <div>
-            <span style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
-          </div>
+          <span style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700 }}>Build Brief</span>
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 14, color: "#666" }}>{request.business_name}</span>
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <X size={20} />
-            </button>
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={20} /></button>
           </div>
         </div>
 
         {/* TAB BAR */}
         <div className="flex border-b" style={{ borderColor: "#F0F0F0" }}>
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="flex-1 text-center py-3"
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="flex-1 text-center py-3"
               style={{
                 fontFamily: font.body, fontSize: 14, fontWeight: activeTab === tab.id ? 600 : 400,
                 color: activeTab === tab.id ? "#00C853" : "#666",
@@ -318,7 +398,7 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 Copy → Lovable → Build → GitHub → Submit
               </p>
 
-              {promptLoaing ? (
+              {promptLoading ? (
                 <div className="rounded-xl p-8 text-center" style={{ backgroundColor: "#F8F9FA", border: "1px solid #E0E0E0" }}>
                   <Loader2 size={24} className="animate-spin mx-auto mb-3" style={{ color: "#00C853" }} />
                   <p style={{ fontSize: 14, color: "#666" }}>Generating AI prompt...</p>
@@ -336,32 +416,20 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 </div>
               )}
 
-              <button onClick={handleCopy} disabled={promptLoaing}
+              <button onClick={handleCopy} disabled={promptLoading}
                 style={{ width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer", marginTop: 12, minHeight: 52 }}>
                 {copied ? "Copied! ✓" : "Copy Complete Prompt 📋"}
               </button>
 
               <div className="mt-4">
-                <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 8, textAlign: "center" }}>
-                  Choose your build tool:
-                </p>
+                <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 8, textAlign: "center" }}>Choose your build tool:</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => window.open("https://lovable.dev", "_blank")}
-                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                    Open Lovable →
-                  </button>
-                  <button onClick={() => window.open("https://bolt.new", "_blank")}
-                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                    Open Bolt →
-                  </button>
-                  <button onClick={() => window.open("https://emergentmind.com", "_blank")}
-                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                    Open Emergent →
-                  </button>
-                  <button onClick={() => window.open("https://replit.com", "_blank")}
-                    style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                    Open Replit →
-                  </button>
+                  {[{ name: "Lovable", url: "https://lovable.dev" }, { name: "Bolt", url: "https://bolt.new" }, { name: "Emergent", url: "https://emergentmind.com" }, { name: "Replit", url: "https://replit.com" }].map(t => (
+                    <button key={t.name} onClick={() => window.open(t.url, "_blank")}
+                      style={{ width: "100%", backgroundColor: "#fff", color: "#00C853", border: "2px solid #00C853", borderRadius: 12, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                      Open {t.name} →
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -382,51 +450,58 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 <div className="flex items-center gap-2 mt-3">
                   <span style={{ fontSize: 13, color: "#666" }}>WhatsApp: +91{request.owner_whatsapp}</span>
                   <button onClick={() => { navigator.clipboard.writeText(request.owner_whatsapp); toast({ title: "Copied!" }); }}
-                    style={{ fontSize: 12, color: "#00C853", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
-                    Copy
-                  </button>
+                    style={{ fontSize: 12, color: "#00C853", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copy</button>
                 </div>
               </div>
 
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
                 <div className="flex items-center gap-3 mb-2">
                   <span style={{ fontSize: 13, color: "#666" }}>Color:</span>
-                  <div className="w-5 h-5 rounded-full" style={{
-                    backgroundColor: (request as any).color_preference === "blue" ? "#2196F3" :
-                      (request as any).color_preference === "orange" ? "#FF6B35" :
-                        (request as any).color_preference === "dark" ? "#1A1A1A" : "#00C853"
-                  }} />
+                  <div className="w-5 h-5 rounded-full" style={{ backgroundColor: (request as any).color_preference || "#00C853" }} />
                   <span style={{ fontSize: 13, color: "#1A1A1A" }}>{(request as any).color_preference || "green"}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span style={{ fontSize: 13, color: "#666" }}>Style:</span>
-                  <span style={{ fontSize: 13, color: "#1A1A1A" }}>{(request as any).style_preference || "modern"}</span>
                 </div>
               </div>
 
+              {/* Logo Section */}
               <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                <span style={{ fontSize: 13, color: "#666" }}>Logo:</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <ImageIcon size={16} style={{ color: "#666" }} />
+                  <span style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>Business Logo</span>
+                </div>
                 {(request as any).logo_url ? (
-                  <div className="mt-2">
-                    <img src={(request as any).logo_url} alt="Business Logo" className="max-h-20 rounded-lg border border-[#E0E0E0]" />
-                    <p className="text-xs text-[#00C853] mt-1 font-medium">Use this logo on the website</p>
+                  <div>
+                    <img src={(request as any).logo_url} alt="Business Logo"
+                      className="max-h-24 rounded-lg border" style={{ borderColor: "#E0E0E0", objectFit: "contain" }} />
+                    <p className="text-xs mt-1 font-medium" style={{ color: "#00C853" }}>✅ Use this logo on the website</p>
                   </div>
                 ) : (
-                  <span style={{ fontSize: 13, color: "#1A1A1A", marginLeft: 8 }}>No logo — create text logo</span>
+                  <span style={{ fontSize: 13, color: "#999" }}>No logo — create text logo</span>
                 )}
               </div>
 
-              {(request as any).photos_urls && (request as any).photos_urls.length > 0 && (
+              {/* Photos Section */}
+              {(request as any).photos_urls && (request as any).photos_urls.length > 0 ? (
                 <div className="rounded-xl p-4" style={{ backgroundColor: "#F8F9FA" }}>
-                  <p style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>Business Photos ({(request as any).photos_urls.length}):</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <ImageIcon size={16} style={{ color: "#666" }} />
+                    <span style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>Business Photos ({(request as any).photos_urls.length})</span>
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     {(request as any).photos_urls.map((url: string, i: number) => (
-                      <img key={i} src={url} alt={`Photo ${i + 1}`} className="w-full h-20 object-cover rounded-lg border border-[#E0E0E0]" />
+                      <img key={i} src={url} alt={`Photo ${i + 1}`} className="w-full h-20 object-cover rounded-lg border" style={{ borderColor: "#E0E0E0" }} />
                     ))}
                   </div>
-                  <p className="text-xs text-[#00C853] mt-2 font-medium">Use these photos — not stock images</p>
+                  <p className="text-xs mt-2 font-medium" style={{ color: "#00C853" }}>✅ Use these actual photos — not stock images</p>
                 </div>
-              )}
+              ) : !(request as any).logo_url ? (
+                <div className="rounded-xl p-4" style={{ backgroundColor: "#FFF8E1", border: "1px solid #FFD54F" }}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={16} style={{ color: "#F57F17" }} />
+                    <span style={{ fontSize: 13, color: "#F57F17", fontWeight: 600 }}>⚠️ No images provided</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: "#666", marginTop: 4 }}>Use relevant stock photos for this business type</p>
+                </div>
+              ) : null}
 
               {request.special_requirements && (
                 <div className="rounded-xl p-4" style={{ backgroundColor: "#F0F0F0" }}>
@@ -435,27 +510,17 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 </div>
               )}
 
-              {/* GitHub Requirements Checklist */}
+              {/* GitHub Requirements */}
               <div className="rounded-xl p-4" style={{ backgroundColor: "#EFF6FF", border: "1px solid #93C5FD" }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#1E40AF", marginBottom: 8 }}>📦 GitHub Requirements</p>
                 <div className="space-y-2">
-                  {[
-                    "Repository must be PUBLIC",
-                    "Built with React + Vite",
-                    'Has package.json with "build": "vite build" script',
-                    "No build errors locally",
-                    "LeadPe widget code included",
-                    'Branch name must be "main"',
-                  ].map((item) => (
+                  {["Repository must be PUBLIC", "Built with React + Vite", 'Has package.json with "build": "vite build"', "No build errors locally", "LeadPe widget code included", 'Branch name must be "main"', 'Footer has "Built with LeadPe 🌱" credit'].map((item) => (
                     <div key={item} className="flex items-start gap-2">
                       <CheckCircle size={14} style={{ color: "#3B82F6", marginTop: 2, flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: "#1E3A5F" }}>{item}</span>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontSize: 11, color: "#6B7280", marginTop: 8 }}>
-                  ⚠️ Private repos will cause deployment errors.
-                </p>
               </div>
 
               {/* Lead Widget */}
@@ -463,22 +528,18 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#E65100", marginBottom: 8 }}>⚠️ Lead Widget (REQUIRED)</p>
                 <div className="rounded-lg p-3 text-xs font-mono max-h-32 overflow-y-auto" style={{ backgroundColor: "#F1F3F5", border: "1px solid #E0E0E0" }}>
                   <pre className="whitespace-pre-wrap break-all">{generateLeadWidgetCode({
-                    id: request.business_id || request.id,
-                    name: request.business_name,
-                    whatsapp: request.owner_whatsapp,
+                    id: request.business_id || request.id, name: request.business_name, whatsapp: request.owner_whatsapp,
                   })}</pre>
                 </div>
                 <button onClick={() => {
                   navigator.clipboard.writeText(generateLeadWidgetCode({
-                    id: request.business_id || request.id,
-                    name: request.business_name,
-                    whatsapp: request.owner_whatsapp,
+                    id: request.business_id || request.id, name: request.business_name, whatsapp: request.owner_whatsapp,
                   }));
                   setWidgetCopied(true);
                   setTimeout(() => setWidgetCopied(false), 2000);
                   toast({ title: "✅ Widget copied!" });
                 }}
-                  style={{ width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 8, minHeight: 40 }}>
+                  style={{ width: "100%", backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 8, minHeight: 44 }}>
                   {widgetCopied ? "Copied! ✅" : "Copy Widget Code 📋"}
                 </button>
               </div>
@@ -488,9 +549,7 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
           {/* ═══ SUBMIT TAB ═══ */}
           {activeTab === "submit" && (
             <div className="p-4">
-              <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
-                Submit Your Website
-              </h3>
+              <h3 style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>Submit Your Website</h3>
 
               <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "#FFF8E1" }}>
                 <p style={{ fontSize: 14, fontWeight: 700, color: "#F57F17", marginBottom: 8 }}>How to get GitHub URL:</p>
@@ -504,57 +563,45 @@ Connect GitHub in Lovable → Create PUBLIC repo → Branch "main" → Copy URL 
                 ))}
               </div>
 
-              <label style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", display: "block", marginBottom: 6 }}>
-                GitHub Repository URL
-              </label>
+              <label style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", display: "block", marginBottom: 6 }}>GitHub Repository URL</label>
               <input value={githubUrl}
-                onChange={(e) => { setGithubUrl(e.target.value); setQualityReport(null); }}
+                onChange={(e) => { setGithubUrl(e.target.value); setQualityReport(null); setDeployError(null); }}
                 placeholder="github.com/username/reponame"
-                style={{
-                  width: "100%", height: 52, border: "2px solid #E0E0E0", borderRadius: 12,
-                  padding: "0 16px", fontSize: 15, outline: "none", marginBottom: 12,
-                }}
+                style={{ width: "100%", height: 52, border: "2px solid #E0E0E0", borderRadius: 12, padding: "0 16px", fontSize: 15, outline: "none", marginBottom: 12 }}
                 onFocus={(e) => (e.target.style.borderColor = "#00C853")}
                 onBlur={(e) => (e.target.style.borderColor = "#E0E0E0")}
               />
 
-              {/* Deployment Progress Steps */}
-              {(qualityChecking || submitting) && (
+              {/* Error Card */}
+              {deployError && getErrorCard(deployError, () => { setDeployError(null); handleSubmitGithub(); })}
+
+              {/* Deployment Progress */}
+              {(qualityChecking || submitting) && !deployError && (
                 <div className="rounded-xl p-4 mb-3 space-y-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
                   <div className="flex items-center gap-2">
                     <CheckCircle size={16} style={{ color: "#00C853" }} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>✅ GitHub URL received</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {qualityChecking ? (
-                      <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} />
-                    ) : qualityReport ? (
-                      <CheckCircle size={16} style={{ color: "#00C853" }} />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                    )}
+                    {qualityChecking ? <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} /> :
+                      qualityReport ? <CheckCircle size={16} style={{ color: "#00C853" }} /> :
+                        <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
                     <span style={{ fontSize: 13, fontWeight: qualityChecking ? 600 : 400, color: "#1A1A1A" }}>
                       {qualityChecking ? "⏳ Running quality check..." : qualityReport ? "✅ Quality check passed" : "Quality check"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {submitting && !qualityChecking && qualityReport?.passed ? (
-                      <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                    )}
+                    {submitting && !qualityChecking && qualityReport?.passed ? <Loader2 size={16} className="animate-spin" style={{ color: "#00C853" }} /> :
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
                     <span style={{ fontSize: 13, fontWeight: submitting && !qualityChecking ? 600 : 400, color: "#1A1A1A" }}>
                       {submitting && !qualityChecking && qualityReport?.passed ? "⏳ Deploying to Vercel..." : "Deploy to Vercel"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                    <span style={{ fontSize: 13, color: "#999" }}>Website is live!</span>
-                  </div>
                 </div>
               )}
 
-              {qualityReport && !qualityChecking && (
+              {/* Quality Report */}
+              {qualityReport && !qualityChecking && !deployError && (
                 <div className="rounded-xl p-4 mb-3" style={{
                   backgroundColor: qualityReport.passed ? "#F0FFF4" : "#FFF3E0",
                   border: `2px solid ${qualityReport.passed ? "#00C853" : "#FF6D00"}`,

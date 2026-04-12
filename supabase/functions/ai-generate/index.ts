@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const ALLOWED_ORIGINS = [
   "https://leadpe.lovable.app",
   "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
+  "https://leadpe.tech",
 ];
 
 function getCorsHeaders(req: Request) {
@@ -15,103 +16,234 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-function buildPromptTemplate(data: Record<string, string>): { system: string; user: string } {
+// ═══ DESIGN PROFILES BY BUSINESS TYPE ═══
+const designProfiles: Record<string, { colors: string; style: string; fonts: string; sections: string; tone: string; images: string }> = {
+  "Doctor / Clinic": {
+    colors: "Trust blue #1565C0 + Clean white + Soft green #4CAF50",
+    style: "Clean, medical, trustworthy",
+    fonts: "Professional serif heading + Clean sans body (Inter)",
+    sections: "Hero, Services, Doctor Bio, Timings, Location, Book Appointment, Testimonials",
+    tone: "Professional, caring, reassuring",
+    images: "Medical, healthcare, doctor-patient trust",
+  },
+  "CA / Lawyer / CS": {
+    colors: "Deep navy #1A237E + Gold #C9A84C + White",
+    style: "Formal, prestigious, authoritative",
+    fonts: "Classic serif heading + Formal sans body",
+    sections: "Hero, Services, Experience, Why Choose Us, Cases Won, Consultation Booking, Contact",
+    tone: "Professional, expert, trustworthy",
+    images: "Office, books, professional setting",
+  },
+  "Coaching Institute": {
+    colors: "Energetic orange #E65100 + Yellow #FDD835 + White",
+    style: "Dynamic, motivating, energetic",
+    fonts: "Bold impactful heading + Clean readable body",
+    sections: "Hero, Courses, Results/Ranks, Faculty, Batches, Fees, Success Stories, Enroll Now",
+    tone: "Motivating, result-focused, confidence-building",
+    images: "Students, books, success, classroom energy",
+  },
+  "Restaurant / Cafe": {
+    colors: "Warm red #C62828 + Golden #FF8F00 + Cream #FFF8E1",
+    style: "Appetizing, warm, inviting",
+    fonts: "Friendly rounded heading + Readable body",
+    sections: "Hero, Menu Highlights, Specialties, Gallery, Location, Order/Reserve",
+    tone: "Warm, appetizing, welcoming",
+    images: "Food, restaurant ambiance, happy customers dining",
+  },
+  "Salon / Parlour": {
+    colors: "Rose gold #C2185B + Blush pink #FCE4EC + White",
+    style: "Elegant, feminine, aspirational",
+    fonts: "Elegant script heading + Clean body",
+    sections: "Hero, Services + Prices, Before/After Gallery, Team, Offers, Book Now",
+    tone: "Beautiful, confidence-boosting, luxurious",
+    images: "Beauty, transformation, salon atmosphere",
+  },
+  "Contractor / Plumber": {
+    colors: "Strong gray #37474F + Yellow #F9A825 + White",
+    style: "Strong, reliable, industrial",
+    fonts: "Bold strong heading + Clean readable body",
+    sections: "Hero, Services, Projects Done, Materials Used, Why Us, Free Quote Form, Contact",
+    tone: "Reliable, experienced, quality-focused",
+    images: "Construction, tools, completed projects",
+  },
+  "Photographer / Videographer": {
+    colors: "Dark charcoal #1A1A1A + White + Accent gold #C9A84C",
+    style: "Cinematic, artistic, portfolio-focused",
+    fonts: "Modern sans heading + Minimal body",
+    sections: "Hero with full-width photo, Portfolio Gallery, Services, Packages, About, Contact",
+    tone: "Artistic, professional, storytelling",
+    images: "Photography, portraits, events, cinematic shots",
+  },
+  "Architect": {
+    colors: "Slate #334155 + White + Warm wood #8B6F47",
+    style: "Minimal, architectural, clean lines",
+    fonts: "Geometric sans heading + Light body",
+    sections: "Hero, Projects Portfolio, Services, Design Philosophy, Process, Contact",
+    tone: "Sophisticated, visionary, detail-oriented",
+    images: "Architecture, buildings, interiors, blueprints",
+  },
+  "Gym / Fitness Trainer": {
+    colors: "Bold red #D32F2F + Dark #1A1A1A + White",
+    style: "Energetic, powerful, motivating",
+    fonts: "Bold uppercase heading + Strong body",
+    sections: "Hero, Programs, Trainers, Schedule, Membership Plans, Transformations, Contact",
+    tone: "Motivating, powerful, results-driven",
+    images: "Fitness, gym, workout, transformations",
+  },
+  "Digital Agency": {
+    colors: "Deep violet #7C3AED + Electric blue #1565C0 + White",
+    style: "Modern, tech-forward, results-driven",
+    fonts: "Syne bold heading + Inter clean body",
+    sections: "Hero, Services, Results/Stats, Portfolio, Testimonials, Process, Contact",
+    tone: "Professional, results-focused, growth-oriented",
+    images: "Digital, growth charts, modern office, tech",
+  },
+  "NGO / Trust": {
+    colors: "Hope green #2E7D32 + Warm orange #E65100 + White",
+    style: "Trustworthy, mission-driven, emotional",
+    fonts: "Humanist heading + Readable body",
+    sections: "Hero + Mission, Impact Numbers, Our Work, Team, Donate/Support, Contact",
+    tone: "Inspiring, trustworthy, emotionally connecting",
+    images: "Community, impact, people helped",
+  },
+  "Individual Consultant": {
+    colors: "Professional blue #1976D2 + Light gray #F5F5F5 + White",
+    style: "Personal brand, professional, credible",
+    fonts: "Modern serif heading + Clean body",
+    sections: "Hero, Expertise, Services, Success Stories, Process, Book Consultation, Contact",
+    tone: "Expert, approachable, results-oriented",
+    images: "Professional headshot, office, consulting",
+  },
+};
+
+const defaultProfile = {
+  colors: "LeadPe green #00C853 + Dark #1A1A1A + White",
+  style: "Modern, clean, professional",
+  fonts: "Syne bold heading + Inter body",
+  sections: "Hero, Services, About, Gallery, Testimonials, Contact",
+  tone: "Professional, friendly, trustworthy",
+  images: "Relevant business stock photos",
+};
+
+function getDesignProfile(businessType: string) {
+  for (const [key, profile] of Object.entries(designProfiles)) {
+    if (businessType.toLowerCase().includes(key.toLowerCase().split(" ")[0])) {
+      return profile;
+    }
+  }
+  return designProfiles[businessType] || defaultProfile;
+}
+
+function buildSmartPrompt(data: Record<string, string>): { system: string; user: string } {
+  const profile = getDesignProfile(data.business_type || "Other");
+
   const system = `You are an expert web developer creating detailed build instructions for a professional Indian business website. Generate a complete, specific, actionable Lovable.dev prompt. Return ONLY the prompt text. No explanation. No preamble.
 
-CRITICAL: The prompt you generate MUST include the EXACT LeadPe Lead Capture Widget HTML/JS code provided in the user message. Copy it AS-IS into the prompt output. This widget is the MOST IMPORTANT part — it captures customer leads. Without it the website is USELESS.`;
+CRITICAL: The prompt you generate MUST include the EXACT LeadPe Lead Capture Widget HTML/JS code provided in the user message. Copy it AS-IS into the prompt output. This widget is the MOST IMPORTANT part — it captures customer leads. Without it the website is USELESS.
+
+ALSO CRITICAL: The footer of EVERY website MUST include this line:
+"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+Make "leadpe.tech" a clickable link opening https://leadpe.tech in a new tab.`;
 
   const user = `Generate a complete Lovable.dev website build prompt for this Indian business:
 
-BUSINESS DETAILS:
-- Name: ${data.business_name}
-- Type: ${data.business_type}
-- City: ${data.city}
-- WhatsApp: ${data.whatsapp_number}
-- Owner: ${data.owner_name}
-- One line: ${data.one_line_description || ""}
-- Brand color: ${data.color_preference || "#00C853"}
-- Special requirements: ${data.special_requirements || "None"}
-- Logo URL: ${data.logo_url || "No logo provided — create text-based logo"}
-- Business Photos: ${data.photos_urls || "No photos — use relevant stock photos"}
+════ BUSINESS DETAILS ════
+Business Name: ${data.business_name}
+Type: ${data.business_type}
+City: ${data.city}
+WhatsApp: ${data.whatsapp_number}
+Owner: ${data.owner_name || "Owner"}
+One line: ${data.one_line_description || ""}
+Special requirements: ${data.special_requirements || "None"}
 
-PACKAGE: ${data.package_name || "Standard"}
-Package includes: ${data.package_features || "5 pages, WhatsApp button, Mobile friendly"}
+════ DESIGN SYSTEM (UNIQUE TO ${data.business_type?.toUpperCase()}) ════
+Colors: ${profile.colors}
+${data.color_preference && data.color_preference !== "#00C853" && data.color_preference !== "rainbow" ? `Client preferred color: ${data.color_preference} — use this as primary instead` : ""}
+Style: ${profile.style}
+Fonts: ${profile.fonts}
+Tone: ${profile.tone}
+Mobile-first (70% Indian users are on mobile)
+Border radius: 12px for cards
+Smooth scroll behavior
 
-IMAGES INSTRUCTION:
-${data.logo_url ? `The business has provided their logo at: ${data.logo_url}\nDownload and use it in the header/navbar prominently.` : "No logo provided — create a text-based logo using the business name."}
-${data.photos_urls ? `The business has provided actual photos. Use these INSTEAD of stock photos:\n${data.photos_urls}\nUse in hero section and gallery.` : "No photos provided — use relevant free stock photos for this business type."}
+════ SECTIONS TO BUILD ════
+${profile.sections}
 
-The prompt must include ALL of these sections in this exact order:
+Plus these on EVERY website:
+- Fixed WhatsApp button bottom-right, green #25D366, pulse animation, z-index 9999
+  Links to: https://wa.me/91${data.whatsapp_number}
+- Google Maps embed for "${data.business_name} ${data.city}"
+- Fast loading (no heavy libraries)
 
-1. PROJECT OVERVIEW
-   Specific website purpose for this exact business type in India.
-   Target audience description.
+════ IMAGES ════
+${data.logo_url ? `USE THIS LOGO: ${data.logo_url}\nPlace in navbar prominently. Do NOT use text logo.` : "No logo provided — create a professional text logo using the business name."}
 
-2. DESIGN SYSTEM
-   - Primary color: ${data.color_preference || "#00C853"}
-   - Font: Syne for headings, Inter for body text
-   - Style: Modern, trustworthy, professional Indian business
-   - Mobile-first (70% Indian users are on mobile)
-   - Border radius: 12px for cards
-   - Smooth scroll behavior
+${data.photos_urls ? `USE THESE ACTUAL BUSINESS PHOTOS:\n${data.photos_urls}\nUse in hero and gallery sections.\nDo NOT use stock photos for main sections.\nThese are real photos of this business.` : `No photos provided.\nUse high-quality relevant stock photos matching: ${profile.images}\nUse Unsplash URLs for stock photos.`}
 
-3. PAGES TO BUILD
-   Based on ${data.business_type}, specify exactly which pages.
+════ CONTENT ════
+Write all content in HINDI + ENGLISH mix (Hinglish).
+Target audience: People in ${data.city}
+Use local language where appropriate.
+Headline must mention ${data.city}.
 
-4. HERO SECTION (most important)
-   - Headline targeting people searching for ${data.business_type} in ${data.city}
-   - Primary CTA: "WhatsApp Us Now →" links to: https://wa.me/91${data.whatsapp_number}
-   - Secondary CTA: "Call Now →" links to: tel:+91${data.whatsapp_number}
-   - Trust badges relevant to business type
+════ SEO META TAGS ════
+<title>${data.business_name} - Best ${data.business_type} in ${data.city}</title>
+Meta description, keywords, OG tags, LocalBusiness schema JSON-LD.
 
-5. WHATSAPP INTEGRATION (CRITICAL)
-   Fixed floating WhatsApp button bottom-right corner.
-   Pulse animation, z-index 9999.
-   Links to: https://wa.me/91${data.whatsapp_number}
+════ DEMO MODE ════
+Check VITE_LEADPE_MODE env var.
+If "demo": show orange bar "⚠️ This is a preview", disable contact buttons.
+If "live" or not set: normal mode.
 
-6. DEMO MODE
-   Check VITE_LEADPE_MODE env var.
-   If "demo": show orange bar "⚠️ This is a preview", disable contact buttons.
-   If "live" or not set: normal mode.
+════ ⚠️ LEADPE LEAD CAPTURE WIDGET — MOST CRITICAL ⚠️ ════
+You MUST include this EXACT HTML/JavaScript widget code in the contact section or before the footer.
+This widget captures customer inquiries and sends them to the LeadPe CRM database.
+WITHOUT this widget, the entire website is USELESS.
 
-7. SEO META TAGS
-   <title>${data.business_name} - Best ${data.business_type} in ${data.city}</title>
-   Meta description, keywords, OG tags, LocalBusiness schema JSON-LD.
+DO NOT modify, summarize, or create your own version. Include this EXACTLY AS-IS:
 
-8. GOOGLE MAPS for "${data.business_name} ${data.city}"
+${data.lead_widget_html || "<!-- Lead widget will be added -->"}
 
-9. TRUST ELEMENTS based on ${data.business_type}
-   Testimonials, years of experience, happy customers count.
+IMPORTANT NOTES:
+- The business_id is pre-configured — DO NOT change it
+- The Supabase API URL and key are pre-configured — DO NOT change them
+- The widget submits leads to the "leads" table
+- On success shows "Request Received!" confirmation
+- "Powered by LeadPe 🌱" footer MUST remain visible
 
-10. CONTACT SECTION with WhatsApp: ${data.whatsapp_number}, City: ${data.city}
+If building with React, you can either:
+a) Embed this HTML in index.html directly
+b) Create a React component that makes the SAME POST request to the SAME URL with SAME headers/body
 
-11. FOOTER with "Powered by LeadPe 🌱"
+════ VIRAL FOOTER (REQUIRED ON EVERY PAGE) ════
+At the very bottom of every page footer, add this line:
+Small gray text, centered, font-size: 12px, color: #999999:
+"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+Make "leadpe.tech" a clickable link that opens https://leadpe.tech in a new tab.
+This MUST appear on EVERY page of the website.
 
-12. PERFORMANCE REQUIREMENTS - 90+ mobile PageSpeed
+════ TECHNICAL REQUIREMENTS ════
+- React + Vite OR plain HTML+CSS+JS (choose what gives fastest load)
+- Mobile first — test on 375px width
+- No frameworks heavier than needed
+- Images: lazy loading
+- Fonts: Google Fonts only
+- No jQuery
+- All links working
+- Performance: 90+ mobile PageSpeed
 
-13. ⚠️ LEADPE LEAD CAPTURE WIDGET — MOST CRITICAL SECTION ⚠️
-    
-    You MUST include this EXACT HTML/JavaScript widget code in the contact section or before the footer.
-    This widget captures customer inquiries and sends them to the LeadPe CRM database.
-    WITHOUT this widget, the entire website is USELESS.
-    
-    DO NOT modify, summarize, or create your own version. Include this EXACTLY AS-IS:
-    
-    ${data.lead_widget_html || "<!-- Lead widget will be added -->"}
-    
-    IMPORTANT NOTES:
-    - The business_id is pre-configured — DO NOT change it
-    - The Supabase API URL and key are pre-configured — DO NOT change them
-    - The widget submits leads to the "leads" table
-    - On success shows "Request Received!" confirmation
-    - "Powered by LeadPe 🌱" footer MUST remain visible
-    
-    If building with React, you can either:
-    a) Embed this HTML in index.html directly
-    b) Create a React component that makes the SAME POST request to the SAME URL with SAME headers/body
+════ GITHUB SETUP ════
+After building: Connect GitHub → Create PUBLIC repo → Branch "main" → Copy URL → Submit in LeadPe
 
-14. GITHUB SETUP
-    After building: Connect GitHub → Create PUBLIC repo → Branch "main" → Copy URL → Submit in LeadPe
+FINAL CHECK before submitting:
+□ All sections present
+□ WhatsApp button working
+□ LeadPe widget embedded correctly
+□ Business photos used (not generic) if provided
+□ Logo in navbar
+□ Mobile looks perfect
+□ Footer has "Built with LeadPe 🌱" credit line
+□ GitHub repo is PUBLIC
 
 Generate the complete prompt now. Make it specific to ${data.business_type}. Use real Indian context.`;
 
@@ -135,7 +267,7 @@ serve(async (req) => {
     let userPrompt = "";
 
     if (type === "build_prompt") {
-      const prompts = buildPromptTemplate(data);
+      const prompts = buildSmartPrompt(data);
       systemPrompt = prompts.system;
       userPrompt = prompts.user;
     } else if (type === "seo") {
