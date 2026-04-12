@@ -42,6 +42,9 @@ export default function GetWebsite() {
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [city, setCity] = useState("");
+  const [subdomain, setSubdomain] = useState("");
+  const [subdomainTaken, setSubdomainTaken] = useState(false);
+  const [checkingSubdomain, setCheckingSubdomain] = useState(false);
 
   // Step 2: Package
   const [selectedPackage, setSelectedPackage] = useState("standard");
@@ -72,10 +75,32 @@ export default function GetWebsite() {
 
   const pkg = WEBSITE_PACKAGES.find((p) => p.id === selectedPackage)!;
 
+  const slugify = (val: string) => val.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+  // Auto-generate subdomain from business name
+  useEffect(() => {
+    if (businessName && !subdomain) {
+      setSubdomain(slugify(businessName));
+    }
+  }, [businessName]);
+
+  // Check subdomain availability
+  useEffect(() => {
+    if (!subdomain || subdomain.length < 3) return;
+    const timer = setTimeout(async () => {
+      setCheckingSubdomain(true);
+      const { data } = await supabase.from("profiles").select("id").eq("subdomain", subdomain).maybeSingle();
+      // Allow if it's the current user's subdomain
+      setSubdomainTaken(!!data && data.id !== profile?.id);
+      setCheckingSubdomain(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [subdomain, profile?.id]);
+
   const canNext = useCallback(() => {
     const phone = whatsapp.replace(/\D/g, "");
-    return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim();
-  }, [whatsapp, businessName, businessType, city]);
+    return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim() && subdomain.length >= 3 && !subdomainTaken;
+  }, [whatsapp, businessName, businessType, city, subdomain, subdomainTaken]);
 
   const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -284,7 +309,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
             business_type: businessType,
             city: city,
             whatsapp_number: customerWhatsapp,
-          })
+            subdomain: subdomain || slugify(businessName),
+          } as any)
           .eq("user_id", user.id);
       }
 
@@ -435,6 +461,38 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Name *</label>
                     <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
                       className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Ramesh Coaching Centre" />
+                  </div>
+                  {/* Subdomain editor */}
+                  <div>
+                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Your website address</label>
+                    <div className="flex items-center h-12 rounded-xl overflow-hidden" style={{ border: subdomainTaken ? "2px solid #EF4444" : "1px solid #E0E0E0" }}>
+                      <input
+                        value={subdomain}
+                        onChange={(e) => setSubdomain(slugify(e.target.value).slice(0, 30))}
+                        className="flex-1 h-full px-3 text-sm outline-none bg-white"
+                        style={{ border: "none", color: "#111", minWidth: 0 }}
+                        placeholder="your-business"
+                      />
+                      <span className="px-3 text-sm font-medium flex-shrink-0" style={{ color: "#999", backgroundColor: "#F5F5F5", height: "100%", display: "flex", alignItems: "center" }}>
+                        .leadpe.tech
+                      </span>
+                    </div>
+                    {subdomain.length >= 3 && !subdomainTaken && !checkingSubdomain && (
+                      <p className="text-[10px] mt-1" style={{ color: "#00C853" }}>
+                        ✅ {subdomain}.leadpe.tech is available
+                      </p>
+                    )}
+                    {subdomainTaken && (
+                      <p className="text-[10px] mt-1" style={{ color: "#EF4444" }}>
+                        ❌ This address is taken. Try another.
+                      </p>
+                    )}
+                    {checkingSubdomain && (
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>Checking availability...</p>
+                    )}
+                    {subdomain.length > 0 && subdomain.length < 3 && (
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>Minimum 3 characters</p>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Type *</label>
