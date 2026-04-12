@@ -267,22 +267,22 @@ export default function DevDashboard() {
     localStorage.setItem('dev_last_fetch_time', Date.now().toString());
   };
 
-  const totalEarned = earnings.reduce((sum, e) => sum + e.amount, 0);
+  // Earnings calculated from earnings table (single source of truth)
+  const totalEarned = earnings
+    .filter(e => e.type !== "payout_request")
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
   const thisMonthEarned = earnings
-    .filter((e) => e.month === new Date().toISOString().slice(0, 7))
-    .reduce((sum, e) => sum + e.amount, 0);
-    
+    .filter((e) => e.month === new Date().toISOString().slice(0, 7) && e.type !== "payout_request")
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
   const buildingFees = earnings
-    .filter((e) => e.type === "building")
-    .reduce((s, e) => s + e.amount, 0);
+    .filter((e) => e.type === "building" || e.type === "building_fee")
+    .reduce((s, e) => s + (e.amount || 0), 0);
   const passiveTotal = earnings
     .filter((e) => e.type === "passive")
-    .reduce((s, e) => s + e.amount, 0);
-
-  
-    const hasRevisionAlert = activeBuilds.some(b => (b as any).change_requests && (b as any).change_requests.some((cr: any) => cr.status === 'pending'));
-
-  const eligiblePayout = earnings.filter(e => !e.paid && e.type !== "payout_request").reduce((sum, e) => sum + (e.amount || 0), 0);
+    .reduce((s, e) => s + (e.amount || 0), 0);
+  const paidOut = earnings
+    .filter(e => e.paid === true && e.type !== "payout_request")
+    .reduce((s, e) => s + (e.amount || 0), 0);
 
   // Realtime earnings listener
   useEffect(() => {
