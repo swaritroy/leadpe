@@ -34,7 +34,16 @@ async function submitLeadPeLead(){
       body:JSON.stringify({business_id:'${businessData.id}',customer_name:n,phone:p.replace(/\\D/g,''),message:i,source:'website',status:'new'})
     });
     if(res.ok){
-      document.getElementById('leadpe-widget').innerHTML='<div style="text-align:center;padding:40px 20px;background:#F0FFF4;border-radius:16px;border:2px solid #00C853"><div style="font-size:48px">✅</div><h3 style="color:#1A1A1A">Request Received!</h3><p style="color:#666">We will call you back within 2 hours.</p><p style="color:#999;font-size:11px">Powered by LeadPe 🌱</p></div>';
+      var w=document.getElementById('leadpe-widget');
+      while(w.firstChild)w.removeChild(w.firstChild);
+      var d=document.createElement('div');
+      d.style.cssText='text-align:center;padding:40px 20px;background:#F0FFF4;border-radius:16px;border:2px solid #00C853';
+      d.innerHTML='';
+      var e1=document.createElement('div');e1.style.fontSize='48px';e1.textContent='✅';d.appendChild(e1);
+      var e2=document.createElement('h3');e2.style.color='#1A1A1A';e2.textContent='Request Received!';d.appendChild(e2);
+      var e3=document.createElement('p');e3.style.color='#666';e3.textContent='We will call you back within 2 hours.';d.appendChild(e3);
+      var e4=document.createElement('p');e4.style.cssText='color:#999;font-size:11px';e4.textContent='Powered by LeadPe 🌱';d.appendChild(e4);
+      w.appendChild(d);
     }else{btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}
   }catch(e){btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}
 }

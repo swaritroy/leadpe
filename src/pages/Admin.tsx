@@ -43,7 +43,7 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from "recharts";
-import { generateWeeklyReport, sendWeeklyReportWhatsApp, saveWeeklyReport } from "@/lib/weeklyReport";
+import { sendWeeklyReportWhatsApp, saveWeeklyReport } from "@/lib/weeklyReport";
 import { sendWhatsApp } from "@/lib/whatsappService";
 import { getBusinessIcon, formatDeadline } from "@/lib/clientBrief";
 

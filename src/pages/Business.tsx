@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Copy } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, ChevronDown, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
