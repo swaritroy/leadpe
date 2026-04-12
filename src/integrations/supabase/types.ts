@@ -782,6 +782,7 @@ export type Database = {
           role: string | null
           site_url: string | null
           status: string | null
+          subdomain: string | null
           subscription_plan: string | null
           total_earned: number | null
           total_sites_built: number | null
@@ -822,6 +823,7 @@ export type Database = {
           role?: string | null
           site_url?: string | null
           status?: string | null
+          subdomain?: string | null
           subscription_plan?: string | null
           total_earned?: number | null
           total_sites_built?: number | null
@@ -862,6 +864,7 @@ export type Database = {
           role?: string | null
           site_url?: string | null
           status?: string | null
+          subdomain?: string | null
           subscription_plan?: string | null
           total_earned?: number | null
           total_sites_built?: number | null
