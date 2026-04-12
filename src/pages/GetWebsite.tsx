@@ -75,10 +75,32 @@ export default function GetWebsite() {
 
   const pkg = WEBSITE_PACKAGES.find((p) => p.id === selectedPackage)!;
 
+  const slugify = (val: string) => val.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+  // Auto-generate subdomain from business name
+  useEffect(() => {
+    if (businessName && !subdomain) {
+      setSubdomain(slugify(businessName));
+    }
+  }, [businessName]);
+
+  // Check subdomain availability
+  useEffect(() => {
+    if (!subdomain || subdomain.length < 3) return;
+    const timer = setTimeout(async () => {
+      setCheckingSubdomain(true);
+      const { data } = await supabase.from("profiles").select("id").eq("subdomain", subdomain).maybeSingle();
+      // Allow if it's the current user's subdomain
+      setSubdomainTaken(!!data && data.id !== profile?.id);
+      setCheckingSubdomain(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [subdomain, profile?.id]);
+
   const canNext = useCallback(() => {
     const phone = whatsapp.replace(/\D/g, "");
-    return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim();
-  }, [whatsapp, businessName, businessType, city]);
+    return phone.length === 10 && businessName.trim() && businessType.trim() && city.trim() && subdomain.length >= 3 && !subdomainTaken;
+  }, [whatsapp, businessName, businessType, city, subdomain, subdomainTaken]);
 
   const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
