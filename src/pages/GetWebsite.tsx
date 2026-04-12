@@ -461,6 +461,38 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                     <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)}
                       className="h-12 rounded-xl bg-white" style={{ border: "1px solid #E0E0E0" }} placeholder="Ramesh Coaching Centre" />
                   </div>
+                  {/* Subdomain editor */}
+                  <div>
+                    <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Your website address</label>
+                    <div className="flex items-center h-12 rounded-xl overflow-hidden" style={{ border: subdomainTaken ? "2px solid #EF4444" : "1px solid #E0E0E0" }}>
+                      <input
+                        value={subdomain}
+                        onChange={(e) => setSubdomain(slugify(e.target.value).slice(0, 30))}
+                        className="flex-1 h-full px-3 text-sm outline-none bg-white"
+                        style={{ border: "none", color: "#111", minWidth: 0 }}
+                        placeholder="your-business"
+                      />
+                      <span className="px-3 text-sm font-medium flex-shrink-0" style={{ color: "#999", backgroundColor: "#F5F5F5", height: "100%", display: "flex", alignItems: "center" }}>
+                        .leadpe.tech
+                      </span>
+                    </div>
+                    {subdomain.length >= 3 && !subdomainTaken && !checkingSubdomain && (
+                      <p className="text-[10px] mt-1" style={{ color: "#00C853" }}>
+                        ✅ {subdomain}.leadpe.tech is available
+                      </p>
+                    )}
+                    {subdomainTaken && (
+                      <p className="text-[10px] mt-1" style={{ color: "#EF4444" }}>
+                        ❌ This address is taken. Try another.
+                      </p>
+                    )}
+                    {checkingSubdomain && (
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>Checking availability...</p>
+                    )}
+                    {subdomain.length > 0 && subdomain.length < 3 && (
+                      <p className="text-[10px] mt-1" style={{ color: "#999" }}>Minimum 3 characters</p>
+                    )}
+                  </div>
                   <div>
                     <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Business Type *</label>
                     <select value={businessType} onChange={(e) => setBusinessType(e.target.value)}
