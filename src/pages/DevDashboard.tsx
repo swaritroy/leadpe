@@ -284,6 +284,10 @@ export default function DevDashboard() {
     .filter(e => e.paid === true && e.type !== "payout_request")
     .reduce((s, e) => s + (e.amount || 0), 0);
 
+  const hasRevisionAlert = activeBuilds.some(b => (b as any).change_requests && (b as any).change_requests.some((cr: any) => cr.status === 'pending'));
+
+  const eligiblePayout = totalEarned - paidOut;
+
   // Realtime earnings listener
   useEffect(() => {
     if (!user) return;
