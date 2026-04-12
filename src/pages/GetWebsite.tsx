@@ -42,6 +42,9 @@ export default function GetWebsite() {
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [city, setCity] = useState("");
+  const [subdomain, setSubdomain] = useState("");
+  const [subdomainTaken, setSubdomainTaken] = useState(false);
+  const [checkingSubdomain, setCheckingSubdomain] = useState(false);
 
   // Step 2: Package
   const [selectedPackage, setSelectedPackage] = useState("standard");
