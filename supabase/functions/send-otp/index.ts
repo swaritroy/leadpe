@@ -18,7 +18,7 @@ function getCorsHeaders(req: Request) {
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     const { phone } = await req.json();
@@ -35,7 +35,7 @@ serve(async (req) => {
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return new Response(
         JSON.stringify({ success: false, message: "Enter a valid 10-digit Indian mobile number." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -50,7 +50,7 @@ serve(async (req) => {
     if (existing) {
       return new Response(
         JSON.stringify({ success: false, message: "This number is already registered. Sign in instead." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -74,7 +74,7 @@ serve(async (req) => {
       console.error("OTP insert error:", insertError);
       return new Response(
         JSON.stringify({ success: false, message: "Database error. Try again." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -91,12 +91,12 @@ serve(async (req) => {
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "SMS service unavailable. Try again later." }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       return new Response(
         JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "SMS not configured. Test OTP returned." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -143,7 +143,7 @@ serve(async (req) => {
     if (smsSent) {
       return new Response(
         JSON.stringify({ success: true, sms_sent: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -153,20 +153,20 @@ serve(async (req) => {
     if (IS_PRODUCTION) {
       return new Response(
         JSON.stringify({ success: false, message: "SMS failed. Try again in a minute." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
     // Non-production fallback: return test OTP
     return new Response(
       JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsResult?.Details || "SMS delivery failed" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("send-otp error:", e);
     return new Response(
       JSON.stringify({ success: false, message: (e as Error).message || "Something went wrong. Try again." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
