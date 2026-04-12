@@ -309,7 +309,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
             business_type: businessType,
             city: city,
             whatsapp_number: customerWhatsapp,
-          })
+            subdomain: subdomain || slugify(businessName),
+          } as any)
           .eq("user_id", user.id);
       }
 
