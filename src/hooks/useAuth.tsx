@@ -134,6 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
             setAuthReady(true);
           }
+        }).catch(() => {
+          if (mounted) { setLoading(false); setAuthReady(true); }
         });
       } else {
         setLoading(false);
