@@ -12,13 +12,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
-import { getBusinessIcon, getBuildingFee, formatDeadline } from "@/lib/clientBrief";
+import { getBusinessIcon, getBuildingFee } from "@/lib/clientBrief";
 import { checkWebsiteQuality, QualityReport } from "@/lib/qualityChecker";
 import { deployWebsite } from "@/lib/deployService";
 import { getPackageById } from "@/lib/packages";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import BriefModal from "@/components/BriefModal";
-import { copyToClipboard } from "@/lib/clientBrief";
 
 interface BuildRequest {
   id: string;

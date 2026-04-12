@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Paintbrush, Type, Eye, Monitor, Smartphone, Tablet,
   Phone, MapPin, Clock, Star, ChevronRight

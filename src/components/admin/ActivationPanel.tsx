@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Copy, CheckCircle, Loader2, MessageCircle } from "lucide-react";
+import { ExternalLink, Copy, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ADMIN_WHATSAPP } from "@/lib/constants";
 
 const font = { heaing: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 

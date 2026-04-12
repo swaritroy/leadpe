@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Copy, ExternalLink, Loader2, CheckCircle, XCircle, Shield, AlertCircle, ClipboardCopy } from "lucide-react";
+import { motion } from "framer-motion";
+import { X, Copy, Loader2, CheckCircle, XCircle, Shield, AlertCircle, ClipboardCopy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { checkWebsiteQuality, generateFixPrompt, QualityReport } from "@/lib/qualityChecker";
