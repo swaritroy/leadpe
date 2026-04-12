@@ -47,10 +47,12 @@ serve(async (req) => {
       "Content-Type": "application/json",
     };
 
+    // ══════════════════════════════════════════════
+    // ACTION: deploy (demo mode — no custom domain)
+    // ══════════════════════════════════════════════
     if (action === "deploy") {
       const { businessName, businessType, city, githubUrl, trialCode, buildRequestId, businessId } = data;
 
-      // Parse GitHub URL
       const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "");
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
@@ -87,7 +89,7 @@ serve(async (req) => {
       });
 
       const projectData = await createResp.json();
-      console.log("Project create response:", createResp.status, JSON.stringify(projectData));
+      console.log("Project create response:", createResp.status);
 
       // Step 2: Trigger deployment
       const deployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
@@ -101,7 +103,6 @@ serve(async (req) => {
       });
 
       const deployData = await deployResp.json();
-      console.log("Deploy response:", deployResp.status, JSON.stringify(deployData));
 
       if (!deployResp.ok) {
         return new Response(
@@ -116,7 +117,7 @@ serve(async (req) => {
       // Step 3: Poll deployment status (max 3 minutes)
       let finalState = "BUILDING";
       let finalUrl = deployUrl;
-      const maxWait = 180000; // 3 minutes
+      const maxWait = 180000;
       const pollInterval = 5000;
       const startTime = Date.now();
 
@@ -127,39 +128,41 @@ serve(async (req) => {
           const statusData = await statusResp.json();
           finalState = statusData.readyState || statusData.state || "BUILDING";
           if (statusData.url) finalUrl = `https://${statusData.url}`;
-
           if (finalState === "READY" || finalState === "ERROR") break;
         } catch (e) {
           console.error("Poll error:", e);
         }
       }
 
-      console.log("Final deploy state:", finalState, finalUrl);
-
-      // Step 4: Save deployment URL to build_requests
+      // Step 4: Save as demo_url ONLY (NOT live_url)
       if (buildRequestId) {
         await supabase.from("build_requests").update({
+          demo_url: finalUrl,
           deploy_url: finalUrl,
           status: finalState === "READY" ? "demo_ready" : "review",
           deployed_at: new Date().toISOString(),
         }).eq("id", buildRequestId);
       }
 
-      // Step 5: Update business owner profile
+      // Step 5: Update business owner profile to demo_ready (NOT live)
       if (businessId) {
         await supabase.from("profiles").update({
           website_status: "demo_ready",
         }).eq("user_id", businessId);
       }
 
-      // Step 6: Send WhatsApp notification to business owner
+      // Step 6: WhatsApp notification
       if (data.ownerWhatsapp && finalState === "READY") {
         try {
-          await supabase.functions.invoke("send-whatsapp", {
-            body: {
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+          const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
               to: data.ownerWhatsapp,
-              message: `Your website preview is ready! Login to review it: leadpe.tech`,
-            },
+              message: `Your website preview is ready! 🎉 Login to review it: leadpe.tech`,
+            }),
           });
         } catch (e) {
           console.error("WhatsApp send error:", e);
@@ -178,6 +181,103 @@ serve(async (req) => {
       );
     }
 
+    // ══════════════════════════════════════════════
+    // ACTION: deploy_live (after payment — with custom domain)
+    // ══════════════════════════════════════════════
+    if (action === "deploy_live") {
+      const { buildRequestId, subdomain, userId } = data;
+
+      // Fetch build request
+      const { data: br } = await supabase.from("build_requests")
+        .select("*").eq("id", buildRequestId).single();
+
+      if (!br || !br.github_url) {
+        return new Response(
+          JSON.stringify({ error: "Build request or GitHub URL not found" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const cleaned = br.github_url.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const parts = cleaned.split("/").filter(Boolean);
+      const githubOrg = parts[0];
+      const githubRepo = parts[1]?.replace(".git", "");
+
+      const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
+      const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
+      const projectName = `leadpe-${bName}-${bCity}`.replace(/-+/g, "-").replace(/-$/, "");
+      const customDomain = `${subdomain}.leadpe.tech`;
+
+      // Update env var to live
+      try {
+        const projectResp = await fetch(`${VERCEL_API}/v9/projects/${projectName}`, { headers });
+        const projectData = await projectResp.json();
+
+        if (projectResp.ok && projectData.id) {
+          // Update VITE_LEADPE_MODE to live
+          const envResp = await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/env`, { headers });
+          const envData = await envResp.json();
+          const existingEnv = envData.envs?.find((e: any) => e.key === "VITE_LEADPE_MODE");
+
+          if (existingEnv) {
+            await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/env/${existingEnv.id}`, {
+              method: "PATCH", headers,
+              body: JSON.stringify({ value: "live", target: ["production"] }),
+            });
+          } else {
+            await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/env`, {
+              method: "POST", headers,
+              body: JSON.stringify([{ key: "VITE_LEADPE_MODE", value: "live", type: "plain", target: ["production"] }]),
+            });
+          }
+
+          // Add custom domain
+          await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/domains`, {
+            method: "POST", headers,
+            body: JSON.stringify({ name: customDomain }),
+          });
+
+          // Trigger redeployment
+          if (githubOrg && githubRepo) {
+            await fetch(`${VERCEL_API}/v13/deployments`, {
+              method: "POST", headers,
+              body: JSON.stringify({
+                name: projectName,
+                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+                projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
+              }),
+            });
+          }
+        }
+      } catch (vercelErr) {
+        console.error("Vercel live deploy error:", vercelErr);
+      }
+
+      // Update build_requests
+      await supabase.from("build_requests").update({
+        status: "live",
+        deploy_url: `https://${customDomain}`,
+        deployed_at: new Date().toISOString(),
+      }).eq("id", buildRequestId);
+
+      // Update profile
+      if (userId) {
+        await supabase.from("profiles").update({
+          website_status: "live",
+          site_url: `https://${customDomain}`,
+          subdomain: subdomain,
+        }).eq("user_id", userId);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, liveUrl: `https://${customDomain}` }),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    // ══════════════════════════════════════════════
+    // ACTION: status
+    // ══════════════════════════════════════════════
     if (action === "status") {
       const { deploymentId } = data;
       const resp = await fetch(`${VERCEL_API}/v13/deployments/${deploymentId}`, { headers });
