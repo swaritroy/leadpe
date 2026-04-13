@@ -30,13 +30,28 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
 
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingFeedback, setRatingFeedback] = useState("");
-  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(() => !!localStorage.getItem("rating_submitted_" + buildRequest?.id));
   const [submittingRating, setSubmittingRating] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(() => !!localStorage.getItem("feedback_submitted"));
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [fomoBarDismissed, setFomoBarDismissed] = useState(false);
+  const [existingRatingChecked, setExistingRatingChecked] = useState(false);
+
+  // Check if user already rated this build
+  useEffect(() => {
+    if (!user?.id || !buildRequest?.id || existingRatingChecked) return;
+    const checkExisting = async () => {
+      const { data } = await supabase.from("ratings").select("id").eq("business_id", user.id).eq("build_request_id", buildRequest.id).maybeSingle();
+      if (data) {
+        setRatingSubmitted(true);
+        localStorage.setItem("rating_submitted_" + buildRequest.id, "1");
+      }
+      setExistingRatingChecked(true);
+    };
+    checkExisting();
+  }, [user?.id, buildRequest?.id, existingRatingChecked]);
 
   useEffect(() => {
     const dismissed = localStorage.getItem("fomo_bar_dismissed");
@@ -93,6 +108,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
       build_request_id: buildRequest.id, rating: ratingValue, feedback: ratingFeedback || null,
     } as any);
     setRatingSubmitted(true);
+    localStorage.setItem("rating_submitted_" + buildRequest?.id, "1");
     setSubmittingRating(false);
     toast({ title: "⭐ Rating submitted!" });
   };
@@ -106,6 +122,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
     } as any);
     await supabase.from("profiles").update({ feedback_given: true } as any).eq("user_id", user?.id);
     setFeedbackSubmitted(true);
+    localStorage.setItem("feedback_submitted", "1");
     setSubmittingFeedback(false);
     toast({ title: "Thank you! 🙏" });
   };
