@@ -33,6 +33,7 @@ export type Database = {
           github_url: string | null
           hard_deadline: string | null
           id: string
+          max_revisions: number | null
           owner_name: string | null
           owner_whatsapp: string | null
           package_id: string | null
@@ -40,6 +41,8 @@ export type Database = {
           plan_selected: string | null
           practice_build: boolean | null
           reference_sites: string | null
+          revision_count: number | null
+          revision_feedback: Json | null
           special_requirements: string | null
           status: string | null
           submitted_at: string | null
@@ -63,6 +66,7 @@ export type Database = {
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
+          max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
           package_id?: string | null
@@ -70,6 +74,8 @@ export type Database = {
           plan_selected?: string | null
           practice_build?: boolean | null
           reference_sites?: string | null
+          revision_count?: number | null
+          revision_feedback?: Json | null
           special_requirements?: string | null
           status?: string | null
           submitted_at?: string | null
@@ -93,6 +99,7 @@ export type Database = {
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
+          max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
           package_id?: string | null
@@ -100,6 +107,8 @@ export type Database = {
           plan_selected?: string | null
           practice_build?: boolean | null
           reference_sites?: string | null
+          revision_count?: number | null
+          revision_feedback?: Json | null
           special_requirements?: string | null
           status?: string | null
           submitted_at?: string | null
