@@ -288,6 +288,120 @@ serve(async (req) => {
       );
     }
 
+    // ══════════════════════════════════════════════
+    // ACTION: add_custom_domain
+    // ══════════════════════════════════════════════
+    if (action === "add_custom_domain") {
+      const { domain, buildRequestId, userId } = data;
+
+      if (!domain || !domain.includes(".")) {
+        return new Response(
+          JSON.stringify({ error: "Invalid domain" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Find the Vercel project from build request
+      const { data: br } = await supabase.from("build_requests")
+        .select("*").eq("id", buildRequestId).single();
+
+      if (!br) {
+        return new Response(
+          JSON.stringify({ error: "Build request not found" }),
+          { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
+      const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
+      const projectName = `leadpe-${bName}-${bCity}`.replace(/-+/g, "-").replace(/-$/, "");
+
+      // Get Vercel project ID
+      const projectResp = await fetch(`${VERCEL_API}/v9/projects/${projectName}`, { headers });
+      const projectData = await projectResp.json();
+
+      if (!projectResp.ok || !projectData.id) {
+        return new Response(
+          JSON.stringify({ error: "Vercel project not found" }),
+          { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Add custom domain to Vercel project
+      const domainResp = await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/domains`, {
+        method: "POST", headers,
+        body: JSON.stringify({ name: domain }),
+      });
+      const domainData = await domainResp.json();
+
+      if (!domainResp.ok) {
+        return new Response(
+          JSON.stringify({ error: domainData.error?.message || "Failed to add domain" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Also add www variant
+      await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/domains`, {
+        method: "POST", headers,
+        body: JSON.stringify({ name: `www.${domain}` }),
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, domain }),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    // ══════════════════════════════════════════════
+    // ACTION: verify_domain
+    // ══════════════════════════════════════════════
+    if (action === "verify_domain") {
+      const { domain, buildRequestId, userId } = data;
+
+      const { data: br } = await supabase.from("build_requests")
+        .select("*").eq("id", buildRequestId).single();
+
+      if (!br) {
+        return new Response(
+          JSON.stringify({ error: "Build request not found" }),
+          { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
+      const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
+      const projectName = `leadpe-${bName}-${bCity}`.replace(/-+/g, "-").replace(/-$/, "");
+
+      const projectResp = await fetch(`${VERCEL_API}/v9/projects/${projectName}`, { headers });
+      const projectData = await projectResp.json();
+
+      if (!projectResp.ok || !projectData.id) {
+        return new Response(
+          JSON.stringify({ error: "Vercel project not found" }),
+          { status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check domain verification status
+      const checkResp = await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/domains/${domain}`, { headers });
+      const checkData = await checkResp.json();
+
+      const verified = checkData.verified === true;
+
+      if (verified && userId) {
+        await supabase.from("profiles").update({
+          custom_domain_verified: true,
+          site_url: `https://${domain}`,
+        }).eq("user_id", userId);
+      }
+
+      return new Response(
+        JSON.stringify({ verified, domain, details: checkData }),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Unknown action" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }

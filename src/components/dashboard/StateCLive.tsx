@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Lock } from "lucide-react";
+import { Star, Lock, Globe, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,14 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const [fomoBarDismissed, setFomoBarDismissed] = useState(false);
   const [existingRatingChecked, setExistingRatingChecked] = useState(false);
 
+  // Custom domain state
+  const [customDomainInput, setCustomDomainInput] = useState("");
+  const [connectingDomain, setConnectingDomain] = useState(false);
+  const [domainConnected, setDomainConnected] = useState(false);
+  const [domainVerified, setDomainVerified] = useState(false);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [showDnsInstructions, setShowDnsInstructions] = useState(false);
+
   // Check if user already rated this build
   useEffect(() => {
     if (!user?.id || !buildRequest?.id || existingRatingChecked) return;
@@ -57,6 +65,60 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
     const dismissed = localStorage.getItem("fomo_bar_dismissed");
     if (dismissed && Date.now() - parseInt(dismissed) < 86400000) setFomoBarDismissed(true);
   }, []);
+
+  // Load existing custom domain
+  useEffect(() => {
+    if ((profile as any)?.custom_domain) {
+      setCustomDomainInput((profile as any).custom_domain);
+      setDomainConnected(true);
+      setShowDnsInstructions(true);
+      if ((profile as any)?.custom_domain_verified) setDomainVerified(true);
+    }
+  }, [profile]);
+
+  const handleConnectDomain = async () => {
+    const domain = customDomainInput.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    if (!domain || !domain.includes(".")) {
+      toast({ title: "Enter a valid domain", description: "Example: mybusiness.com", variant: "destructive" });
+      return;
+    }
+    setConnectingDomain(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-website", {
+        body: { action: "add_custom_domain", data: { domain, buildRequestId: buildRequest?.id, userId: user?.id } },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      await supabase.from("profiles").update({ custom_domain: domain } as any).eq("user_id", user?.id);
+      setDomainConnected(true);
+      setShowDnsInstructions(true);
+      toast({ title: "Domain added! ✅", description: "Now add the DNS records below." });
+    } catch (e: any) {
+      toast({ title: "Failed to connect domain", description: e.message || "Try again later.", variant: "destructive" });
+    }
+    setConnectingDomain(false);
+  };
+
+  const handleVerifyDomain = async () => {
+    setVerifyingDomain(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-website", {
+        body: { action: "verify_domain", data: { domain: customDomainInput.trim().toLowerCase(), buildRequestId: buildRequest?.id, userId: user?.id } },
+      });
+      if (error) throw error;
+      if (data?.verified) {
+        setDomainVerified(true);
+        await supabase.from("profiles").update({ custom_domain_verified: true, site_url: `https://${customDomainInput.trim().toLowerCase()}` } as any).eq("user_id", user?.id);
+        toast({ title: "✅ Domain verified!", description: "Your website is now live on your domain." });
+      } else {
+        toast({ title: "⏳ Not verified yet", description: "DNS changes can take up to 24 hours.", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Verification failed", description: e.message || "Try again later.", variant: "destructive" });
+    }
+    setVerifyingDomain(false);
+  };
 
   // Use subdomain from profile, fallback to slug
   const subdomain = (profile as any)?.subdomain || business?.slug || profile?.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "";
@@ -307,7 +369,145 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         ))}
       </motion.div>
 
-      {/* ═══ FEEDBACK CARD ═══ */}
+      {/* ═══ CUSTOM DOMAIN (Growth plan only) ═══ */}
+      {showFullFeatures && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          style={{
+            margin: "0 16px 16px", backgroundColor: "#fff", borderRadius: 16, padding: 20,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: domainVerified ? "2px solid #00C853" : "none",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Globe size={20} style={{ color: "#00C853" }} />
+            <h3 style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>
+              Connect your own domain
+            </h3>
+          </div>
+
+          {domainVerified ? (
+            <div style={{ textAlign: "center", padding: "12px 0" }}>
+              <CheckCircle size={40} style={{ color: "#00C853", margin: "0 auto 8px" }} />
+              <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#00C853" }}>
+                Domain connected!
+              </p>
+              <p style={{ fontFamily: font.body, fontSize: 14, color: "#1A1A1A", marginTop: 4, wordBreak: "break-all" }}>
+                {customDomainInput}
+              </p>
+              <button onClick={() => window.open(`https://${customDomainInput}`, "_blank")}
+                style={{
+                  marginTop: 12, width: "100%", height: 48, borderRadius: 12,
+                  backgroundColor: "#E8F5E9", color: "#00C853", border: "none",
+                  fontFamily: font.body, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                }}>
+                Visit {customDomainInput} →
+              </button>
+            </div>
+          ) : !domainConnected ? (
+            <>
+              <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.5 }}>
+                Already have a domain? Point it to your LeadPe website.
+              </p>
+              <input
+                type="text"
+                value={customDomainInput}
+                onChange={e => setCustomDomainInput(e.target.value)}
+                placeholder="yourwebsite.com"
+                style={{
+                  width: "100%", height: 48, borderRadius: 12, border: "1px solid #E0E0E0",
+                  padding: "0 16px", fontFamily: font.body, fontSize: 15, color: "#1A1A1A",
+                  boxSizing: "border-box", marginBottom: 12, outline: "none",
+                }}
+              />
+              <button onClick={handleConnectDomain} disabled={connectingDomain || !customDomainInput.trim()}
+                style={{
+                  width: "100%", height: 48, borderRadius: 12,
+                  backgroundColor: connectingDomain || !customDomainInput.trim() ? "#E0E0E0" : "#00C853",
+                  color: "#fff", border: "none",
+                  fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: connectingDomain ? "wait" : "pointer",
+                }}>
+                {connectingDomain ? "Connecting..." : "Connect Domain →"}
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontFamily: font.body, fontSize: 13, color: "#00C853", fontWeight: 600, marginBottom: 12 }}>
+                ✅ Domain added: {customDomainInput}
+              </p>
+              <div style={{
+                backgroundColor: "#F8F9FA", borderRadius: 12, padding: 16, marginBottom: 16,
+              }}>
+                <p style={{ fontFamily: font.heading, fontSize: 14, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>
+                  Add these DNS records at your domain provider:
+                </p>
+
+                {/* Record 1 */}
+                <div style={{
+                  backgroundColor: "#fff", borderRadius: 10, padding: 12, marginBottom: 8,
+                  border: "1px solid #E0E0E0",
+                }}>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Type</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>A</p>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Name</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>@</p>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Value</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>76.76.21.22</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Record 2 */}
+                <div style={{
+                  backgroundColor: "#fff", borderRadius: 10, padding: 12,
+                  border: "1px solid #E0E0E0",
+                }}>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Type</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>CNAME</p>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Name</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>www</p>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: font.body, fontSize: 11, color: "#999" }}>Value</span>
+                      <p style={{ fontFamily: font.body, fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: 0, wordBreak: "break-all" }}>cname.vercel-dns.com</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 8, marginTop: 12,
+                  backgroundColor: "#FFFDE7", borderRadius: 8, padding: 10,
+                }}>
+                  <Clock size={16} style={{ color: "#F9A825", flexShrink: 0, marginTop: 2 }} />
+                  <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", margin: 0, lineHeight: 1.5 }}>
+                    After adding records, click Verify below. Usually takes 10-30 minutes.
+                  </p>
+                </div>
+              </div>
+
+              <button onClick={handleVerifyDomain} disabled={verifyingDomain}
+                style={{
+                  width: "100%", height: 48, borderRadius: 12,
+                  backgroundColor: verifyingDomain ? "#E0E0E0" : "#00C853",
+                  color: "#fff", border: "none",
+                  fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: verifyingDomain ? "wait" : "pointer",
+                }}>
+                {verifyingDomain ? "Verifying..." : "Verify Connection →"}
+              </button>
+            </>
+          )}
+        </motion.div>
+      )}
+
       {showFeedbackCard && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
