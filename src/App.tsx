@@ -35,6 +35,7 @@ const Payment = lazy(() => import("./pages/Payment"));
 const DevDashboard = lazy(() => import("./pages/DevDashboard"));
 const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
 const Admin = lazy(() => import("./pages/Admin"));
+const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
 const queryClient = new QueryClient();
 
