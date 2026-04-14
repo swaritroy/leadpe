@@ -130,22 +130,41 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
         return;
       }
 
-      const { data: seoData } = await (supabase as any).from("business_seo")
-        .select("*").eq("business_id", request.business_id || request.id).maybeSingle();
+      // Fetch order data for logo/photos and SEO data in parallel
+      const [seoResult, orderResult] = await Promise.all([
+        (supabase as any).from("business_seo")
+          .select("*").eq("business_id", request.business_id || request.id).maybeSingle(),
+        (supabase as any).from("orders")
+          .select("logo_url, photos_urls, color_preference, reference_site, business_description, business_since")
+          .eq("business_name", request.business_name)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      const { data, error } = await supabase.functions.invoke("generate-seo", {
+      const seoData = seoResult?.data || {};
+      const orderData = orderResult?.data || {};
+
+      const { data, error } = await supabase.functions.invoke("ai-generate", {
         body: {
-          type: "prompt",
+          type: "build_prompt",
           data: {
-            name: request.business_name, type: request.business_type, city: request.city,
-            ownerName: request.owner_name, whatsapp: request.owner_whatsapp?.replace(/\D/g, ""),
-            colorPreference: (request as any).color_preference || "green",
-            stylePreference: (request as any).style_preference || "modern",
-            specialRequirements: request.special_requirements || "",
+            business_name: request.business_name,
+            business_type: request.business_type,
+            city: request.city,
+            owner_name: request.owner_name,
+            whatsapp_number: request.owner_whatsapp?.replace(/\D/g, ""),
+            color_preference: orderData.color_preference || (request as any).color_preference || "green",
+            special_requirements: request.special_requirements || "",
+            reference_sites: request.reference_sites || orderData.reference_site || "",
+            one_line_description: orderData.business_description || "",
+            package_id: request.package_id || "standard",
             businessId: request.business_id || request.id,
             supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
             supabaseKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            seo: seoData || {},
+            logo_url: orderData.logo_url || "",
+            photos_urls: orderData.photos_urls?.length > 0 ? orderData.photos_urls.join("\n") : "",
+            seo: seoData,
           },
         },
       });
