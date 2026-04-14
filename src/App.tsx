@@ -68,6 +68,7 @@ const AppContent = () => {
             <Route path="/refund" element={<Refund />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/checkout/return" element={<CheckoutReturn />} />
 
             {/* Onboarding — protected, business only */}
             <Route path="/onboarding" element={
