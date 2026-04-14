@@ -662,8 +662,15 @@ export default function DevDashboard() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {activeBuilds.map((request) => (
-                    <div key={request.id} className="rounded-xl border border-[#E0F2E9] p-5 bg-white shadow-sm flex flex-col justify-between">
+                  {activeBuilds.map((request) => {
+                    const isRevision = request.status === "revision";
+                    const revFeedback = (request as any).revision_feedback;
+                    const revCount = (request as any).revision_count || 0;
+                    const revMax = (request as any).max_revisions || 2;
+
+                    return (
+                    <div key={request.id} className="rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between"
+                      style={{ border: isRevision ? "2px solid #FF9800" : "1px solid #E0F2E9" }}>
                        <div>
                          <div className="flex items-center justify-between mb-3">
                            <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -673,10 +680,32 @@ export default function DevDashboard() {
                                <p className="text-xs text-[#666] truncate">{request.package_id ? getPackageById(request.package_id).badge : request.plan_selected}</p>
                              </div>
                            </div>
-                          <span className="text-xs font-semibold px-2 py-1 rounded bg-green-50 text-[#00C853] border border-green-200">
-                            ACCEPTED ✓
+                          <span className="text-xs font-semibold px-2 py-1 rounded border" style={{
+                            backgroundColor: isRevision ? "#FFF3E0" : "#F0FFF4",
+                            color: isRevision ? "#E65100" : "#00C853",
+                            borderColor: isRevision ? "#FFE0B2" : "#C8E6C9",
+                          }}>
+                            {isRevision ? "✏️ REVISION" : "ACCEPTED ✓"}
                           </span>
                         </div>
+
+                        {/* Revision details card */}
+                        {isRevision && revFeedback && (
+                          <div style={{ backgroundColor: "#FFF8E1", borderRadius: 12, padding: 14, marginBottom: 12, border: "1px solid #FFE0B2" }}>
+                            <p style={{ fontWeight: 700, fontSize: 13, color: "#E65100", marginBottom: 8 }}>Changes requested:</p>
+                            {revFeedback.selected && Array.isArray(revFeedback.selected) && (
+                              <ul style={{ margin: 0, paddingLeft: 18, marginBottom: 8 }}>
+                                {revFeedback.selected.map((item: string, i: number) => (
+                                  <li key={i} style={{ fontSize: 12, color: "#1A1A1A", marginBottom: 4 }}>{item}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {revFeedback.description && (
+                              <p style={{ fontSize: 12, color: "#666", fontStyle: "italic", marginBottom: 8 }}>"{revFeedback.description}"</p>
+                            )}
+                            <p style={{ fontSize: 11, color: "#999" }}>Revision {revCount} of {revMax}</p>
+                          </div>
+                        )}
                         
                         {(request as any).change_requests && (request as any).change_requests.filter((cr: any) => cr.status === 'pending').map((cr: any) => (
                            <div key={cr.id} style={{ backgroundColor: "#FEF2F2", color: "#EF4444", padding: "12px", borderRadius: "12px", marginBottom: "12px", border: "1px solid #FECACA" }}>
@@ -696,12 +725,13 @@ export default function DevDashboard() {
                       </div>
                       
                       <div className="flex gap-2 mt-auto">
-                        <Button size="sm" className="w-full h-10 font-semibold text-white shadow-md focus:outline-none" style={{ backgroundColor: "#0A0A0A" }} onClick={() => { setSelectedRequest(request); setShowBriefModal(true); }}>
-                          Submit GitHub →
+                        <Button size="sm" className="w-full h-10 font-semibold text-white shadow-md focus:outline-none" style={{ backgroundColor: isRevision ? "#FF9800" : "#0A0A0A" }} onClick={() => { setSelectedRequest(request); setShowBriefModal(true); }}>
+                          {isRevision ? "Submit Updated GitHub →" : "Submit GitHub →"}
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             
