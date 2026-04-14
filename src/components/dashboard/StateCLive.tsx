@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Lock } from "lucide-react";
+import { Star, Lock, Globe, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +38,14 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [fomoBarDismissed, setFomoBarDismissed] = useState(false);
   const [existingRatingChecked, setExistingRatingChecked] = useState(false);
+
+  // Custom domain state
+  const [customDomainInput, setCustomDomainInput] = useState("");
+  const [connectingDomain, setConnectingDomain] = useState(false);
+  const [domainConnected, setDomainConnected] = useState(false);
+  const [domainVerified, setDomainVerified] = useState(false);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [showDnsInstructions, setShowDnsInstructions] = useState(false);
 
   // Check if user already rated this build
   useEffect(() => {
