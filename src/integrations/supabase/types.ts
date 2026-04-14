@@ -760,6 +760,8 @@ export type Database = {
           business_type: string | null
           city: string | null
           created_at: string
+          custom_domain: string | null
+          custom_domain_verified: boolean | null
           display_name: string | null
           email: string | null
           feedback_given: boolean | null
@@ -801,6 +803,8 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           created_at?: string
+          custom_domain?: string | null
+          custom_domain_verified?: boolean | null
           display_name?: string | null
           email?: string | null
           feedback_given?: boolean | null
@@ -842,6 +846,8 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           created_at?: string
+          custom_domain?: string | null
+          custom_domain_verified?: boolean | null
           display_name?: string | null
           email?: string | null
           feedback_given?: boolean | null
