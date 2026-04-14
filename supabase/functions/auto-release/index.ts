@@ -30,6 +30,71 @@ serve(async (req) => {
     const results: string[] = [];
 
     // ─────────────────────────────────────
+    // CASE 0: Auto-assign to admin coder after 1 hour
+    // ─────────────────────────────────────
+    const ADMIN_CODER_ID = Deno.env.get("ADMIN_CODER_ID");
+
+    if (ADMIN_CODER_ID) {
+      const { data: unassigned } = await supabase
+        .from("build_requests")
+        .select("*")
+        .eq("status", "pending")
+        .is("assigned_coder_id", null)
+        .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+      for (const build of (unassigned || [])) {
+        // Auto-assign to admin
+        await supabase
+          .from("build_requests")
+          .update({
+            assigned_coder_id: ADMIN_CODER_ID,
+            assigned_coder_name: "Admin Builder",
+            status: "building",
+            hard_deadline: new Date(Date.now() + 47 * 60 * 60 * 1000).toISOString(),
+          })
+          .eq("id", build.id);
+
+        // Get business profile for WhatsApp details
+        let businessName = build.business_name || "Unknown";
+        let businessType = build.business_type || "N/A";
+        let city = build.city || "N/A";
+
+        if (build.business_id) {
+          const { data: bizProfile } = await supabase
+            .from("profiles")
+            .select("full_name, business_type, city")
+            .eq("user_id", build.business_id)
+            .maybeSingle();
+          if (bizProfile) {
+            businessName = bizProfile.full_name || businessName;
+            businessType = bizProfile.business_type || businessType;
+            city = bizProfile.city || city;
+          }
+        }
+
+        // Alert admin via WhatsApp
+        try {
+          await supabase.functions.invoke("send-whatsapp", {
+            body: {
+              to: "919973383902",
+              message:
+                "🔔 AUTO-ASSIGNED TO YOU\n" +
+                "Business: " + businessName + "\n" +
+                "Type: " + businessType + "\n" +
+                "City: " + city + "\n" +
+                "You have 47 hours.\n" +
+                "Accept now: leadpe.tech/studio"
+            }
+          });
+        } catch (e) {
+          console.error("WhatsApp error:", e);
+        }
+
+        results.push(`Auto-assigned to admin: ${businessName}`);
+      }
+    }
+
+    // ─────────────────────────────────────
     // CASE 1: No accept after 24 hours — alert admin once
     // ─────────────────────────────────────
     const { data: unaccepted } = await supabase
@@ -84,7 +149,6 @@ serve(async (req) => {
         .update({ status: "expired" })
         .eq("id", build.id);
 
-      // Update business profile
       if (build.business_id) {
         await supabase
           .from("profiles")
@@ -125,7 +189,6 @@ serve(async (req) => {
     for (const build of (stale || [])) {
       const penalisedCoder = build.assigned_coder_id;
 
-      // Release back to pool with 4hr emergency window
       await supabase
         .from("build_requests")
         .update({
@@ -137,7 +200,6 @@ serve(async (req) => {
         })
         .eq("id", build.id);
 
-      // Penalty for coder
       if (penalisedCoder) {
         await supabase.from("coder_penalties").insert({
           coder_id: penalisedCoder,
@@ -146,7 +208,6 @@ serve(async (req) => {
         });
       }
 
-      // Alert admin
       try {
         await supabase.functions.invoke("send-whatsapp", {
           body: {
@@ -163,7 +224,6 @@ serve(async (req) => {
         console.error("WhatsApp error:", e);
       }
 
-      // Apologise to business
       if (build.owner_whatsapp) {
         try {
           await supabase.functions.invoke("send-whatsapp", {
