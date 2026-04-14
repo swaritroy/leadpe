@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import ChangeRequestSheet from "@/components/ChangeRequestSheet";
+import RevisionRequestSheet from "@/components/RevisionRequestSheet";
+import { ADMIN_WHATSAPP } from "@/lib/constants";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
@@ -19,42 +20,71 @@ const STEPS = [
 
 export default function StateBBuilding({ buildRequest, businessName }: Props) {
   const navigate = useNavigate();
-  const [showChangeSheet, setShowChangeSheet] = useState(false);
+  const [showRevisionSheet, setShowRevisionSheet] = useState(false);
   const status = buildRequest?.status || "pending";
 
-  const activeIndex = status === "pending" ? 0 : status === "building" ? 2 : status === "demo_ready" ? 3 : 1;
+  const activeIndex = status === "pending" ? 0 : status === "building" ? 2 : status === "demo_ready" ? 3 : status === "revision" ? 2 : 1;
   const isAssigned = !!buildRequest?.assigned_coder_id;
 
-  // demo_ready state
   const isDemoReady = status === "demo_ready";
+  const isRevision = status === "revision";
   const demoUrl = buildRequest?.demo_url || buildRequest?.deploy_url;
-  const packagePrice = buildRequest?.package_price || 800;
+
+  const revisionCount = buildRequest?.revision_count || 0;
+  const maxRevisions = buildRequest?.max_revisions || 2;
+  const canRequestRevision = revisionCount < maxRevisions;
 
   return (
     <div style={{ backgroundColor: "#FFFFFF", minHeight: "calc(100vh - 56px)", paddingBottom: 80 }}>
 
       {/* ═══ TOP STATUS BAR ═══ */}
       <div style={{
-        backgroundColor: isDemoReady ? "#00C853" : "#E8F5E9",
+        backgroundColor: isDemoReady ? "#00C853" : isRevision ? "#FF9800" : "#E8F5E9",
         padding: "14px 20px",
         textAlign: "center",
       }}>
         <span style={{
           fontFamily: font.body, fontSize: 14, fontWeight: 600,
-          color: isDemoReady ? "#fff" : "#1A1A1A",
+          color: isDemoReady || isRevision ? "#fff" : "#1A1A1A",
         }}>
-          {isDemoReady ? "🎉 Your website preview is ready!" : "⚡ Your website is being built"}
+          {isDemoReady ? "🎉 Your website preview is ready!" : isRevision ? "✏️ Revision in progress" : "⚡ Your website is being built"}
         </span>
       </div>
 
-      {/* ═══ PROGRESS TRACKER (non-demo_ready) ═══ */}
-      {!isDemoReady && (
+      {/* ═══ REVISION IN PROGRESS STATE ═══ */}
+      {isRevision && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            margin: 16, backgroundColor: "#FFF8E1", borderRadius: 16, padding: 24,
+            border: "1px solid #FFE0B2", textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🔧</div>
+          <p style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>
+            Your builder is making the changes
+          </p>
+          <p style={{ fontFamily: font.body, fontSize: 14, color: "#666", lineHeight: 1.6 }}>
+            Ready in 24 hours. We'll notify you when the updated preview is ready.
+          </p>
+          <div style={{
+            marginTop: 16, backgroundColor: "#fff", borderRadius: 12, padding: 12,
+            display: "inline-block",
+          }}>
+            <span style={{ fontFamily: font.body, fontSize: 13, color: "#999" }}>
+              Revision {revisionCount} of {maxRevisions} used
+            </span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ═══ PROGRESS TRACKER (non-demo_ready, non-revision) ═══ */}
+      {!isDemoReady && !isRevision && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           style={{ margin: 16, backgroundColor: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", position: "relative" }}>
-            {/* Connecting line */}
             <div style={{
               position: "absolute", top: 18, left: 28, right: 28, height: 2,
               backgroundColor: "#E0E0E0", zIndex: 0,
@@ -95,8 +125,8 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
         </motion.div>
       )}
 
-      {/* ═══ STATUS MESSAGE (non-demo_ready) ═══ */}
-      {!isDemoReady && (
+      {/* ═══ STATUS MESSAGE (non-demo_ready, non-revision) ═══ */}
+      {!isDemoReady && !isRevision && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           style={{
@@ -180,7 +210,7 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
               See Preview →
             </button>
 
-            {/* Pay & Go Live button */}
+            {/* Approve & Pay button */}
             <button
               onClick={() => {
                 sessionStorage.setItem("upgrade_intent", "true");
@@ -193,8 +223,49 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
                 cursor: "pointer", boxShadow: "0 8px 24px rgba(0,200,83,0.35)",
               }}
             >
-              Pay ₹299 & Go Live →
+              ✅ Approve & Pay →
             </button>
+
+            {/* Request Changes button — only if revisions left */}
+            {canRequestRevision && (
+              <button
+                onClick={() => setShowRevisionSheet(true)}
+                style={{
+                  width: "100%", height: 44, borderRadius: 12, marginTop: 12,
+                  backgroundColor: "#fff", color: "#666", border: "1px solid #E0E0E0",
+                  fontFamily: font.body, fontSize: 14, fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                ✏️ Request Changes
+              </button>
+            )}
+
+            {/* Max revisions reached */}
+            {!canRequestRevision && (
+              <div style={{
+                marginTop: 16, backgroundColor: "#FFF8E1", borderRadius: 12, padding: 16,
+                border: "1px solid #FFE0B2",
+              }}>
+                <p style={{ fontFamily: font.body, fontSize: 13, color: "#F57F17", fontWeight: 600, marginBottom: 8 }}>
+                  Maximum revisions reached.
+                </p>
+                <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", lineHeight: 1.5, marginBottom: 12 }}>
+                  You have used all {maxRevisions} revisions. If you are still not satisfied, please contact us on WhatsApp. We will find a solution.
+                </p>
+                <button
+                  onClick={() => window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`Hi, I need help with my website: ${businessName}`)}`, "_blank")}
+                  style={{
+                    width: "100%", height: 40, borderRadius: 10,
+                    backgroundColor: "#25D366", color: "#fff", border: "none",
+                    fontFamily: font.body, fontSize: 13, fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Contact on WhatsApp →
+                </button>
+              </div>
+            )}
 
             <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", marginTop: 16, lineHeight: 1.5 }}>
               Your website will be live at:<br />
@@ -204,21 +275,6 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
             </p>
           </div>
         </motion.div>
-      )}
-
-      {/* ═══ WANT CHANGES ═══ */}
-      {isDemoReady && (
-        <div style={{ margin: "0 16px 16px", textAlign: "center" }}>
-          <button
-            onClick={() => setShowChangeSheet(true)}
-            style={{
-              background: "none", border: "none", fontFamily: font.body,
-              fontSize: 14, color: "#999", cursor: "pointer", padding: "12px 0",
-            }}
-          >
-            Want changes? 🔄
-          </button>
-        </div>
       )}
 
       {/* ═══ ENQUIRIES PLACEHOLDER ═══ */}
@@ -240,11 +296,12 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
         </div>
       </motion.div>
 
-      <ChangeRequestSheet
-        open={showChangeSheet}
-        onClose={() => setShowChangeSheet(false)}
+      <RevisionRequestSheet
+        open={showRevisionSheet}
+        onClose={() => setShowRevisionSheet(false)}
         buildRequest={buildRequest}
         businessName={businessName}
+        onSubmitted={() => window.location.reload()}
       />
     </div>
   );
