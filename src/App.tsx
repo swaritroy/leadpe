@@ -35,6 +35,7 @@ const Payment = lazy(() => import("./pages/Payment"));
 const DevDashboard = lazy(() => import("./pages/DevDashboard"));
 const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
 const Admin = lazy(() => import("./pages/Admin"));
+const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const AppContent = () => {
             <Route path="/refund" element={<Refund />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/checkout/return" element={<CheckoutReturn />} />
 
             {/* Onboarding — protected, business only */}
             <Route path="/onboarding" element={
