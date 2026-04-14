@@ -1,24 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const ALLOWED_ORIGINS = [
-  "https://leadpe.lovable.app",
-  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
+const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
 
   try {
     const { phone } = await req.json();
@@ -35,7 +23,7 @@ serve(async (req) => {
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return new Response(
         JSON.stringify({ success: false, message: "Enter a valid 10-digit Indian mobile number." }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -50,7 +38,7 @@ serve(async (req) => {
     if (existing) {
       return new Response(
         JSON.stringify({ success: false, message: "This number is already registered. Sign in instead." }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -74,99 +62,92 @@ serve(async (req) => {
       console.error("OTP insert error:", insertError);
       return new Response(
         JSON.stringify({ success: false, message: "Database error. Try again." }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Send OTP via 2Factor.in API — use ADDON_SERVICES for guaranteed TEXT SMS
-    // The /SMS/ route falls back to voice call if DLT template is not registered
-    const apiKey = Deno.env.get("TWOFACTOR_API_KEY");
+    // Send OTP via Twilio SMS through Lovable connector gateway
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
+    const twilioSmsFrom = Deno.env.get('TWILIO_SMS_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM')?.replace('whatsapp:', '') || '+14155238886';
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone);
     console.log("OTP generated successfully");
 
-    if (!apiKey) {
-      console.error("TWOFACTOR_API_KEY missing");
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
+      console.error("Missing Twilio connector credentials");
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "SMS service unavailable. Try again later." }),
-          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       return new Response(
         JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "SMS not configured. Test OTP returned." }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Use 2Factor ADDON_SERVICES/SEND/TSMS for explicit TEXT SMS (not voice)
-    // This sends a transactional SMS that doesn't require DLT template
-    const smsUrl = `https://2factor.in/API/R1/?module=TRANS_SMS&apikey=${apiKey}&to=${cleanPhone}&from=LEADPE&templatename=LeadPe-OTP&var1=${otp}`;
-    
-    console.log("Calling 2Factor Transactional SMS API...");
-    
-    let smsResult: any;
+    // Send SMS via Twilio connector gateway
+    console.log("Sending OTP via Twilio connector gateway...");
     let smsSent = false;
 
     try {
-      const smsResponse = await fetch(smsUrl);
-      smsResult = await smsResponse.json();
-      console.log("2Factor TSMS response:", JSON.stringify(smsResult));
-      
-      if (smsResult.Status === "Success") {
+      const smsResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'X-Connection-Api-Key': TWILIO_API_KEY,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          To: `+91${cleanPhone}`,
+          From: twilioSmsFrom,
+          Body: `Your LeadPe verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
+        }),
+      });
+
+      const smsResult = await smsResponse.json();
+      console.log("Twilio SMS response:", JSON.stringify(smsResult));
+
+      if (smsResponse.ok && smsResult.sid) {
         smsSent = true;
+        console.log("SMS sent successfully:", smsResult.sid);
+      } else {
+        console.error("Twilio SMS failed:", JSON.stringify(smsResult));
       }
     } catch (smsErr) {
-      console.error("TSMS API call failed:", smsErr);
-    }
-
-    // If transactional SMS failed, try the standard OTP route with AUTOGEN2
-    // AUTOGEN2 forces TEXT SMS (AUTOGEN without 2 may use voice)
-    if (!smsSent) {
-      console.log("TSMS failed, trying standard SMS OTP route...");
-      const fallbackUrl = `https://2factor.in/API/V1/${apiKey}/SMS/${cleanPhone}/${otp}`;
-      
-      try {
-        const fallbackResponse = await fetch(fallbackUrl);
-        smsResult = await fallbackResponse.json();
-        console.log("2Factor fallback response:", JSON.stringify(smsResult));
-        
-        if (smsResult.Status === "Success") {
-          smsSent = true;
-        }
-      } catch (fallbackErr) {
-        console.error("Fallback SMS failed:", fallbackErr);
-      }
+      console.error("SMS API call failed:", smsErr);
     }
 
     if (smsSent) {
       return new Response(
         JSON.stringify({ success: true, sms_sent: true }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // All SMS methods failed
-    console.error("All SMS methods failed:", JSON.stringify(smsResult));
+    // SMS failed
+    console.error("SMS sending failed");
 
     if (IS_PRODUCTION) {
       return new Response(
         JSON.stringify({ success: false, message: "SMS failed. Try again in a minute." }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Non-production fallback: return test OTP
     return new Response(
-      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsResult?.Details || "SMS delivery failed" }),
-      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: "SMS delivery failed" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("send-otp error:", e);
     return new Response(
       JSON.stringify({ success: false, message: (e as Error).message || "Something went wrong. Try again." }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

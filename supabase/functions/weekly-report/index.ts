@@ -1,32 +1,23 @@
-// Supabase Edge Function: Weekly Report Sender
-// Runs every Monday at 9am IST (3:30am UTC)
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const ALLOWED_ORIGINS = [
-  "https://leadpe.lovable.app",
-  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
+const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: getCorsHeaders(req) });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Create Supabase client with service role
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
+    const twilioFrom = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
+      throw new Error("Missing Twilio connector credentials (LOVABLE_API_KEY or TWILIO_API_KEY)");
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -51,16 +42,14 @@ serve(async (req) => {
     // Get current week range
     const now = new Date();
     const weekStart = new Date(now);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
     weekStart.setHours(0, 0, 0, 0);
-    
+
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
-    // Process each business
     for (const business of businesses || []) {
       try {
-        // Get deployment data
         const { data: deployment } = await supabase
           .from("deployments")
           .select("*")
@@ -69,7 +58,6 @@ serve(async (req) => {
           .limit(1)
           .single();
 
-        // Get leads this week
         const { count: leadsThisWeek } = await supabase
           .from("leads")
           .select("count", { count: "exact", head: true })
@@ -77,7 +65,6 @@ serve(async (req) => {
           .gte("created_at", weekStart.toISOString())
           .lt("created_at", weekEnd.toISOString());
 
-        // Get leads last week
         const lastWeekStart = new Date(weekStart);
         lastWeekStart.setDate(lastWeekStart.getDate() - 7);
         const lastWeekEnd = new Date(weekStart);
@@ -91,11 +78,10 @@ serve(async (req) => {
 
         const thisWeekCount = leadsThisWeek ?? 0;
         const lastWeekCount = leadsLastWeek ?? 0;
-        const growth = lastWeekCount > 0 
+        const growth = lastWeekCount > 0
           ? Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100)
           : thisWeekCount > 0 ? 100 : 0;
 
-        // Calculate trial day
         let trialDay: number | null = null;
         let isTrial = business.status === "trial";
 
@@ -107,7 +93,6 @@ serve(async (req) => {
           isTrial = diffDays < 7 && !deployment.converted;
         }
 
-        // Generate tip based on language and data
         const language = business.preferred_language || "hinglish";
         let tip = "";
 
@@ -146,90 +131,67 @@ serve(async (req) => {
           tip = langTips.noLeads;
         }
 
-        // Mock visitors (would come from analytics)
         const visitors = Math.floor(Math.random() * 50) + 10;
         const siteHealth = 94;
 
-        // Get week range string
         const startStr = weekStart.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
         const endStr = new Date(weekEnd.getTime() - 86400000).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
         const weekRange = `${startStr} - ${endStr}`;
 
-        // Generate report message
         const messages: Record<string, string> = {
-          english: `📊 WEEKLY REPORT
-━━━━━━━━━━━━━━
-${business.business_name || business.full_name}
-${weekRange}
-━━━━━━━━━━━━━━
-👁 Visitors: ${visitors}
-📋 Inquiries: ${thisWeekCount}
-📈 Growth: ${growth >= 0 ? "+" : ""}${growth}%
-⚡ Site: Healthy ✅
-━━━━━━━━━━━━━━
-${tip}
-LeadPe ⚡`,
-          
-          hindi: `📊 साप्ताहिक रिपोर्ट
-━━━━━━━━━━━━━━
-${business.business_name || business.full_name}
-${weekRange}
-━━━━━━━━━━━━━━
-👁 विज़िटर: ${visitors}
-📋 इन्क्वायरी: ${thisWeekCount}
-📈 वृद्धि: ${growth >= 0 ? "+" : ""}${growth}%
-⚡ साइट: ठीक है ✅
-━━━━━━━━━━━━━━
-${tip}
-LeadPe ⚡`,
-          
-          hinglish: `📊 WEEKLY REPORT
-━━━━━━━━━━━━━━
-${business.business_name || business.full_name}
-${weekRange}
-━━━━━━━━━━━━━━
-👁 Visitors: ${visitors}
-📋 Inquiries: ${thisWeekCount}
-📈 Growth: ${growth >= 0 ? "+" : ""}${growth}%
-⚡ Site: Healthy ✅
-━━━━━━━━━━━━━━
-${tip}
-LeadPe ⚡`,
+          english: `📊 WEEKLY REPORT\n━━━━━━━━━━━━━━\n${business.business_name || business.full_name}\n${weekRange}\n━━━━━━━━━━━━━━\n👁 Visitors: ${visitors}\n📋 Inquiries: ${thisWeekCount}\n📈 Growth: ${growth >= 0 ? "+" : ""}${growth}%\n⚡ Site: Healthy ✅\n━━━━━━━━━━━━━━\n${tip}\nLeadPe ⚡`,
+          hindi: `📊 साप्ताहिक रिपोर्ट\n━━━━━━━━━━━━━━\n${business.business_name || business.full_name}\n${weekRange}\n━━━━━━━━━━━━━━\n👁 विज़िटर: ${visitors}\n📋 इन्क्वायरी: ${thisWeekCount}\n📈 वृद्धि: ${growth >= 0 ? "+" : ""}${growth}%\n⚡ साइट: ठीक है ✅\n━━━━━━━━━━━━━━\n${tip}\nLeadPe ⚡`,
+          hinglish: `📊 WEEKLY REPORT\n━━━━━━━━━━━━━━\n${business.business_name || business.full_name}\n${weekRange}\n━━━━━━━━━━━━━━\n👁 Visitors: ${visitors}\n📋 Inquiries: ${thisWeekCount}\n📈 Growth: ${growth >= 0 ? "+" : ""}${growth}%\n⚡ Site: Healthy ✅\n━━━━━━━━━━━━━━\n${tip}\nLeadPe ⚡`,
         };
 
         const message = messages[language] || messages.hinglish;
 
-        // Send WhatsApp (using wa.me for now - can be replaced with Twilio)
         const cleanPhone = business.whatsapp_number.replace(/\D/g, "");
         const fullPhone = cleanPhone.startsWith("91") ? cleanPhone : `91${cleanPhone}`;
-        
+
+        // Send WhatsApp via Twilio connector gateway
+        const whatsappRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'X-Connection-Api-Key': TWILIO_API_KEY,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            From: twilioFrom,
+            To: `whatsapp:+${fullPhone}`,
+            Body: message,
+          }),
+        });
+
+        const whatsappData = await whatsappRes.json();
+
         // Log the message
         await supabase.from("message_log").insert({
           business_id: business.id,
-          day: null,
-          recipient: "owner",
           message: message.substring(0, 500),
           language: language,
           message_type: "weekly_report",
-          created_at: new Date().toISOString(),
-        });
-
-        // Save weekly report to Supabase
-        await supabase.from("weekly_reports").insert({
-          business_id: business.id,
-          week_start: weekStart.toISOString().split("T")[0],
-          visitors: visitors,
-          leads_count: thisWeekCount,
-          growth_percent: growth,
-          site_health: siteHealth,
+          channel: "whatsapp",
+          to_number: fullPhone,
+          status: whatsappRes.ok ? "sent" : "failed",
+          delivery_status: whatsappRes.ok ? (whatsappData.status || "queued") : "failed",
+          twilio_sid: whatsappData.sid || null,
+          error_message: whatsappRes.ok ? null : (whatsappData.message || "Send failed"),
           sent_at: new Date().toISOString(),
-          message_sent: true,
         });
 
-        results.sent++;
+        if (whatsappRes.ok) {
+          results.sent++;
+          console.log(`✅ Weekly report sent to ${fullPhone}: ${whatsappData.sid}`);
+        } else {
+          results.failed++;
+          results.errors.push(`${business.business_name || business.full_name}: ${whatsappData.message || "Send failed"}`);
+          console.error(`❌ Weekly report failed for ${fullPhone}:`, whatsappData);
+        }
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
 
       } catch (err) {
         results.failed++;
@@ -243,19 +205,13 @@ LeadPe ⚡`,
         message: `Weekly reports sent: ${results.sent}/${results.total}`,
         results,
       }),
-      {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
 
   } catch (error) {
     return new Response(
       JSON.stringify({ success: false, error: (error as Error).message }),
-      {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
