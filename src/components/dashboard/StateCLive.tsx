@@ -82,13 +82,23 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
       toast({ title: "Enter a valid domain", description: "Example: mybusiness.com", variant: "destructive" });
       return;
     }
+    // Check if a deployment exists before trying to add domain
+    if (!buildRequest?.deploy_url && !buildRequest?.demo_url) {
+      toast({ title: "Website not deployed yet", description: "Your website must be deployed first before connecting a custom domain.", variant: "destructive" });
+      return;
+    }
     setConnectingDomain(true);
     try {
       const { data, error } = await supabase.functions.invoke("deploy-website", {
         body: { action: "add_custom_domain", data: { domain, buildRequestId: buildRequest?.id, userId: user?.id } },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        if (data.error.includes("project not found")) {
+          throw new Error("Your website hasn't been deployed to hosting yet. Please wait for deployment to complete first.");
+        }
+        throw new Error(data.error);
+      }
 
       await supabase.from("profiles").update({ custom_domain: domain } as any).eq("user_id", user?.id);
       setDomainConnected(true);
