@@ -60,7 +60,7 @@ serve(async (req) => {
 
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioSmsFrom = Deno.env.get('TWILIO_SMS_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM')?.replace('whatsapp:', '') || '+14155238886';
+    const twilioFrom = Deno.env.get('TWILIO_WHATSAPP_FROM') || 'whatsapp:+14155238886';
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone);
@@ -70,67 +70,68 @@ serve(async (req) => {
       console.error("Missing Twilio credentials");
       if (IS_PRODUCTION) {
         return new Response(
-          JSON.stringify({ success: false, message: "SMS service unavailable. Try again later." }),
+          JSON.stringify({ success: false, message: "OTP service unavailable. Try again later." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       return new Response(
-        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "SMS not configured. Test OTP returned." }),
+        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "Twilio not configured. Test OTP returned." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Send OTP via WhatsApp instead of SMS
     const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
-    console.log("Sending OTP via Twilio API...");
-    let smsSent = false;
+    console.log("Sending OTP via WhatsApp...");
+    let whatsappSent = false;
 
     try {
-      const smsResponse = await fetch(TWILIO_API_URL, {
+      const waResponse = await fetch(TWILIO_API_URL, {
         method: 'POST',
         headers: {
           'Authorization': authHeader,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          To: `+91${cleanPhone}`,
-          From: twilioSmsFrom,
-          Body: `Your LeadPe verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
+          To: `whatsapp:+91${cleanPhone}`,
+          From: twilioFrom,
+          Body: `🔐 Your LeadPe verification code is: *${otp}*\n\nValid for 10 minutes. Do not share this code with anyone.`,
         }),
       });
 
-      const smsResult = await smsResponse.json();
-      console.log("Twilio SMS response:", JSON.stringify(smsResult));
+      const waResult = await waResponse.json();
+      console.log("Twilio WhatsApp response:", JSON.stringify(waResult));
 
-      if (smsResponse.ok && smsResult.sid) {
-        smsSent = true;
-        console.log("SMS sent successfully:", smsResult.sid);
+      if (waResponse.ok && waResult.sid) {
+        whatsappSent = true;
+        console.log("WhatsApp OTP sent successfully:", waResult.sid);
       } else {
-        console.error("Twilio SMS failed:", JSON.stringify(smsResult));
+        console.error("Twilio WhatsApp failed:", JSON.stringify(waResult));
       }
-    } catch (smsErr) {
-      console.error("SMS API call failed:", smsErr);
+    } catch (waErr) {
+      console.error("WhatsApp API call failed:", waErr);
     }
 
-    if (smsSent) {
+    if (whatsappSent) {
       return new Response(
-        JSON.stringify({ success: true, sms_sent: true }),
+        JSON.stringify({ success: true, whatsapp_sent: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.error("SMS sending failed");
+    console.error("WhatsApp OTP sending failed");
 
     if (IS_PRODUCTION) {
       return new Response(
-        JSON.stringify({ success: false, message: "SMS failed. Try again in a minute." }),
+        JSON.stringify({ success: false, message: "OTP delivery failed. Please try again in a minute." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: "SMS delivery failed" }),
+      JSON.stringify({ success: true, test_mode: true, test_otp: otp, whatsapp_error: "WhatsApp delivery failed" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
