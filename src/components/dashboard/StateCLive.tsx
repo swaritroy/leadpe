@@ -66,6 +66,60 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
     if (dismissed && Date.now() - parseInt(dismissed) < 86400000) setFomoBarDismissed(true);
   }, []);
 
+  // Load existing custom domain
+  useEffect(() => {
+    if ((profile as any)?.custom_domain) {
+      setCustomDomainInput((profile as any).custom_domain);
+      setDomainConnected(true);
+      setShowDnsInstructions(true);
+      if ((profile as any)?.custom_domain_verified) setDomainVerified(true);
+    }
+  }, [profile]);
+
+  const handleConnectDomain = async () => {
+    const domain = customDomainInput.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    if (!domain || !domain.includes(".")) {
+      toast({ title: "Enter a valid domain", description: "Example: mybusiness.com", variant: "destructive" });
+      return;
+    }
+    setConnectingDomain(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-website", {
+        body: { action: "add_custom_domain", data: { domain, buildRequestId: buildRequest?.id, userId: user?.id } },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      await supabase.from("profiles").update({ custom_domain: domain } as any).eq("user_id", user?.id);
+      setDomainConnected(true);
+      setShowDnsInstructions(true);
+      toast({ title: "Domain added! ✅", description: "Now add the DNS records below." });
+    } catch (e: any) {
+      toast({ title: "Failed to connect domain", description: e.message || "Try again later.", variant: "destructive" });
+    }
+    setConnectingDomain(false);
+  };
+
+  const handleVerifyDomain = async () => {
+    setVerifyingDomain(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-website", {
+        body: { action: "verify_domain", data: { domain: customDomainInput.trim().toLowerCase(), buildRequestId: buildRequest?.id, userId: user?.id } },
+      });
+      if (error) throw error;
+      if (data?.verified) {
+        setDomainVerified(true);
+        await supabase.from("profiles").update({ custom_domain_verified: true, site_url: `https://${customDomainInput.trim().toLowerCase()}` } as any).eq("user_id", user?.id);
+        toast({ title: "✅ Domain verified!", description: "Your website is now live on your domain." });
+      } else {
+        toast({ title: "⏳ Not verified yet", description: "DNS changes can take up to 24 hours.", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Verification failed", description: e.message || "Try again later.", variant: "destructive" });
+    }
+    setVerifyingDomain(false);
+  };
+
   // Use subdomain from profile, fallback to slug
   const subdomain = (profile as any)?.subdomain || business?.slug || profile?.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "";
   const liveUrl = subdomain ? `https://${subdomain}.leadpe.tech` : (buildRequest?.deploy_url || buildRequest?.live_url || "");
