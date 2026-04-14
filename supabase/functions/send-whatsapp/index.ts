@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -18,11 +16,11 @@ serve(async (req) => {
       )
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+    if (!TWILIO_ACCOUNT_SID) throw new Error('TWILIO_ACCOUNT_SID is not configured');
 
-    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
-    if (!TWILIO_API_KEY) throw new Error('TWILIO_API_KEY is not configured');
+    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+    if (!TWILIO_AUTH_TOKEN) throw new Error('TWILIO_AUTH_TOKEN is not configured');
 
     const twilioFrom = Deno.env.get('TWILIO_WHATSAPP_FROM') || 'whatsapp:+14155238886';
 
@@ -31,11 +29,13 @@ serve(async (req) => {
     if (toNumber.length === 10) toNumber = '91' + toNumber;
     if (!toNumber.startsWith('91')) toNumber = '91' + toNumber;
 
-    const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
+    const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+    const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+
+    const response = await fetch(TWILIO_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'X-Connection-Api-Key': TWILIO_API_KEY,
+        'Authorization': authHeader,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
@@ -48,7 +48,7 @@ serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Twilio gateway error:', data);
+      console.error('Twilio API error:', data);
       throw new Error(data.message || `Twilio API error [${response.status}]`);
     }
 

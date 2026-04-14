@@ -2,8 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
-
 serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
@@ -16,10 +14,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Clean phone number — last 10 digits only
     const cleanPhone = phone.toString().replace(/\D/g, "").slice(-10);
 
-    // Validate: exactly 10 digits starting with 6-9
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return new Response(
         JSON.stringify({ success: false, message: "Enter a valid 10-digit Indian mobile number." }),
@@ -27,7 +23,6 @@ serve(async (req) => {
       );
     }
 
-    // Check duplicate coder account
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
@@ -42,15 +37,12 @@ serve(async (req) => {
       );
     }
 
-    // Generate 6-digit OTP
     const array = new Uint32Array(1);
     crypto.getRandomValues(array);
     const otp = (100000 + (array[0] % 900000)).toString();
 
-    // Delete existing OTP for this phone
     await supabase.from("otp_verifications").delete().eq("phone", cleanPhone);
 
-    // Insert new OTP (expires in 10 minutes)
     const { error: insertError } = await supabase.from("otp_verifications").insert({
       phone: cleanPhone,
       otp_code: otp,
@@ -66,17 +58,16 @@ serve(async (req) => {
       );
     }
 
-    // Send OTP via Twilio SMS through Lovable connector gateway
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
+    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const twilioSmsFrom = Deno.env.get('TWILIO_SMS_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM')?.replace('whatsapp:', '') || '+14155238886';
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone);
     console.log("OTP generated successfully");
 
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
-      console.error("Missing Twilio connector credentials");
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+      console.error("Missing Twilio credentials");
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "SMS service unavailable. Try again later." }),
@@ -89,16 +80,17 @@ serve(async (req) => {
       );
     }
 
-    // Send SMS via Twilio connector gateway
-    console.log("Sending OTP via Twilio connector gateway...");
+    const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+    const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+
+    console.log("Sending OTP via Twilio API...");
     let smsSent = false;
 
     try {
-      const smsResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
+      const smsResponse = await fetch(TWILIO_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'X-Connection-Api-Key': TWILIO_API_KEY,
+          'Authorization': authHeader,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
@@ -128,7 +120,6 @@ serve(async (req) => {
       );
     }
 
-    // SMS failed
     console.error("SMS sending failed");
 
     if (IS_PRODUCTION) {
@@ -138,7 +129,6 @@ serve(async (req) => {
       );
     }
 
-    // Non-production fallback: return test OTP
     return new Response(
       JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: "SMS delivery failed" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
