@@ -2,28 +2,28 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
+    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
     const twilioFrom = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
 
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
-      throw new Error("Missing Twilio connector credentials (LOVABLE_API_KEY or TWILIO_API_KEY)");
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+      throw new Error("Missing Twilio credentials (TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN)");
     }
+
+    const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+    const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get all active businesses
     const { data: businesses, error: businessError } = await supabase
       .from("profiles")
       .select("*")
@@ -39,7 +39,6 @@ serve(async (req) => {
       errors: [] as string[],
     };
 
-    // Get current week range
     const now = new Date();
     const weekStart = new Date(now);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
@@ -132,7 +131,6 @@ serve(async (req) => {
         }
 
         const visitors = Math.floor(Math.random() * 50) + 10;
-        const siteHealth = 94;
 
         const startStr = weekStart.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
         const endStr = new Date(weekEnd.getTime() - 86400000).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
@@ -149,12 +147,10 @@ serve(async (req) => {
         const cleanPhone = business.whatsapp_number.replace(/\D/g, "");
         const fullPhone = cleanPhone.startsWith("91") ? cleanPhone : `91${cleanPhone}`;
 
-        // Send WhatsApp via Twilio connector gateway
-        const whatsappRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
+        const whatsappRes = await fetch(TWILIO_API_URL, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'X-Connection-Api-Key': TWILIO_API_KEY,
+            'Authorization': authHeader,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
@@ -166,7 +162,6 @@ serve(async (req) => {
 
         const whatsappData = await whatsappRes.json();
 
-        // Log the message
         await supabase.from("message_log").insert({
           business_id: business.id,
           message: message.substring(0, 500),
@@ -190,7 +185,6 @@ serve(async (req) => {
           console.error(`❌ Weekly report failed for ${fullPhone}:`, whatsappData);
         }
 
-        // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 200));
 
       } catch (err) {

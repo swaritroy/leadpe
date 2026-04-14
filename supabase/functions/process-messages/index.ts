@@ -1,35 +1,34 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) {
-    return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
+  const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+  if (!TWILIO_ACCOUNT_SID) {
+    return new Response(JSON.stringify({ error: "TWILIO_ACCOUNT_SID is not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
-  if (!TWILIO_API_KEY) {
-    return new Response(JSON.stringify({ error: "TWILIO_API_KEY is not configured" }), {
+  const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+  if (!TWILIO_AUTH_TOKEN) {
+    return new Response(JSON.stringify({ error: "TWILIO_AUTH_TOKEN is not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   const twilioFrom = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+  const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+  const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Fetch all pending messages
   const { data: pending, error: fetchErr } = await supabase
     .from("scheduled_messages")
     .select("*")
@@ -48,16 +47,14 @@ Deno.serve(async (req) => {
 
   for (const msg of pending) {
     try {
-      // Format phone number
       let toNumber = msg.to.replace(/\D/g, "");
       if (toNumber.length === 10) toNumber = "91" + toNumber;
       if (!toNumber.startsWith("91")) toNumber = "91" + toNumber;
 
-      const res = await fetch(`${GATEWAY_URL}/Messages.json`, {
+      const res = await fetch(TWILIO_API_URL, {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'X-Connection-Api-Key': TWILIO_API_KEY,
+          'Authorization': authHeader,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
@@ -87,7 +84,7 @@ Deno.serve(async (req) => {
         });
 
         sent++;
-        console.log(`✅ Sent to ${toNumber}: ${data.sid} (status: ${data.status})`);
+        console.log(`✅ Sent to ${toNumber}: ${data.sid}`);
       } else {
         const errorMsg = data.message || data.more_info || "Unknown Twilio error";
 
