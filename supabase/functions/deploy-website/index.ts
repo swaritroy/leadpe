@@ -117,6 +117,7 @@ serve(async (req) => {
       // Step 3: Poll deployment status (max 3 minutes)
       let finalState = "BUILDING";
       let finalUrl = deployUrl;
+      let buildError = "";
       const maxWait = 180000;
       const pollInterval = 5000;
       const startTime = Date.now();
@@ -128,26 +129,49 @@ serve(async (req) => {
           const statusData = await statusResp.json();
           finalState = statusData.readyState || statusData.state || "BUILDING";
           if (statusData.url) finalUrl = `https://${statusData.url}`;
+          
+          // Capture build error details
+          if (finalState === "ERROR") {
+            buildError = statusData.errorMessage || statusData.error?.message || "Build failed on Vercel";
+            console.error("Deployment ERROR:", buildError);
+          }
+          
           if (finalState === "READY" || finalState === "ERROR") break;
         } catch (e) {
           console.error("Poll error:", e);
         }
       }
 
-      // Step 4: Save as demo_url ONLY (NOT live_url)
+      // Step 4: Update build request based on final state
       if (buildRequestId) {
-        await supabase.from("build_requests").update({
-          demo_url: finalUrl,
-          deploy_url: finalUrl,
-          status: finalState === "READY" ? "demo_ready" : "review",
-          deployed_at: new Date().toISOString(),
-        }).eq("id", buildRequestId);
+        if (finalState === "READY") {
+          await supabase.from("build_requests").update({
+            demo_url: finalUrl,
+            deploy_url: finalUrl,
+            status: "demo_ready",
+            deployed_at: new Date().toISOString(),
+          }).eq("id", buildRequestId);
+        } else if (finalState === "ERROR") {
+          // Mark as failed — dashboard will show failure state
+          await supabase.from("build_requests").update({
+            status: "failed",
+            deploy_url: null,
+          }).eq("id", buildRequestId);
+        } else {
+          // Timeout — still building
+          await supabase.from("build_requests").update({
+            demo_url: finalUrl,
+            deploy_url: finalUrl,
+            status: "review",
+            deployed_at: new Date().toISOString(),
+          }).eq("id", buildRequestId);
+        }
       }
 
-      // Step 5: Update business owner profile to demo_ready (NOT live)
+      // Step 5: Update business owner profile
       if (businessId) {
         await supabase.from("profiles").update({
-          website_status: "demo_ready",
+          website_status: finalState === "ERROR" ? "failed" : "demo_ready",
         }).eq("user_id", businessId);
       }
 
@@ -167,6 +191,18 @@ serve(async (req) => {
         } catch (e) {
           console.error("WhatsApp send error:", e);
         }
+      }
+
+      if (finalState === "ERROR") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: buildError || "Build failed on deployment platform",
+            state: "ERROR",
+            projectName,
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
       }
 
       return new Response(

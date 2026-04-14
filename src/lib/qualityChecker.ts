@@ -28,39 +28,43 @@ export async function checkWebsiteQuality(
 
     if (error) {
       console.error("Quality check error:", error);
-      return getFallbackReport();
+      // Return a FAILED report, not a passing one
+      return getFailedReport("Quality check service unavailable. Please try again.");
+    }
+
+    if (data?.error) {
+      return getFailedReport(data.error);
     }
 
     return data as QualityReport;
   } catch (err) {
     console.error("Quality check failed:", err);
-    return getFallbackReport();
+    return getFailedReport("Network error during quality check. Check your connection and try again.");
   }
 }
 
-function getFallbackReport(): QualityReport {
+/**
+ * Returns a FAILED report when the quality check service itself fails.
+ * This prevents false "100 score" results that let broken sites through.
+ */
+function getFailedReport(reason: string): QualityReport {
   const items: CheckResultItem[] = [
-    { key: "whatsapp_button", label: "WhatsApp Button", passed: true, fix: "" },
-    { key: "contact_form", label: "Contact Form", passed: true, fix: "" },
-    { key: "about_section", label: "About Section", passed: true, fix: "" },
-    { key: "services_section", label: "Services Section", passed: true, fix: "" },
-    { key: "business_name", label: "Business Name", passed: true, fix: "" },
-    { key: "seo_title", label: "SEO Title", passed: true, fix: "" },
-    { key: "meta_description", label: "Meta Description", passed: true, fix: "" },
-    { key: "mobile_layout", label: "Mobile Layout", passed: true, fix: "" },
-    { key: "google_maps", label: "Google Maps / Location", passed: true, fix: "" },
-    { key: "page_speed", label: "Page Speed Ready", passed: true, fix: "" },
+    { key: "repo_access", label: "Repository Access", passed: false, fix: "Could not access the repository. Ensure it is PUBLIC on GitHub." },
+    { key: "build_check", label: "Build Verification", passed: false, fix: "Could not verify the build. Ensure 'npm run build' passes locally before submitting." },
+    { key: "whatsapp_button", label: "WhatsApp Button", passed: false, fix: "Quality check could not run — verify manually." },
+    { key: "contact_form", label: "Contact Form", passed: false, fix: "Quality check could not run — verify manually." },
+    { key: "seo_title", label: "SEO Title", passed: false, fix: "Quality check could not run — verify manually." },
   ];
   const checks: Record<string, boolean> = {};
-  items.forEach(i => { checks[i.key] = true; });
+  items.forEach(i => { checks[i.key] = false; });
   return {
-    score: 100,
-    passed: true,
+    score: 0,
+    passed: false,
     checks,
     checkResults: items,
-    issues: [],
-    fixes: [],
-    aiSuggestions: "Unable to run quality check. Proceeding with default pass.",
+    issues: [`❌ Quality check failed: ${reason}`],
+    fixes: ["Fix the issue above and try submitting again."],
+    aiSuggestions: reason,
   };
 }
 

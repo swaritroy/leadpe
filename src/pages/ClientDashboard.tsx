@@ -11,6 +11,7 @@ import StateANoWebsite from "@/components/dashboard/StateANoWebsite";
 import StateBBuilding from "@/components/dashboard/StateBBuilding";
 import StateCLive from "@/components/dashboard/StateCLive";
 import StateExpired from "@/components/dashboard/StateExpired";
+import StateDeployFailed from "@/components/dashboard/StateDeployFailed";
 
 interface Lead {
   id: string;
@@ -145,8 +146,9 @@ export default function ClientDashboard() {
   const websiteStatus = profile?.website_status || null;
   
   const isExpiredOrder = status === "expired" || websiteStatus === "expired";
+  const isDeployFailed = status === "failed" || status === "deploy_failed";
   const isLive = status === "live" && !isExpiredOrder;
-  const isBuilding = !isExpiredOrder && !isLive && (status === "pending" || status === "building" || status === "demo_ready");
+  const isBuilding = !isExpiredOrder && !isLive && !isDeployFailed && (status === "pending" || status === "building" || status === "demo_ready" || status === "review");
   const hasNoWebsite = !buildRequest && !websiteStatus;
 
   const planType = profile?.plan_type || "free";
@@ -259,6 +261,14 @@ export default function ClientDashboard() {
         <StateExpired
           profile={profile}
           user={user}
+        />
+      )}
+
+      {isDeployFailed && buildRequest && (
+        <StateDeployFailed
+          buildRequest={buildRequest}
+          businessName={profile?.business_name || profile?.full_name || "Business"}
+          userId={user?.id || ""}
         />
       )}
 
