@@ -193,6 +193,18 @@ serve(async (req) => {
         }
       }
 
+      if (finalState === "ERROR") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: buildError || "Build failed on deployment platform",
+            state: "ERROR",
+            projectName,
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
