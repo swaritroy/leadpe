@@ -50,6 +50,7 @@ import { getBusinessIcon, formatDeadline } from "@/lib/clientBrief";
 // Interfaces
 interface Profile {
   id: string;
+  user_id: string;
   full_name: string;
   business_name?: string;
   whatsapp_number: string;
@@ -62,6 +63,11 @@ interface Profile {
   trial_start_date?: string;
   site_url?: string;
   created_at: string;
+  vetting_status?: string;
+  ai_tools?: string[];
+  test_site_url?: string;
+  vetting_notes?: string;
+  onboarding_complete?: boolean;
 }
 
 interface Deployment {
