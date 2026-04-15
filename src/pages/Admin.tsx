@@ -1580,6 +1580,55 @@ export default function Admin() {
           )}
         </motion.div>
 
+        {/* ── UPI VERIFICATION ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("upi_verify")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("upi_verify") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            💰 UPI Payment Verification
+            {pendingPayments.length > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: "#ef4444" }}>
+                {pendingPayments.length}
+              </span>
+            )}
+          </button>
+
+          {expandedSections.has("upi_verify") && (
+            <div className="rounded-2xl border border-[#E0F2E9] p-5 bg-white">
+              {pendingPayments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">No pending UPI payments</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingPayments.map((p: any) => (
+                    <div key={p.id} className="border border-[#E0F2E9] rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex-1 space-y-1">
+                        <p className="font-bold text-sm">{p.business_name || "Unknown Business"}</p>
+                        <p className="text-xs text-muted-foreground">Amount: <span className="font-bold text-foreground">₹{p.amount || p.total || "—"}</span></p>
+                        <p className="text-xs text-muted-foreground">Plan: <span className="font-semibold">{p.plan || "—"}</span></p>
+                        <p className="text-xs font-mono" style={{ color: "#00C853" }}>UTR: {p.utr || "Not provided"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.created_at ? new Date(p.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleVerifyUpiPayment(p)}
+                        disabled={activatingPayment === p.id}
+                        className="whitespace-nowrap"
+                        style={{ backgroundColor: "#00C853" }}
+                      >
+                        {activatingPayment === p.id ? (
+                          <><RefreshCw size={14} className="animate-spin mr-1" /> Verifying...</>
+                        ) : (
+                          <><CheckCircle size={14} className="mr-1" /> Verify & Activate</>
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+
         {/* ── ACTIVATION PANEL ── */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <button onClick={() => toggleSection("payments")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
