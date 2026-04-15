@@ -209,6 +209,13 @@ export default function DevDashboard() {
       return;
     }
 
+    // Vetting gate — if not approved, don't load build requests
+    if (profileData && profileData.vetting_status && profileData.vetting_status !== "approved") {
+      setLoading(false);
+      setDataLoaded(true);
+      return;
+    }
+
     const { data: earnData } = await supabase.from("earnings")
       .select("*")
       .eq("vibe_coder_id", user.id);
@@ -516,6 +523,54 @@ export default function DevDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
         <div className="animate-spin w-8 h-8 border-2 border-[#00C853] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Vetting gate screens
+  if (profile?.vetting_status === "pending_vetting") {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7", fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="max-w-md mx-auto px-6 text-center">
+          <div style={{ fontSize: 64, marginBottom: 16 }}>⏳</div>
+          <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>Under Review</h1>
+          <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6, marginBottom: 24 }}>
+            Our team is reviewing your test website. This usually takes less than 24 hours. 
+            We'll notify you on WhatsApp once you're approved!
+          </p>
+          <div style={{ backgroundColor: "#E8F5E9", borderRadius: 16, padding: 20, border: "1px solid #C8E6C9" }}>
+            <p style={{ fontSize: 14, color: "#2E7D32", fontWeight: 500 }}>
+              🔗 Test site submitted: <a href={profile.test_site_url} target="_blank" rel="noopener noreferrer" style={{ color: "#00C853", textDecoration: "underline" }}>{profile.test_site_url}</a>
+            </p>
+          </div>
+          <button onClick={() => { signOut(); navigate("/studio/auth"); }} style={{ marginTop: 32, padding: "10px 24px", backgroundColor: "#fff", border: "1px solid #E0E0E0", borderRadius: 12, fontSize: 14, color: "#666", cursor: "pointer" }}>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile?.vetting_status === "rejected") {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7", fontFamily: "'DM Sans', sans-serif" }}>
+        <div className="max-w-md mx-auto px-6 text-center">
+          <div style={{ fontSize: 64, marginBottom: 16 }}>😔</div>
+          <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 28, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>Application Not Approved</h1>
+          <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6, marginBottom: 16 }}>
+            Unfortunately, your test website didn't meet our quality standards this time.
+          </p>
+          {profile.vetting_notes && (
+            <div style={{ backgroundColor: "#FFF3E0", borderRadius: 16, padding: 20, border: "1px solid #FFE0B2", marginBottom: 24, textAlign: "left" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#E65100", marginBottom: 6 }}>Feedback:</p>
+              <p style={{ fontSize: 14, color: "#BF360C", lineHeight: 1.5 }}>{profile.vetting_notes}</p>
+            </div>
+          )}
+          <p style={{ fontSize: 14, color: "#999" }}>You can reapply in 7 days with a better test site. Keep building! 💪</p>
+          <button onClick={() => { signOut(); navigate("/studio/auth"); }} style={{ marginTop: 32, padding: "10px 24px", backgroundColor: "#fff", border: "1px solid #E0E0E0", borderRadius: 12, fontSize: 14, color: "#666", cursor: "pointer" }}>
+            Sign Out
+          </button>
+        </div>
       </div>
     );
   }
