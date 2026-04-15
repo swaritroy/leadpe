@@ -209,6 +209,13 @@ export default function DevDashboard() {
       return;
     }
 
+    // Vetting gate — if not approved, don't load build requests
+    if (profileData && profileData.vetting_status && profileData.vetting_status !== "approved") {
+      setLoading(false);
+      setDataLoaded(true);
+      return;
+    }
+
     const { data: earnData } = await supabase.from("earnings")
       .select("*")
       .eq("vibe_coder_id", user.id);
