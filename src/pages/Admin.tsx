@@ -178,6 +178,8 @@ export default function Admin() {
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [activatingPayment, setActivatingPayment] = useState<string | null>(null);
   
   // Check admin access
   useEffect(() => {
@@ -268,6 +270,13 @@ export default function Admin() {
         .order("sent_at", { ascending: false })
         .limit(100);
       setMessageLog(msgLogData || []);
+
+      // Fetch pending UPI payments
+      const { data: paymentsData } = await (supabase as any).from("payments")
+        .select("*")
+        .eq("status", "pending_verification")
+        .order("created_at", { ascending: false });
+      setPendingPayments(paymentsData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
