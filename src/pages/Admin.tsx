@@ -542,7 +542,41 @@ export default function Admin() {
     fetchData();
   };
   
-  const markAllPaid = async () => {
+  const [vettingNotes, setVettingNotes] = useState<Record<string, string>>({});
+
+  const pendingVettingCoders = profiles.filter(p => p.role === "vibe_coder" && p.vetting_status === "pending_vetting" && p.onboarding_complete);
+
+  const handleApproveVetting = async (coder: Profile) => {
+    await (supabase.from("profiles") as any).update({ vetting_status: "approved" }).eq("user_id", coder.user_id);
+    // WhatsApp notification
+    try {
+      await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          to: `91${coder.whatsapp_number}`,
+          message: `🎉 Congratulations ${coder.full_name}!\n\nYou've been APPROVED as a LeadPe Vibe Coder! 🚀\n\nYou can now see live build requests in your dashboard and start earning.\n\nLogin: https://leadpe.lovable.app/studio/auth\n\n— Team LeadPe ⚡`
+        }
+      });
+    } catch {}
+    toast({ title: "✅ Coder Approved!", description: `${coder.full_name} can now see build requests` });
+    fetchData();
+  };
+
+  const handleRejectVetting = async (coder: Profile) => {
+    const notes = vettingNotes[coder.id] || "Your test website needs improvement. Please ensure it's mobile responsive, professional, and well-structured.";
+    await (supabase.from("profiles") as any).update({ vetting_status: "rejected", vetting_notes: notes }).eq("user_id", coder.user_id);
+    // WhatsApp notification
+    try {
+      await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          to: `91${coder.whatsapp_number}`,
+          message: `Hi ${coder.full_name},\n\nThank you for applying to LeadPe Studio.\n\nAfter reviewing your test website, we've decided to not approve your application at this time.\n\n📝 Feedback: ${notes}\n\nYou can reapply in 7 days with an improved site. Keep building! 💪\n\n— Team LeadPe`
+        }
+      });
+    } catch {}
+    toast({ title: "Coder rejected", description: `${coder.full_name} has been notified` });
+    fetchData();
+  };
+
     for (const earning of unpaidEarnings) {
       await (supabase as any).from("earnings")
         .update({ paid: true, paid_at: new Date().toISOString() })
