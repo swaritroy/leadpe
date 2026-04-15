@@ -846,6 +846,92 @@ export default function Admin() {
           )}
         </motion.div>
 
+        {/* Coder Vetting Queue */}
+        {pendingVettingCoders.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <button onClick={() => toggleSection("vetting")} className="flex items-center gap-2 text-lg font-bold font-display">
+                {expandedSections.has("vetting") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                🔍 Pending Vetting ({pendingVettingCoders.length})
+              </button>
+            </div>
+            {expandedSections.has("vetting") && (
+              <div className="space-y-4">
+                {pendingVettingCoders.map((coder) => (
+                  <div key={coder.id} className="rounded-2xl border-2 border-[#FFD54F] overflow-hidden" style={{ backgroundColor: "#FFFDE7" }}>
+                    <div className="p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold" style={{ color: "#1A1A1A" }}>{coder.full_name}</h3>
+                          <p className="text-sm text-muted-foreground">📍 {coder.city} • 📱 {coder.whatsapp_number} • Joined {new Date(coder.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#FFF9C4", color: "#F57F17", border: "1px solid #FFD54F" }}>
+                          ⏳ Pending Review
+                        </span>
+                      </div>
+
+                      {/* AI Tools */}
+                      <div className="mb-3">
+                        <span className="text-xs font-medium text-muted-foreground">AI Tools: </span>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {(coder.ai_tools || []).map((tool) => (
+                            <span key={tool} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#E8F5E9", color: "#2E7D32" }}>
+                              {tool}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Test Site */}
+                      <div className="mb-4">
+                        <span className="text-xs font-medium text-muted-foreground">Test Site: </span>
+                        <a href={coder.test_site_url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium ml-1" style={{ color: "#00C853" }}>
+                          {coder.test_site_url} <ExternalLink size={12} className="inline ml-1" />
+                        </a>
+                      </div>
+
+                      {/* Rejection notes */}
+                      <div className="mb-4">
+                        <label className="text-xs font-medium text-muted-foreground block mb-1">Rejection notes (optional):</label>
+                        <Input
+                          value={vettingNotes[coder.id] || ""}
+                          onChange={e => setVettingNotes(prev => ({ ...prev, [coder.id]: e.target.value }))}
+                          placeholder="e.g. Site not mobile responsive, missing contact section..."
+                          className="h-10 border-[#E0E0E0] bg-white text-sm"
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleApproveVetting(coder)}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors hover:opacity-90"
+                          style={{ backgroundColor: "#00C853" }}
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectVetting(coder)}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-90"
+                          style={{ backgroundColor: "#FFEBEE", color: "#D32F2F", border: "1px solid #FFCDD2" }}
+                        >
+                          ❌ Reject
+                        </button>
+                        <button
+                          onClick={() => window.open(`https://wa.me/91${coder.whatsapp_number}`, "_blank")}
+                          className="py-2.5 px-4 rounded-xl text-sm border border-border hover:border-[#00E676]/50 transition-colors"
+                        >
+                          💬
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Vibe Coders Table */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-8">
           <div className="flex items-center gap-2 mb-4">
