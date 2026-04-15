@@ -13,7 +13,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
-const ADMIN_UPI = "swaritroy9@oksbi"; // Your UPI ID
+const ADMIN_UPI = "kisswithurmila@okaxis"; // Your UPI ID
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
