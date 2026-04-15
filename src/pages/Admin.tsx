@@ -586,6 +586,50 @@ export default function Admin() {
     fetchData();
   };
 
+  const handleVerifyUpiPayment = async (payment: any) => {
+    setActivatingPayment(payment.id);
+    try {
+      // Update payment status
+      await (supabase as any).from("payments").update({
+        status: "completed",
+        activated_at: new Date().toISOString(),
+      }).eq("id", payment.id);
+
+      // Find business profile and activate
+      if (payment.business_id) {
+        await (supabase as any).from("profiles").update({
+          website_status: "live",
+          plan_status: "active",
+          status: "active",
+        }).eq("user_id", payment.business_id);
+
+        // Get profile for WhatsApp
+        const { data: prof } = await (supabase as any).from("profiles")
+          .select("whatsapp_number, full_name, subdomain")
+          .eq("user_id", payment.business_id)
+          .single();
+
+        if (prof?.whatsapp_number) {
+          const siteUrl = prof.subdomain ? `${prof.subdomain}.leadpe.tech` : "leadpe.tech/dashboard";
+          try {
+            await supabase.functions.invoke("send-whatsapp", {
+              body: {
+                to: `91${prof.whatsapp_number}`,
+                message: `✅ Payment verified!\n\nYour website is now LIVE! 🎉\n\nVisit: https://${siteUrl}\n\nYou'll start receiving leads directly on WhatsApp.\n\n— Team LeadPe ⚡`,
+              },
+            });
+          } catch {}
+        }
+      }
+
+      toast({ title: "✅ Payment verified!", description: `${payment.business_name} activated` });
+      fetchData();
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to verify payment", variant: "destructive" });
+    }
+    setActivatingPayment(null);
+  };
+
   const markAllPaid = async () => {
     for (const earning of unpaidEarnings) {
       await (supabase as any).from("earnings")
