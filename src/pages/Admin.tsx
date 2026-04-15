@@ -577,6 +577,7 @@ export default function Admin() {
     fetchData();
   };
 
+  const markAllPaid = async () => {
     for (const earning of unpaidEarnings) {
       await (supabase as any).from("earnings")
         .update({ paid: true, paid_at: new Date().toISOString() })
