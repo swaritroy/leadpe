@@ -1,10 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
+
+const ALLOWED_ORIGINS = [
+  "https://leadpe.lovable.app",
+  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     const { phone } = await req.json();
@@ -19,7 +33,7 @@ serve(async (req) => {
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return new Response(
         JSON.stringify({ success: false, message: "Enter a valid 10-digit Indian mobile number." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -32,8 +46,8 @@ serve(async (req) => {
 
     if (existing) {
       return new Response(
-        JSON.stringify({ success: false, message: "This number is already registered. Sign in instead." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: "already_exists", message: "This number is already registered. Sign in instead." }),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -54,7 +68,7 @@ serve(async (req) => {
       console.error("OTP insert error:", insertError);
       return new Response(
         JSON.stringify({ success: false, message: "Database error. Try again." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -71,16 +85,15 @@ serve(async (req) => {
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "OTP service unavailable. Try again later." }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       return new Response(
         JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "Twilio not configured. Test OTP returned." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
-    // Send OTP via WhatsApp instead of SMS
     const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
@@ -117,7 +130,7 @@ serve(async (req) => {
     if (whatsappSent) {
       return new Response(
         JSON.stringify({ success: true, whatsapp_sent: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -126,19 +139,19 @@ serve(async (req) => {
     if (IS_PRODUCTION) {
       return new Response(
         JSON.stringify({ success: false, message: "OTP delivery failed. Please try again in a minute." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
       JSON.stringify({ success: true, test_mode: true, test_otp: otp, whatsapp_error: "WhatsApp delivery failed" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("send-otp error:", e);
     return new Response(
       JSON.stringify({ success: false, message: (e as Error).message || "Something went wrong. Try again." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
