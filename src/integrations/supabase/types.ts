@@ -764,6 +764,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_tools: string[] | null
           avatar_url: string | null
           business_name: string | null
           business_type: string | null
@@ -795,6 +796,7 @@ export type Database = {
           status: string | null
           subdomain: string | null
           subscription_plan: string | null
+          test_site_url: string | null
           total_earned: number | null
           total_sites_built: number | null
           total_sites_live: number | null
@@ -803,10 +805,13 @@ export type Database = {
           trial_start_date: string | null
           upi_id: string | null
           user_id: string
+          vetting_notes: string | null
+          vetting_status: string | null
           website_status: string | null
           whatsapp_number: string | null
         }
         Insert: {
+          ai_tools?: string[] | null
           avatar_url?: string | null
           business_name?: string | null
           business_type?: string | null
@@ -838,6 +843,7 @@ export type Database = {
           status?: string | null
           subdomain?: string | null
           subscription_plan?: string | null
+          test_site_url?: string | null
           total_earned?: number | null
           total_sites_built?: number | null
           total_sites_live?: number | null
@@ -846,10 +852,13 @@ export type Database = {
           trial_start_date?: string | null
           upi_id?: string | null
           user_id: string
+          vetting_notes?: string | null
+          vetting_status?: string | null
           website_status?: string | null
           whatsapp_number?: string | null
         }
         Update: {
+          ai_tools?: string[] | null
           avatar_url?: string | null
           business_name?: string | null
           business_type?: string | null
@@ -881,6 +890,7 @@ export type Database = {
           status?: string | null
           subdomain?: string | null
           subscription_plan?: string | null
+          test_site_url?: string | null
           total_earned?: number | null
           total_sites_built?: number | null
           total_sites_live?: number | null
@@ -889,6 +899,8 @@ export type Database = {
           trial_start_date?: string | null
           upi_id?: string | null
           user_id?: string
+          vetting_notes?: string | null
+          vetting_status?: string | null
           website_status?: string | null
           whatsapp_number?: string | null
         }
