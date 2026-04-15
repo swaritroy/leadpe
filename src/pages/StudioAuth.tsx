@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,74 @@ import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+
+// OTP Input Component defined OUTSIDE
+function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v: string) => void; onComplete: () => void }) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const digits = value.padEnd(6, "").split("").slice(0, 6);
+
+  const handleChange = useCallback((index: number, val: string) => {
+    const digit = val.replace(/\D/g, "").slice(-1);
+    const newDigits = [...digits];
+    newDigits[index] = digit;
+    const newValue = newDigits.join("").replace(/ /g, "");
+    onChange(newValue);
+    if (digit && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    if (newValue.length === 6) {
+      setTimeout(() => onComplete(), 300);
+    }
+  }, [digits, onChange, onComplete]);
+
+  const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      const newDigits = [...digits];
+      newDigits[index - 1] = "";
+      onChange(newDigits.join("").replace(/ /g, ""));
+      inputRefs.current[index - 1]?.focus();
+    }
+  }, [digits, onChange]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length > 0) {
+      onChange(pasted);
+      const focusIdx = Math.min(pasted.length, 5);
+      inputRefs.current[focusIdx]?.focus();
+      if (pasted.length === 6) {
+        setTimeout(() => onComplete(), 500);
+      }
+    }
+  }, [onChange, onComplete]);
+
+  return (
+    <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "24px 0" }}>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <input
+          key={i}
+          ref={(el) => { inputRefs.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i]?.trim() || ""}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={i === 0 ? handlePaste : undefined}
+          onFocus={(e) => { e.target.style.borderColor = "#00C853"; }}
+          onBlur={(e) => { e.target.style.borderColor = "#E0E0E0"; }}
+          autoFocus={i === 0}
+          style={{
+            width: 48, height: 56, textAlign: "center", fontSize: 24, fontWeight: 700,
+            border: "2px solid #E0E0E0", borderRadius: 12, outline: "none",
+            transition: "border-color 0.2s", color: "#1A1A1A", backgroundColor: "#fff",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function StudioAuth() {
   const navigate = useNavigate();
@@ -18,6 +86,7 @@ export default function StudioAuth() {
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
   const [error, setError] = useState("");
+  const [alreadyExists, setAlreadyExists] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
   // Join fields
@@ -46,9 +115,10 @@ export default function StudioAuth() {
   const [siPhone, setSiPhone] = useState("");
   const [siPw, setSiPw] = useState("");
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setError("");
+    setAlreadyExists(false);
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     if (!jName.trim()) { setError("Please enter your full name."); return; }
     const digits = jPhone.replace(/\D/g, "");
@@ -60,20 +130,33 @@ export default function StudioAuth() {
 
     setLoading(true);
     try {
+      // Check if already registered
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("whatsapp_number", digits)
+        .maybeSingle();
+
+      if (existing) {
+        setAlreadyExists(true);
+        setLoading(false);
+        return;
+      }
+
       const { data, error: functionErr } = await supabase.functions.invoke("send-otp", { body: { phone: digits } });
       if (functionErr || !data?.success) {
         setLoading(false);
         setError(data?.message || functionErr?.message || "Failed to send OTP. Please try again.");
         return;
       }
-      // If SMS failed or not configured, show test OTP in toast
       if (data.test_mode && data.test_otp) {
         toast({ title: "Test Mode — SMS unavailable", description: `Your OTP is: ${data.test_otp}`, duration: 30000 });
       } else {
-        toast({ title: "Code sent!", description: "Check your SMS messages." });
+        toast({ title: "Code sent!", description: "Check your WhatsApp messages." });
       }
       setLoading(false);
       setScreen("otp");
+      setSuOtp("");
       setTimer(60);
     } catch (err: any) {
       setLoading(false);
@@ -81,8 +164,8 @@ export default function StudioAuth() {
     }
   };
 
-  const handleVerifyAndJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyAndJoin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setError("");
     if (suOtp.length !== 6) { setError("Please enter 6-digit code."); return; }
 
@@ -102,7 +185,16 @@ export default function StudioAuth() {
         options: { data: { full_name: jName, whatsapp_number: digits, role: "vibe_coder", city: jCity, upi_id: jUpi } },
       });
 
-      if (authErr) { setLoading(false); setError(authErr.message); return; }
+      if (authErr) {
+        setLoading(false);
+        if (authErr.message.includes("already registered")) {
+          setAlreadyExists(true);
+          setScreen("form");
+        } else {
+          setError(authErr.message);
+        }
+        return;
+      }
 
       if (authData.user) {
         await supabase.auth.signInWithPassword({ email, password: jPw });
@@ -144,15 +236,6 @@ export default function StudioAuth() {
       return;
     }
 
-    const res2 = await supabase.auth.signInWithPassword({ email: `${digits}@leadpe.business`, password: siPw });
-    if (!res2.error && res2.data?.user) {
-      await refreshRole();
-      await refreshProfile();
-      setLoading(false);
-      navigate("/dev/dashboard", { replace: true });
-      return;
-    }
-
     setLoading(false);
     setError("Incorrect number or password.");
   };
@@ -176,7 +259,7 @@ export default function StudioAuth() {
         {screen === "form" && (
           <div className="flex justify-center gap-0 mb-6" style={{ borderBottom: "1px solid #E0E0E0" }}>
             {(["join", "signin"] as const).map((t) => (
-              <button key={t} onClick={() => { setTab(t); setError(""); }}
+              <button key={t} onClick={() => { setTab(t); setError(""); setAlreadyExists(false); }}
                 className="px-6 py-3 text-[15px] transition-all"
                 style={{ fontFamily: "DM Sans, sans-serif", fontWeight: tab === t ? 700 : 400, color: tab === t ? "#1A1A1A" : "#999", borderBottom: tab === t ? "2px solid #00C853" : "2px solid transparent" }}>
                 {t === "join" ? "Join Studio" : "Sign In"}
@@ -186,12 +269,24 @@ export default function StudioAuth() {
         )}
 
         <div className="bg-white rounded-2xl p-9" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          {error && (
+          {/* Already exists message */}
+          {alreadyExists && (
+            <div className="mb-5 p-4 rounded-xl" style={{ border: "2px solid #ef4444", backgroundColor: "rgba(239,68,68,0.05)" }}>
+              <p className="font-bold text-sm mb-1" style={{ color: "#ef4444" }}>📱 Account already exists</p>
+              <p className="text-xs mb-3" style={{ color: "#666" }}>This number is already registered on LeadPe Studio. Please sign in instead.</p>
+              <button
+                onClick={() => { setTab("signin"); setAlreadyExists(false); setScreen("form"); setSiPhone(jPhone); }}
+                className="w-full h-10 rounded-lg font-semibold text-sm"
+                style={{ backgroundColor: "#00C853", color: "white" }}
+              >
+                Sign In →
+              </button>
+            </div>
+          )}
+
+          {error && !alreadyExists && (
             <div className="mb-5 p-3 rounded-xl text-sm text-center" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
               {error}
-              {error.includes("already registered") && (
-                <div className="mt-2"><button onClick={() => setTab("signin")} className="font-bold underline">Sign in instead →</button></div>
-              )}
             </div>
           )}
 
@@ -241,7 +336,6 @@ export default function StudioAuth() {
                     </div>
                   </div>
 
-                  {/* Terms checkbox */}
                   <div className="flex items-start gap-2">
                     <Checkbox id="studio-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
                     <label htmlFor="studio-terms" className="text-xs leading-tight" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
@@ -265,24 +359,25 @@ export default function StudioAuth() {
                   </button>
                 </motion.form>
               ) : (
-                <motion.form key="join-otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleVerifyAndJoin} className="space-y-6">
-                  <button type="button" onClick={() => setScreen("form")} className="flex items-center gap-1.5 text-sm font-medium hover:text-[#00C853] transition-colors" style={{ color: "#666" }}>
+                <motion.form key="join-otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  onSubmit={handleVerifyAndJoin} className="space-y-4">
+                  <button type="button" onClick={() => { setScreen("form"); setSuOtp(""); }} className="flex items-center gap-1.5 text-sm font-medium hover:text-[#00C853] transition-colors" style={{ color: "#666" }}>
                     <ArrowLeft size={16} /> Back
                   </button>
                   <div className="text-center">
                     <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Verify Your Number</h1>
-                    <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Enter the 6-digit code sent to +91 {jPhone}</p>
                   </div>
-                  <div className="flex justify-center">
-                    <Input type="tel" maxLength={6} autoFocus value={suOtp}
-                      onChange={(e) => setSuOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      className="w-full h-20 text-center text-4xl font-bold tracking-[0.5em] rounded-2xl border-2 border-[#E0E0E0] focus:border-[#00C853] focus:ring-0"
-                      placeholder="000000" />
-                  </div>
+
+                  <OtpInput value={suOtp} onChange={setSuOtp} onComplete={() => handleVerifyAndJoin()} />
+
+                  <p className="text-xs text-center" style={{ color: "#999" }}>
+                    Enter the 6-digit code sent to +91 {jPhone}
+                  </p>
+
                   <div className="space-y-4">
                     <button type="submit" disabled={loading || suOtp.length !== 6}
-                      className="w-full h-[60px] rounded-2xl font-bold text-lg transition-all disabled:opacity-60"
-                      style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif", boxShadow: "0 8px 20px rgba(0,200,83,0.3)" }}>
+                      className="w-full h-[52px] rounded-xl font-bold text-base transition-all disabled:opacity-60"
+                      style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">
                           <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
@@ -292,9 +387,9 @@ export default function StudioAuth() {
                     </button>
                     <div className="text-center">
                       {timer > 0 ? (
-                        <p className="text-sm font-medium" style={{ color: "#999" }}>Resend code in 00:{timer < 10 ? `0${timer}` : timer}</p>
+                        <p className="text-sm font-medium" style={{ color: "#999" }}>Resend in 00:{timer < 10 ? `0${timer}` : timer}</p>
                       ) : (
-                        <button type="button" onClick={handleSendOtp} className="text-sm font-bold transition-colors" style={{ color: "#00C853" }}>Resend code →</button>
+                        <button type="button" onClick={() => handleSendOtp()} className="text-sm font-bold transition-colors" style={{ color: "#00C853" }}>Resend OTP →</button>
                       )}
                     </div>
                   </div>
@@ -320,7 +415,6 @@ export default function StudioAuth() {
                   </div>
                 </div>
 
-                {/* Terms checkbox */}
                 <div className="flex items-start gap-2">
                   <Checkbox id="studio-si-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
                   <label htmlFor="studio-si-terms" className="text-xs leading-tight" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
@@ -346,12 +440,10 @@ export default function StudioAuth() {
           </AnimatePresence>
         </div>
 
-        {screen === "form" && (
-          <p className="text-sm text-center mt-6" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
-            Looking to get a website?{" "}
-            <Link to="/" className="font-medium" style={{ color: "#00C853" }}>Go to main site →</Link>
-          </p>
-        )}
+        <p className="text-sm text-center mt-6" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
+          Business owner?{" "}
+          <Link to="/auth" className="font-medium" style={{ color: "#00C853" }}>Sign in here →</Link>
+        </p>
       </motion.div>
     </div>
   );

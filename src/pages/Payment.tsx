@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ArrowLeft } from "lucide-react";
+import { Check, ArrowLeft, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { MONTHLY_PRICE } from "@/lib/constants";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { supabase } from "@/integrations/supabase/client";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+const ADMIN_UPI = "swaritroy9@oksbi"; // Your UPI ID
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
@@ -20,9 +23,13 @@ export default function Payment() {
   const plan = searchParams.get("plan") || "growth";
   const amount = parseInt(searchParams.get("amount") || MONTHLY_PRICE.toString());
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showUpi, setShowUpi] = useState(false);
   const [gateChecked, setGateChecked] = useState(false);
+  const [utrInput, setUtrInput] = useState("");
+  const [upiCopied, setUpiCopied] = useState(false);
+  const [upiLoading, setUpiLoading] = useState(false);
+  const [upiSuccess, setUpiSuccess] = useState(false);
 
-  // Gate check: only allow if upgrade_intent set
   useEffect(() => {
     const intent = sessionStorage.getItem("upgrade_intent");
     if (!intent) {
@@ -33,9 +40,72 @@ export default function Payment() {
     setGateChecked(true);
   }, [navigate]);
 
-  const priceId = plan === "growth" ? "growth_monthly" : "growth_monthly";
+  const priceId = "growth_monthly";
+
+  const copyUpi = () => {
+    navigator.clipboard.writeText(ADMIN_UPI);
+    setUpiCopied(true);
+    setTimeout(() => setUpiCopied(false), 2000);
+  };
+
+  const handleUpiConfirm = async () => {
+    const cleanUtr = utrInput.replace(/\D/g, "");
+    if (cleanUtr.length < 12) {
+      toast({ title: "Invalid UTR", description: "Please enter at least 12-digit transaction number.", variant: "destructive" });
+      return;
+    }
+
+    setUpiLoading(true);
+    try {
+      await (supabase.from("payments") as any).insert({
+        business_id: user?.id || null,
+        business_name: profile?.business_name || null,
+        amount,
+        method: "upi_manual",
+        utr: cleanUtr,
+        status: "pending_verification",
+        plan: "growth",
+      });
+
+      // Notify admin via WhatsApp
+      try {
+        await supabase.functions.invoke("send-whatsapp", {
+          body: {
+            to: "919973383902",
+            message: `💰 MANUAL UPI PAYMENT\n━━━━━━━━━━━━\nBusiness: ${profile?.business_name || "Unknown"}\nAmount: ₹${amount}\nUTR: ${cleanUtr}\nUser: ${user?.email || ""}\n━━━━━━━━━━━━\nVERIFY at: leadpe.tech/admin`,
+          },
+        });
+      } catch {}
+
+      setUpiSuccess(true);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Something went wrong.", variant: "destructive" });
+    } finally {
+      setUpiLoading(false);
+    }
+  };
 
   if (!gateChecked) return null;
+
+  // UPI Success screen
+  if (upiSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md w-full">
+          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: "#F0FFF4" }}>
+            <Check size={40} style={{ color: "#00C853" }} />
+          </div>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: "#1A1A1A", fontFamily: font.heading }}>Payment Submitted! ✅</h2>
+          <p className="text-sm mb-6" style={{ color: "#666" }}>
+            We will verify and activate your website within 2 hours. You will receive a WhatsApp confirmation.
+          </p>
+          <Button onClick={() => navigate("/client/dashboard")} className="w-full h-12 rounded-xl text-white font-semibold" style={{ backgroundColor: "#00C853" }}>
+            Go to Dashboard →
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (showCheckout) {
     return (
@@ -63,7 +133,6 @@ export default function Payment() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
       <PaymentTestModeBanner />
-      {/* Navbar */}
       <nav className="bg-white border-b flex items-center justify-between px-4 h-14" style={{ borderColor: "#E0E0E0" }}>
         <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", cursor: "pointer" }}>
           <ArrowLeft size={20} style={{ color: "#1A1A1A" }} />
@@ -74,22 +143,14 @@ export default function Payment() {
 
       <div className="max-w-md mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Hero */}
           <div className="text-center mb-6">
             <h1 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Unlock Your Customers 🚀</h1>
             <p style={{ fontSize: 14, color: "#666" }}>See who contacted you and call them directly.</p>
           </div>
 
-          {/* What unlocks */}
           <div className="rounded-2xl mb-5" style={{ backgroundColor: "#E8F5E9", padding: 20 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", marginBottom: 12 }}>What unlocks:</p>
-            {[
-              "See all customer names + numbers",
-              "Call them directly from dashboard",
-              "New customer WhatsApp alerts",
-              "Appear on Google + Google Maps",
-              "Weekly Monday performance report",
-            ].map(f => (
+            {["See all customer names + numbers", "Call them directly from dashboard", "New customer WhatsApp alerts", "Appear on Google + Google Maps", "Weekly Monday performance report"].map(f => (
               <div key={f} className="flex items-center gap-2 mb-2">
                 <Check size={16} style={{ color: "#00C853", flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: "#1A1A1A" }}>{f}</span>
@@ -97,7 +158,6 @@ export default function Payment() {
             ))}
           </div>
 
-          {/* Plan card */}
           <div className="bg-white rounded-2xl mb-5" style={{ border: "2px solid #00C853", padding: 20 }}>
             <p style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Growth Plan 💚</p>
             <p style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹{MONTHLY_PRICE} / month</p>
@@ -110,13 +170,72 @@ export default function Payment() {
             ))}
           </div>
 
-          {/* Pay button */}
+          {/* Stripe Pay button */}
           <Button onClick={() => setShowCheckout(true)}
-            className="w-full rounded-xl text-white font-semibold text-base mb-5" style={{ backgroundColor: "#00C853", height: 56 }}>
+            className="w-full rounded-xl text-white font-semibold text-base mb-4" style={{ backgroundColor: "#00C853", height: 56 }}>
             Pay ₹{amount} / month →
           </Button>
 
-          {/* Trust */}
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
+            <span className="text-xs" style={{ color: "#999" }}>or pay manually</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
+          </div>
+
+          {/* Manual UPI Section */}
+          {!showUpi ? (
+            <Button onClick={() => setShowUpi(true)} variant="outline"
+              className="w-full rounded-xl font-semibold text-base mb-5" style={{ borderColor: "#00C853", color: "#00C853", height: 48 }}>
+              Pay via UPI (GPay / PhonePe / Paytm) →
+            </Button>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl mb-5 p-5" style={{ border: "2px solid #00C853" }}>
+              <h3 className="font-bold text-base mb-1" style={{ color: "#1A1A1A", fontFamily: font.heading }}>Pay via UPI</h3>
+              <p className="text-xs mb-4" style={{ color: "#666" }}>Instant. No extra charges.</p>
+
+              {/* UPI ID */}
+              <div className="flex items-center gap-2 rounded-xl p-3 mb-4" style={{ backgroundColor: "#F0FFF4", border: "1px solid #C8E6C9" }}>
+                <span className="flex-1 font-bold text-lg" style={{ color: "#1A1A1A", fontFamily: "monospace" }}>{ADMIN_UPI}</span>
+                <button onClick={copyUpi} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                  style={{ backgroundColor: "#00C853", color: "white" }}>
+                  {upiCopied ? "Copied! ✅" : <><Copy size={12} /> Copy</>}
+                </button>
+              </div>
+
+              <p className="font-bold text-sm mb-3" style={{ color: "#00C853" }}>Amount: ₹{amount}</p>
+
+              <div className="text-xs space-y-1 mb-4" style={{ color: "#666" }}>
+                <p>1. Copy the UPI ID above</p>
+                <p>2. Open any UPI app (GPay, PhonePe, Paytm)</p>
+                <p>3. Send exactly ₹{amount}</p>
+                <p>4. Enter UTR below and confirm</p>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>UTR / Transaction ID</label>
+                <Input
+                  value={utrInput}
+                  onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, "").slice(0, 16))}
+                  placeholder="12-digit transaction number"
+                  className="rounded-xl h-12"
+                />
+                <p className="text-[11px] mt-1" style={{ color: "#999" }}>Find this in your UPI app after payment</p>
+              </div>
+
+              <Button onClick={handleUpiConfirm} disabled={upiLoading || utrInput.length < 12}
+                className="w-full h-12 rounded-xl text-white font-semibold disabled:opacity-60" style={{ backgroundColor: "#00C853" }}>
+                {upiLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                    Submitting...
+                  </span>
+                ) : "I Have Paid — Confirm →"}
+              </Button>
+            </motion.div>
+          )}
+
           <div className="flex flex-wrap justify-center gap-2 text-xs" style={{ color: "#666" }}>
             {["🔒 Secure", "↩️ Cancel anytime", "💬 WhatsApp support", "🇮🇳 Made in India"].map(t => (
               <span key={t} className="px-3 py-1.5 rounded-full" style={{ backgroundColor: "#F0F0F0" }}>{t}</span>
