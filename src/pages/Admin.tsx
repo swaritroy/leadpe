@@ -178,6 +178,8 @@ export default function Admin() {
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [activatingPayment, setActivatingPayment] = useState<string | null>(null);
   
   // Check admin access
   useEffect(() => {
@@ -268,6 +270,13 @@ export default function Admin() {
         .order("sent_at", { ascending: false })
         .limit(100);
       setMessageLog(msgLogData || []);
+
+      // Fetch pending UPI payments
+      const { data: paymentsData } = await (supabase as any).from("payments")
+        .select("*")
+        .eq("status", "pending_verification")
+        .order("created_at", { ascending: false });
+      setPendingPayments(paymentsData || []);
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -575,6 +584,50 @@ export default function Admin() {
     } catch {}
     toast({ title: "Coder rejected", description: `${coder.full_name} has been notified` });
     fetchData();
+  };
+
+  const handleVerifyUpiPayment = async (payment: any) => {
+    setActivatingPayment(payment.id);
+    try {
+      // Update payment status
+      await (supabase as any).from("payments").update({
+        status: "completed",
+        activated_at: new Date().toISOString(),
+      }).eq("id", payment.id);
+
+      // Find business profile and activate
+      if (payment.business_id) {
+        await (supabase as any).from("profiles").update({
+          website_status: "live",
+          plan_status: "active",
+          status: "active",
+        }).eq("user_id", payment.business_id);
+
+        // Get profile for WhatsApp
+        const { data: prof } = await (supabase as any).from("profiles")
+          .select("whatsapp_number, full_name, subdomain")
+          .eq("user_id", payment.business_id)
+          .single();
+
+        if (prof?.whatsapp_number) {
+          const siteUrl = prof.subdomain ? `${prof.subdomain}.leadpe.tech` : "leadpe.tech/dashboard";
+          try {
+            await supabase.functions.invoke("send-whatsapp", {
+              body: {
+                to: `91${prof.whatsapp_number}`,
+                message: `✅ Payment verified!\n\nYour website is now LIVE! 🎉\n\nVisit: https://${siteUrl}\n\nYou'll start receiving leads directly on WhatsApp.\n\n— Team LeadPe ⚡`,
+              },
+            });
+          } catch {}
+        }
+      }
+
+      toast({ title: "✅ Payment verified!", description: `${payment.business_name} activated` });
+      fetchData();
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to verify payment", variant: "destructive" });
+    }
+    setActivatingPayment(null);
   };
 
   const markAllPaid = async () => {
@@ -1522,6 +1575,55 @@ export default function Admin() {
                     ))}
                   </div>
                 </>
+              )}
+            </div>
+          )}
+        </motion.div>
+
+        {/* ── UPI VERIFICATION ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <button onClick={() => toggleSection("upi_verify")} className="flex items-center gap-2 text-lg font-bold font-display mb-4">
+            {expandedSections.has("upi_verify") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            💰 UPI Payment Verification
+            {pendingPayments.length > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs text-white" style={{ backgroundColor: "#ef4444" }}>
+                {pendingPayments.length}
+              </span>
+            )}
+          </button>
+
+          {expandedSections.has("upi_verify") && (
+            <div className="rounded-2xl border border-[#E0F2E9] p-5 bg-white">
+              {pendingPayments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">No pending UPI payments</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingPayments.map((p: any) => (
+                    <div key={p.id} className="border border-[#E0F2E9] rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex-1 space-y-1">
+                        <p className="font-bold text-sm">{p.business_name || "Unknown Business"}</p>
+                        <p className="text-xs text-muted-foreground">Amount: <span className="font-bold text-foreground">₹{p.amount || p.total || "—"}</span></p>
+                        <p className="text-xs text-muted-foreground">Plan: <span className="font-semibold">{p.plan || "—"}</span></p>
+                        <p className="text-xs font-mono" style={{ color: "#00C853" }}>UTR: {p.utr || "Not provided"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.created_at ? new Date(p.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleVerifyUpiPayment(p)}
+                        disabled={activatingPayment === p.id}
+                        className="whitespace-nowrap"
+                        style={{ backgroundColor: "#00C853" }}
+                      >
+                        {activatingPayment === p.id ? (
+                          <><RefreshCw size={14} className="animate-spin mr-1" /> Verifying...</>
+                        ) : (
+                          <><CheckCircle size={14} className="mr-1" /> Verify & Activate</>
+                        )}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
