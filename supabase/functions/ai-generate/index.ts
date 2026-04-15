@@ -645,8 +645,28 @@ serve(async (req) => {
       const prompts = buildCTOPrompt(data);
       systemPrompt = prompts.system;
       userPrompt = prompts.user;
+    } else if (type === "seo") {
+      systemPrompt = "You are an SEO expert for Indian local businesses. Return ONLY valid JSON with no markdown fencing.";
+      userPrompt = `Generate SEO content for this business as a JSON object with these exact keys: pageTitle, metaDescription, keywords (array of 8 strings), googleDescription, whatsappBio, h1, aboutText.
+
+Business: ${data.name}
+Type: ${data.type}
+City: ${data.city}
+Owner: ${data.ownerName}
+
+Make it locally optimized for "${data.city}" searches. Use natural Indian English.`;
+    } else if (type === "welcome") {
+      systemPrompt = "You are a friendly business onboarding assistant for LeadPe, an Indian MSME platform. Write warm WhatsApp welcome messages.";
+      userPrompt = `Write a WhatsApp welcome message for a new business signup:
+Name: ${data.name}, Type: ${data.type}, City: ${data.city}, Owner: ${data.ownerName}, Plan: ${data.plan}, Trial Code: ${data.trialCode}, Language preference: ${data.language}.
+Keep it under 500 chars, use emojis, mention 48h website delivery and the trial code.`;
+    } else if (type === "lead") {
+      systemPrompt = "You are a lead notification assistant. Write short, urgent WhatsApp alerts for business owners about new customer inquiries.";
+      userPrompt = `Write a WhatsApp lead alert for:
+Customer: ${data.customerName}, Phone: ${data.customerPhone}, Interest: ${data.interest}, Business: ${data.businessName}.
+Language: ${data.language || "english"}. Keep under 300 chars, use emojis, create urgency.`;
     } else {
-      return new Response(JSON.stringify({ error: "Unknown type. Use 'build_prompt'." }), {
+      return new Response(JSON.stringify({ error: "Unknown type. Use 'build_prompt', 'seo', 'welcome', or 'lead'." }), {
         status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
