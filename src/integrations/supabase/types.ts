@@ -731,6 +731,7 @@ export type Database = {
           plan: string | null
           status: string | null
           total: number | null
+          utr: string | null
         }
         Insert: {
           activated_at?: string | null
@@ -745,6 +746,7 @@ export type Database = {
           plan?: string | null
           status?: string | null
           total?: number | null
+          utr?: string | null
         }
         Update: {
           activated_at?: string | null
@@ -759,6 +761,7 @@ export type Database = {
           plan?: string | null
           status?: string | null
           total?: number | null
+          utr?: string | null
         }
         Relationships: []
       }
