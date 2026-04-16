@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
+import { getFeaturesForCategory, getPackageTierFromId } from "@/lib/packageFeatures";
 
 const businessTypes = [
   "Doctor / Clinic", "CA / Lawyer / CS", "Coaching Institute", "Contractor / Plumber",
