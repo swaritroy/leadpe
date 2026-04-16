@@ -587,9 +587,32 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         </motion.div>
       )}
 
+      {/* ═══ CHANGE REQUEST (Growth plan) ═══ */}
+      {isGrowthPlan && <ChangeRequestSection user={user} profile={profile} />}
+
+      {/* ═══ CHANGE REQUEST UPSELL (Free plan) ═══ */}
+      {isFreePlan && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ margin: "0 16px 16px", backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        >
+          <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Need a change?</p>
+          <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", lineHeight: 1.5, marginBottom: 16 }}>
+            Your website is set. Upgrade to Growth Plan for 4 changes every month.
+          </p>
+          <button onClick={handleUpgrade} style={{
+            width: "100%", height: 48, borderRadius: 12,
+            backgroundColor: "#00C853", color: "#fff", border: "none",
+            fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: "pointer",
+          }}>
+            Get Growth Plan — ₹299/mo →
+          </button>
+        </motion.div>
+      )}
+
       {/* ═══ QUICK ACTIONS ═══ */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         style={{ margin: 16, backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       >
         <button onClick={() => window.open("https://wa.me/919973383902", "_blank")}

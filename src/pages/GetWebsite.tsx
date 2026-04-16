@@ -247,7 +247,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
               color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
               special_requirements: additionalDetails || "",
               package_name: pkg.name,
-              package_features: pkg.features.join(", "),
+              package_features: getFeaturesForCategory(businessType)[getPackageTierFromId(selectedPackage)].join(", "),
               lead_widget_html: leadWidgetHtml,
               logo_url: logoUrl || "",
               photos_urls: photoUrls.join(", "),
