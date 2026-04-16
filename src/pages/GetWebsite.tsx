@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
+import { getFeaturesForCategory, getPackageTierFromId } from "@/lib/packageFeatures";
 
 const businessTypes = [
   "Doctor / Clinic", "CA / Lawyer / CS", "Coaching Institute", "Contractor / Plumber",
@@ -246,7 +247,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
               color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
               special_requirements: additionalDetails || "",
               package_name: pkg.name,
-              package_features: pkg.features.join(", "),
+              package_features: getFeaturesForCategory(businessType)[getPackageTierFromId(selectedPackage)].join(", "),
               lead_widget_html: leadWidgetHtml,
               logo_url: logoUrl || "",
               photos_urls: photoUrls.join(", "),
@@ -515,13 +516,26 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
             )}
 
             {/* STEP 2 — Package Selection */}
-            {step === 2 && (
+            {step === 2 && (() => {
+              const catFeatures = getFeaturesForCategory(businessType);
+              const tierMap: Record<string, { tier: "starter" | "standard" | "premium"; features: string[] }> = {
+                basic: { tier: "starter", features: catFeatures.starter },
+                standard: { tier: "standard", features: catFeatures.standard },
+                premium: { tier: "premium", features: catFeatures.premium },
+              };
+              return (
               <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                 <div className="bg-white rounded-2xl p-6 shadow-lg mb-4" style={{ border: "1px solid #E0F2E9" }}>
                   <h2 className="text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Choose Your Package</h2>
-                  <p className="text-sm mb-6" style={{ color: "#999" }}>Free demo before any payment.</p>
+                  <p className="text-sm mb-1" style={{ color: "#999" }}>Free demo before any payment.</p>
+                  {businessType && <p className="text-xs mb-5" style={{ color: "#00C853" }}>✓ Features tailored for {businessType}</p>}
                   <div className="space-y-3">
-                    {WEBSITE_PACKAGES.filter(p => p.id !== "complex").map((p) => (
+                    {WEBSITE_PACKAGES.filter(p => p.id !== "complex").map((p) => {
+                      const tf = tierMap[p.id];
+                      const features = tf?.features || catFeatures.starter;
+                      const visibleCount = 4;
+                      const hasMore = features.length > visibleCount;
+                      return (
                       <div key={p.id} className="rounded-xl overflow-hidden transition-all"
                         style={{ border: selectedPackage === p.id ? "2px solid #00C853" : "2px solid #E0E0E0", backgroundColor: selectedPackage === p.id ? "#F0FFF4" : "#fff" }}>
                         <div className="p-4">
@@ -533,33 +547,41 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                             <span className="font-extrabold text-lg" style={{ color: "#1A1A1A" }}>₹{p.price.toLocaleString()}</span>
                           </div>
                           <p className="text-xs mb-3" style={{ color: "#999" }}>Demo in {p.deliveryDays} days</p>
-                          <ul className="space-y-1 mb-3">
-                            {p.features.slice(0, 3).map((f) => (
+
+                          {/* Features list */}
+                          <ul className="space-y-1 mb-2">
+                            {features.slice(0, visibleCount).map((f) => (
                               <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
                                 <Check size={12} style={{ color: "#00C853" }} /> {f}
                               </li>
                             ))}
                           </ul>
 
-                          {/* Expandable details */}
-                          {expandedPkg === p.id && (
-                            <div className="mb-3 pt-2 border-t" style={{ borderColor: "#E0E0E0" }}>
-                              <ul className="space-y-1">
-                                {p.features.slice(3).map((f) => (
-                                  <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
-                                    <Check size={12} style={{ color: "#00C853" }} /> {f}
-                                  </li>
-                                ))}
-                              </ul>
-                              <p className="text-[10px] mt-2" style={{ color: "#999" }}>Best for: {p.bestFor.join(" • ")}</p>
-                            </div>
+                          {/* Expandable features */}
+                          {expandedPkg === p.id && hasMore && (
+                            <ul className="space-y-1 mb-2">
+                              {features.slice(visibleCount).map((f) => (
+                                <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
+                                  <Check size={12} style={{ color: "#00C853" }} /> {f}
+                                </li>
+                              ))}
+                            </ul>
                           )}
 
+                          {/* Revision policy */}
+                          <div className="rounded-lg px-3 py-2 mb-3" style={{ backgroundColor: "#F8F8F8" }}>
+                            <p className="text-[10px]" style={{ color: "#999" }}>
+                              ✏️ 2 revisions included. No changes after that.
+                            </p>
+                          </div>
+
                           <div className="flex items-center justify-between">
-                            <button onClick={() => setExpandedPkg(expandedPkg === p.id ? null : p.id)}
-                              className="text-xs font-medium flex items-center gap-1" style={{ color: "#666" }}>
-                              {expandedPkg === p.id ? <><ChevronUp size={14} /> Less</> : <><ChevronDown size={14} /> Details</>}
-                            </button>
+                            {hasMore ? (
+                              <button onClick={() => setExpandedPkg(expandedPkg === p.id ? null : p.id)}
+                                className="text-xs font-medium flex items-center gap-1" style={{ color: "#666" }}>
+                                {expandedPkg === p.id ? <><ChevronUp size={14} /> Less</> : <><ChevronDown size={14} /> +{features.length - visibleCount} more</>}
+                              </button>
+                            ) : <span />}
                             <button onClick={() => setSelectedPackage(p.id)}
                               className="text-sm font-bold px-4 py-1.5 rounded-lg transition-all"
                               style={{
@@ -571,7 +593,13 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );})}
+                  </div>
+
+                  {/* Growth plan upsell */}
+                  <div className="mt-4 rounded-xl p-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C85330" }}>
+                    <p className="text-xs font-bold" style={{ color: "#1A1A1A" }}>💚 Growth Plan Add-on — ₹299/mo</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#666" }}>4 changes/month (small edits only, resets monthly)</p>
                   </div>
                 </div>
 
@@ -584,7 +612,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                   </Button>
                 </div>
               </motion.div>
-            )}
+              );
+            })()}
 
             {/* STEP 3 — Assets & Details */}
             {step === 3 && (

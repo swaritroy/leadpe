@@ -245,6 +245,36 @@ export type Database = {
         }
         Relationships: []
       }
+      change_requests: {
+        Row: {
+          business_id: string
+          completed_at: string | null
+          description: string | null
+          id: string
+          requested_at: string | null
+          status: string | null
+          type: string | null
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string | null
+          description?: string | null
+          id?: string
+          requested_at?: string | null
+          status?: string | null
+          type?: string | null
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string | null
+          description?: string | null
+          id?: string
+          requested_at?: string | null
+          status?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       coder_penalties: {
         Row: {
           build_request_id: string | null
@@ -771,6 +801,7 @@ export type Database = {
           avatar_url: string | null
           business_name: string | null
           business_type: string | null
+          changes_reset_date: string | null
           city: string | null
           created_at: string
           custom_domain: string | null
@@ -783,6 +814,7 @@ export type Database = {
           full_name: string | null
           id: string
           monthly_capacity: string | null
+          monthly_changes_used: number | null
           monthly_passive: number | null
           name_changes_this_month: number | null
           number_changes_this_month: number | null
@@ -818,6 +850,7 @@ export type Database = {
           avatar_url?: string | null
           business_name?: string | null
           business_type?: string | null
+          changes_reset_date?: string | null
           city?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -830,6 +863,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
+          monthly_changes_used?: number | null
           monthly_passive?: number | null
           name_changes_this_month?: number | null
           number_changes_this_month?: number | null
@@ -865,6 +899,7 @@ export type Database = {
           avatar_url?: string | null
           business_name?: string | null
           business_type?: string | null
+          changes_reset_date?: string | null
           city?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -877,6 +912,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           monthly_capacity?: string | null
+          monthly_changes_used?: number | null
           monthly_passive?: number | null
           name_changes_this_month?: number | null
           number_changes_this_month?: number | null

@@ -314,6 +314,7 @@ City/Location: ${data.city}, India
 Owner Name: ${data.owner_name || "Owner"}
 WhatsApp Number: +91${data.whatsapp_number || data.whatsapp}
 Package: ${data.package_id || "standard"}
+Package Features to Build: ${data.package_features || "Standard website features"}
 Special Requirements: ${data.special_requirements || "None specified"}
 Reference Sites: ${data.reference_sites || "None"}
 ${contentEnhancement}

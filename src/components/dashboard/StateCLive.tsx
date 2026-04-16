@@ -1,11 +1,142 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Lock, Globe, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Star, Lock, Globe, CheckCircle, Clock, AlertCircle, Edit3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
+
+const CHANGE_TYPES = [
+  "Update phone number",
+  "Update address",
+  "Update timings",
+  "Fix a typo in text",
+  "Add/remove a photo",
+  "Update price/fees",
+  "Other small change",
+];
+
+function ChangeRequestSection({ user, profile }: { user: any; profile: any }) {
+  const { toast } = useToast();
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const used = (profile as any)?.monthly_changes_used || 0;
+  const remaining = Math.max(0, 4 - used);
+  const resetDate = new Date();
+  resetDate.setMonth(resetDate.getMonth() + 1, 1);
+  const nextMonth = resetDate.toLocaleString("en-IN", { month: "long" });
+
+  const toggleType = (t: string) => {
+    setSelectedTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
+
+  const handleSubmit = async () => {
+    if (remaining <= 0) return;
+    if (!selectedTypes.length && !description.trim()) {
+      toast({ title: "Please select what to change", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const changeDesc = [...selectedTypes, description.trim()].filter(Boolean).join("; ");
+
+      await supabase.from("change_requests").insert({
+        business_id: user?.id,
+        description: changeDesc,
+        type: selectedTypes[0] || "other",
+        status: "pending",
+      } as any);
+
+      await supabase.from("profiles").update({
+        monthly_changes_used: used + 1,
+      } as any).eq("user_id", user?.id);
+
+      // Notify admin via WhatsApp
+      try {
+        await supabase.from("scheduled_messages").insert({
+          to: "919973383902",
+          message: `✏️ CHANGE REQUEST\nBusiness: ${profile?.business_name || "Unknown"}\nChange: ${changeDesc}\nChanges left: ${remaining - 1}`,
+          type: "change_request",
+        });
+      } catch {}
+
+      setSubmitted(true);
+      toast({ title: "Change requested ✅" });
+    } catch (e: any) {
+      toast({ title: "Failed to submit", description: e.message, variant: "destructive" });
+    }
+    setSubmitting(false);
+  };
+
+  if (submitted) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        style={{ margin: "0 16px 16px", backgroundColor: "#F0FFF4", borderRadius: 16, padding: 20, border: "2px solid #00C853" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
+          <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A" }}>Change requested!</p>
+          <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", marginTop: 4 }}>We will update within 24 hours.</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+      style={{ margin: "0 16px 16px", backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <Edit3 size={18} style={{ color: "#00C853" }} />
+        <h3 style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>Request a Change</h3>
+      </div>
+      <p style={{ fontFamily: font.body, fontSize: 13, color: remaining > 0 ? "#00C853" : "#EF4444", fontWeight: 600, marginBottom: 16 }}>
+        {remaining > 0 ? `${remaining} changes remaining this month` : `Monthly changes used up. Resets on 1st ${nextMonth}.`}
+      </p>
+
+      {remaining > 0 ? (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {CHANGE_TYPES.map(t => (
+              <button key={t} onClick={() => toggleType(t)}
+                style={{
+                  padding: "6px 12px", borderRadius: 20, fontSize: 12, fontFamily: font.body,
+                  border: selectedTypes.includes(t) ? "2px solid #00C853" : "1px solid #E0E0E0",
+                  backgroundColor: selectedTypes.includes(t) ? "#F0FFF4" : "#fff",
+                  color: selectedTypes.includes(t) ? "#00C853" : "#666", cursor: "pointer", fontWeight: 500,
+                }}>
+                {selectedTypes.includes(t) ? "✓ " : ""}{t}
+              </button>
+            ))}
+          </div>
+          <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 200))}
+            placeholder="Describe the change (optional)"
+            rows={2}
+            style={{
+              width: "100%", border: "1px solid #E0E0E0", borderRadius: 12, padding: 12,
+              fontFamily: font.body, fontSize: 13, color: "#1A1A1A", resize: "none",
+              boxSizing: "border-box", marginBottom: 4,
+            }} />
+          <p style={{ fontFamily: font.body, fontSize: 10, color: "#999", marginBottom: 12, textAlign: "right" }}>{description.length}/200</p>
+          <button onClick={handleSubmit} disabled={submitting}
+            style={{
+              width: "100%", height: 48, borderRadius: 12,
+              backgroundColor: submitting ? "#E0E0E0" : "#00C853", color: "#fff", border: "none",
+              fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: submitting ? "wait" : "pointer",
+            }}>
+            {submitting ? "Submitting..." : "Request Change →"}
+          </button>
+        </>
+      ) : (
+        <p style={{ fontFamily: font.body, fontSize: 13, color: "#666" }}>
+          Need urgent change? <a href="https://wa.me/919973383902" target="_blank" rel="noopener" style={{ color: "#00C853", fontWeight: 600 }}>Contact us on WhatsApp</a>
+        </p>
+      )}
+    </motion.div>
+  );
+}
 
 interface Lead {
   id: string;
@@ -587,9 +718,32 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
         </motion.div>
       )}
 
+      {/* ═══ CHANGE REQUEST (Growth plan) ═══ */}
+      {isGrowthPlan && <ChangeRequestSection user={user} profile={profile} />}
+
+      {/* ═══ CHANGE REQUEST UPSELL (Free plan) ═══ */}
+      {isFreePlan && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ margin: "0 16px 16px", backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        >
+          <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>Need a change?</p>
+          <p style={{ fontFamily: font.body, fontSize: 13, color: "#666", lineHeight: 1.5, marginBottom: 16 }}>
+            Your website is set. Upgrade to Growth Plan for 4 changes every month.
+          </p>
+          <button onClick={handleUpgrade} style={{
+            width: "100%", height: 48, borderRadius: 12,
+            backgroundColor: "#00C853", color: "#fff", border: "none",
+            fontFamily: font.body, fontSize: 15, fontWeight: 600, cursor: "pointer",
+          }}>
+            Get Growth Plan — ₹299/mo →
+          </button>
+        </motion.div>
+      )}
+
       {/* ═══ QUICK ACTIONS ═══ */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         style={{ margin: 16, backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
       >
         <button onClick={() => window.open("https://wa.me/919973383902", "_blank")}
