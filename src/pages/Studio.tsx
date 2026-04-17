@@ -240,20 +240,20 @@ export default function Studio() {
       </section>
 
       {/* FAQ */}
-      <section style={{ backgroundColor: "#fff", padding: "40px 16px" }}>
-        <div className="max-w-[600px] mx-auto">
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 24 }}>Common Questions</h2>
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#fff", padding: "56px 16px" }}>
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 32 }}>Common Questions</h2>
           {faqs.map((faq, i) =>
             <div key={i} style={{ borderBottom: "1px solid #E0E0E0" }}>
               <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full flex items-center justify-between"
-                style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "14px 0", minHeight: 48 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A", lineHeight: 1.4, paddingRight: 8 }}>{faq.q}</span>
-                <ChevronDown size={16} style={{ color: "#666", flexShrink: 0, transform: openFaq === i ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
+                style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "18px 0", minHeight: 56 }}>
+                <span className="text-sm sm:text-base" style={{ fontWeight: 600, color: "#1A1A1A", lineHeight: 1.4, paddingRight: 12 }}>{faq.q}</span>
+                <ChevronDown size={20} style={{ color: "#666", flexShrink: 0, transform: openFaq === i ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
               </button>
               {openFaq === i &&
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                  style={{ paddingBottom: 14, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                  className="text-sm" style={{ paddingBottom: 18, color: "#666", lineHeight: 1.6 }}>
                   {faq.a}
                 </motion.div>
               }
@@ -263,37 +263,37 @@ export default function Studio() {
       </section>
 
       {/* Final CTA */}
-      <section style={{ backgroundColor: "#1A1A1A", padding: "48px 16px", textAlign: "center" }}>
-        <h2 className="text-2xl sm:text-3xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 10 }}>
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#1A1A1A", padding: "64px 16px", textAlign: "center" }}>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#fff", lineHeight: 1.15, marginBottom: 14 }}>
           Your First Website<br />Is Waiting. 🚀
         </h2>
-        <p style={{ color: "#999", fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>Join free. Pick a request today. Start earning tomorrow.</p>
-        <div className="flex flex-col items-center gap-2 max-w-xs mx-auto">
+        <p className="text-base sm:text-lg" style={{ color: "#999", marginBottom: 28, lineHeight: 1.5 }}>Join free. Pick a request today. Start earning tomorrow.</p>
+        <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
           <Link to="/studio/auth"
-            className="w-full block text-center rounded-xl text-sm font-bold"
-            style={{ backgroundColor: "#00C853", color: "#000", padding: "14px", textDecoration: "none", minHeight: 48 }}>
+            className="w-full block text-center rounded-xl text-base font-bold"
+            style={{ backgroundColor: "#00C853", color: "#000", padding: "16px", textDecoration: "none", minHeight: 52 }}>
             Join LeadPe Studio Free →
           </Link>
           <Link to="/studio/auth"
-            className="text-xs"
+            className="text-sm"
             style={{ color: "#999", textDecoration: "none" }}>
             Already a member? Sign In
           </Link>
         </div>
-        <p style={{ color: "#444", fontSize: 11, marginTop: 16 }}>Free to join • UPI payments • No commitment</p>
+        <p className="text-xs" style={{ color: "#444", marginTop: 20 }}>Free to join • UPI payments • No commitment</p>
       </section>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", padding: "20px 16px" }}>
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div>
-            <span style={{ fontFamily: font.heading, fontSize: 14, fontWeight: 700 }}>
+      <footer className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", padding: "28px 16px" }}>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-center sm:text-left">
+            <span className="text-base" style={{ fontFamily: font.heading, fontWeight: 700 }}>
               <span style={{ color: "#1A1A1A" }}>Lead</span><span style={{ color: "#00C853" }}>Pe</span>
             </span>
-            <span style={{ color: "#999", fontSize: 11, marginLeft: 4 }}>Studio</span>
-            <p style={{ color: "#999", fontSize: 10, marginTop: 2 }}>© 2026 LeadPe. Made in India 🇮🇳</p>
+            <span className="text-xs" style={{ color: "#999", marginLeft: 6 }}>Studio</span>
+            <p className="text-xs" style={{ color: "#999", marginTop: 4 }}>© 2026 LeadPe. Made in India 🇮🇳</p>
           </div>
-          <Link to="/" style={{ color: "#666", fontSize: 11, textDecoration: "none" }}>For Businesses →</Link>
+          <Link to="/" className="text-sm" style={{ color: "#666", textDecoration: "none" }}>For Businesses →</Link>
         </div>
       </footer>
     </div>
