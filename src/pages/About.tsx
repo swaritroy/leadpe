@@ -8,6 +8,11 @@ export default function About() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="About LeadPe | Mission to Empower Indian Local Businesses"
+        description="LeadPe is on a mission to help Indian MSMEs go digital with AI-built websites in 48 hours and WhatsApp lead capture."
+        path="/about"
+      />
       <Navbar />
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-[680px] mx-auto bg-white rounded-2xl p-8" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
