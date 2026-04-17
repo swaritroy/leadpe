@@ -19,8 +19,8 @@ export const WEBSITE_PACKAGES: WebsitePackage[] = [
     name: 'Basic Website',
     price: 800,
     deliveryDays: 2,
-    coderEarning: 640,
-    leadpeEarning: 160,
+    coderEarning: 480,
+    leadpeEarning: 320,
     features: [
       '5 pages',
       'Mobile friendly',
@@ -38,8 +38,8 @@ export const WEBSITE_PACKAGES: WebsitePackage[] = [
     name: 'Standard Website',
     price: 1500,
     deliveryDays: 3,
-    coderEarning: 1200,
-    leadpeEarning: 300,
+    coderEarning: 900,
+    leadpeEarning: 600,
     features: [
       'All Basic features',
       'Photo gallery',
@@ -59,8 +59,8 @@ export const WEBSITE_PACKAGES: WebsitePackage[] = [
     name: 'Premium Website',
     price: 3000,
     deliveryDays: 5,
-    coderEarning: 2400,
-    leadpeEarning: 600,
+    coderEarning: 1800,
+    leadpeEarning: 1200,
     features: [
       'All Standard features',
       'Online booking system',
@@ -80,8 +80,8 @@ export const WEBSITE_PACKAGES: WebsitePackage[] = [
     price: 5000,
     priceLabel: '₹5,000+',
     deliveryDays: 7,
-    coderEarning: 4000,
-    leadpeEarning: 1000,
+    coderEarning: 3000,
+    leadpeEarning: 2000,
     features: [
       'Everything in Premium',
       'E-commerce / Shop',
