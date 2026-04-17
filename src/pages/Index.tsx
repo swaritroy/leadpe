@@ -294,26 +294,26 @@ export default function Index() {
         <div className="container px-4">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#1A1A1A" }}>Simple, Honest Pricing</h2>
-            <p style={{ color: "#666666" }}>Start free. Upgrade when you're ready.</p>
+            <p style={{ color: "#666666" }}>₹800 one-time website fee or ₹299/month Growth Plan.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start mb-8">
-            {/* FREE PLAN */}
+            {/* STARTER TRIAL */}
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
               whileHover={{ y: -8, boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="rounded-2xl p-8 bg-white border cursor-pointer" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Start Free</span>
-              <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
-              <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS} days. No card needed.</p>
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Starter Trial</span>
+              <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹800</span><span className="text-base ml-1" style={{ color: "#666666" }}> one-time</span></div>
+              <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS}-day trial. Pay only after demo.</p>
               <ul className="space-y-2.5 mb-6">
-                {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.tech", "See before paying anything"].map((f) => (
+                {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.tech", "See your demo before paying"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
-              <p className="text-xs mb-6" style={{ color: "#999999" }}>Growth Plan ₹{MONTHLY_PRICE}/month to get customers on WhatsApp</p>
+              <p className="text-xs mb-6" style={{ color: "#999999" }}>Add Growth Plan ₹{MONTHLY_PRICE}/month to unlock customers on WhatsApp</p>
               <Button onClick={() => navigate("/business")} className="w-full h-12 rounded-xl text-sm font-semibold border bg-white hover:bg-[#F0FFF4]" style={{ borderColor: "#00C853", color: "#00C853" }}>
-                Start Free →
+                Start 21-Day Trial →
               </Button>
             </motion.div>
 
@@ -329,7 +329,7 @@ export default function Index() {
               </div>
               <p className="text-xs mb-6" style={{ color: "#666666" }}>GST included • Cancel anytime</p>
               <ul className="space-y-2.5 mb-4">
-                {["Everything in Free Plan", "New customers on WhatsApp instantly", "Appear on Google + Google Maps", "Weekly Monday performance report", "Priority support", "Custom domain option"].map((f) => (
+                {["Everything in Starter Trial", "New customers on WhatsApp instantly", "Appear on Google + Google Maps", "Weekly Monday performance report", "Priority support", "Custom domain option"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
