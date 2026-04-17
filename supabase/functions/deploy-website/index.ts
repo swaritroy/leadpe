@@ -415,6 +415,11 @@ serve(async (req) => {
           intendedCustomDomain: customDomain,
           vercelDomain,
           latestDeployUrl,
+          seo: seoData ? {
+            title: seoData.page_title || seoData.title,
+            description: seoData.meta_description || seoData.description,
+            keywords: seoData.keywords,
+          } : null,
         }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
