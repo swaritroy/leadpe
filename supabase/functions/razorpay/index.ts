@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (!existingEarning) {
-            const coderAmount = buildRequest.coder_earning || Math.round((buildRequest.package_price || 800) * 0.80);
+            const coderAmount = buildRequest.coder_earning || Math.round((buildRequest.package_price || 800) * 0.60);
 
             await supabase.from("earnings").insert({
               vibe_coder_id: buildRequest.assigned_coder_id,

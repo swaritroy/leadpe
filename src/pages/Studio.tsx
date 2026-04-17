@@ -93,7 +93,7 @@ export default function Studio() {
         <div className="max-w-4xl mx-auto grid grid-cols-4 gap-2">
           {[
             { value: "₹30", label: "/client/mo" },
-            { value: "80%", label: "Your share" },
+            { value: "60%", label: "Your share" },
             { value: "48h", label: "Build time" },
             { value: "₹0", label: "To start" }
           ].map((s) =>

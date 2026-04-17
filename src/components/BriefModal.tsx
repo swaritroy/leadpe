@@ -344,7 +344,7 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
           status: "demo_ready", deploy_url: deployResult.deployUrl, deployed_at: new Date().toISOString(), github_url: githubUrl,
         }).eq("id", request.id);
 
-        const coderEarn = request.coder_earning || 640;
+        const coderEarn = request.coder_earning || Math.round((request.package_price || 800) * 0.60);
         await updateCoderEarnings(userId, { id: request.id, coder_earning: coderEarn, business_name: request.business_name });
 
         window.open(`https://wa.me/91${request.owner_whatsapp?.replace(/\D/g, "")}?text=${encodeURIComponent(`🎉 Your website preview is ready!\n🌐 ${deployResult.deployUrl}\nLogin to your LeadPe dashboard to review it!\nLeadPe 🌱`)}`, "_blank");

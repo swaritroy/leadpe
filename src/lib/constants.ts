@@ -17,9 +17,11 @@ export const PRICES = {
   revision_extra: 200,
 } as const;
 
-export const CODER_SHARE = 0.80;
-export const LEADPE_SHARE = 0.20;
+// Coder revenue share — hardcoded 60/40 split (60% to coder, 40% to LeadPe)
+export const CODER_SHARE = 0.60;
+export const LEADPE_SHARE = 0.40;
 export const PASSIVE_PER_SITE = 30;
+export const SUBSCRIPTION_DAYS = 365;
 
 export const PLAN_PRICES: Record<string, number> = {
   basic: 0,
