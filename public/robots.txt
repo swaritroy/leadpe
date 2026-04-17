@@ -1,14 +1,22 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /services
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /refund
+Allow: /studio
+Allow: /business
+
+Disallow: /auth
+Disallow: /studio/auth
+Disallow: /onboarding
+Disallow: /client/
+Disallow: /dev/
+Disallow: /admin
+Disallow: /payment
+Disallow: /checkout/
+Disallow: /demo/
+
+Sitemap: https://leadpe.tech/sitemap.xml

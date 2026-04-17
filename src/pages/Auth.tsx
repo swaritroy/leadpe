@@ -71,6 +71,20 @@ export default function Auth() {
       return;
     }
     if (data.user) {
+      // Role-gate: business login is for businesses only
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id);
+      const roles = (roleRows ?? []).map((r: any) => r.role);
+      const isBuilder = roles.includes("developer") || roles.includes("vibe_coder");
+      const isAdmin = roles.includes("admin");
+      if (isBuilder && !isAdmin) {
+        await supabase.auth.signOut();
+        setError("This is the business login. Builders should sign in at /studio/auth");
+        setLoading(false);
+        return;
+      }
       await checkProfileAndRedirect(data.user.id);
     }
     setLoading(false);

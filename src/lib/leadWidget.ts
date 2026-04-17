@@ -15,7 +15,7 @@ export function generateLeadWidgetCode(businessData: {
     <input id="lp-phone" type="tel" placeholder="WhatsApp Number" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:12px;box-sizing:border-box;outline:none"/>
     <input id="lp-interest" type="text" placeholder="What are you looking for?" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:16px;box-sizing:border-box;outline:none"/>
     <button onclick="submitLeadPeLead()" style="width:100%;background:#00C853;color:white;border:none;border-radius:10px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer">Get Callback 📲</button>
-    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Powered by LeadPe 🌱</p>
+    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Built with LeadPe 🌱 — Website Nahi? Customer Nahi. <a href="https://leadpe.tech" target="_blank" style="color:#00C853;text-decoration:none;font-weight:600">LeadPe</a></p>
   </div>
 </div>
 <script>
@@ -42,7 +42,7 @@ async function submitLeadPeLead(){
       var e1=document.createElement('div');e1.style.fontSize='48px';e1.textContent='✅';d.appendChild(e1);
       var e2=document.createElement('h3');e2.style.color='#1A1A1A';e2.textContent='Request Received!';d.appendChild(e2);
       var e3=document.createElement('p');e3.style.color='#666';e3.textContent='We will call you back within 2 hours.';d.appendChild(e3);
-      var e4=document.createElement('p');e4.style.cssText='color:#999;font-size:11px';e4.textContent='Powered by LeadPe 🌱';d.appendChild(e4);
+      var e4=document.createElement('p');e4.style.cssText='color:#999;font-size:11px';e4.textContent='Built with LeadPe 🌱 — Website Nahi? Customer Nahi.';d.appendChild(e4);
       w.appendChild(d);
     }else{btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}
   }catch(e){btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}
