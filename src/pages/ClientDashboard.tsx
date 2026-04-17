@@ -145,7 +145,9 @@ export default function ClientDashboard() {
   // Determine dashboard state strictly
   const status = (buildRequest?.status as string) || null;
   const websiteStatus = profile?.website_status || null;
-  
+  const subExpiry = (business as any)?.subscription_expiry ? new Date((business as any).subscription_expiry) : null;
+  const isSubscriptionExpired = subExpiry ? subExpiry.getTime() < Date.now() : false;
+
   const isExpiredOrder = status === "expired" || websiteStatus === "expired";
   const isDeployFailed = status === "failed" || status === "deploy_failed";
   const isLive = status === "live" && !isExpiredOrder;
