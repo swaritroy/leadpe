@@ -34,22 +34,22 @@ export default function Studio() {
         path="/studio"
       />
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ borderBottom: "1px solid #E0E0E0", height: 56 }}>
-        <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ borderBottom: "1px solid #E0E0E0", height: 64 }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700 }}>
+            <span style={{ fontFamily: font.heading, fontWeight: 700 }} className="text-lg sm:text-xl">
               <span style={{ color: "#1A1A1A" }}>Lead</span><span style={{ color: "#00C853" }}>Pe</span>
             </span>
-            <span style={{ color: "#E0E0E0", fontSize: 16 }}>|</span>
-            <span style={{ color: "#00C853", fontSize: 13, fontWeight: 600 }}>Studio</span>
+            <span style={{ color: "#E0E0E0" }}>|</span>
+            <span style={{ color: "#00C853", fontWeight: 600 }} className="text-xs sm:text-sm">Studio</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Link to="/studio/auth" className="px-3 py-2 rounded-lg text-xs font-medium" style={{ color: "#1A1A1A" }}>
+          <div className="flex items-center gap-2">
+            <Link to="/studio/auth" className="px-3 py-2 rounded-lg text-sm font-medium hidden sm:inline-block" style={{ color: "#1A1A1A" }}>
               Sign In
             </Link>
             <Link to="/studio/auth"
-              className="rounded-xl text-xs font-semibold"
-              style={{ backgroundColor: "#00C853", color: "#fff", padding: "8px 14px", textDecoration: "none" }}>
+              className="rounded-xl text-sm font-semibold"
+              style={{ backgroundColor: "#00C853", color: "#fff", padding: "10px 18px", textDecoration: "none" }}>
               Join Free →
             </Link>
           </div>
@@ -57,19 +57,19 @@ export default function Studio() {
       </nav>
 
       {/* Hero */}
-      <section style={{ padding: "72px 16px 40px", textAlign: "center" }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <span className="inline-block rounded-full text-xs font-medium" style={{ backgroundColor: "#E8F5E9", color: "#00C853", padding: "6px 14px", marginBottom: 16 }}>
+      <section className="px-4 sm:px-6 lg:px-8" style={{ paddingTop: 96, paddingBottom: 56, textAlign: "center" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-3xl mx-auto">
+          <span className="inline-block rounded-full text-xs sm:text-sm font-medium" style={{ backgroundColor: "#E8F5E9", color: "#00C853", padding: "6px 14px", marginBottom: 20 }}>
             🇮🇳 Built for Non-Technical Indians
           </span>
 
-          <h1 className="text-2xl sm:text-3xl md:text-5xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.2, marginBottom: 0 }}>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.15, marginBottom: 0 }}>
             Build Websites with AI.
             <br />
-            <span style={{ textDecoration: "underline", textDecorationColor: "#00C853", textUnderlineOffset: 4, textDecorationThickness: 2 }}>Earn Every Month.</span>
+            <span style={{ textDecoration: "underline", textDecorationColor: "#00C853", textUnderlineOffset: 6, textDecorationThickness: 3 }}>Earn Every Month.</span>
           </h1>
 
-          <p className="text-sm sm:text-base" style={{ color: "#666", maxWidth: 400, margin: "14px auto 0", lineHeight: 1.6 }}>
+          <p className="text-base sm:text-lg md:text-xl" style={{ color: "#666", maxWidth: 560, margin: "20px auto 0", lineHeight: 1.6 }}>
             Use ChatGPT + Lovable to build websites for local businesses. No coding. No degree. Just AI.
           </p>
 
