@@ -266,9 +266,20 @@ serve(async (req) => {
       const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
       const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
       const projectName = `leadpe-${bName}-${bCity}`.replace(/-+/g, "-").replace(/-$/, "");
-      const customDomain = `${subdomain}.leadpe.tech`;
 
-      // Update env var to live
+      // ⚠️ DNS for *.leadpe.tech is not propagated yet.
+      // Temporarily serve live sites on the Vercel-assigned subdomain
+      // ({projectName}.vercel.app). Once DNS is healthy, flip USE_CUSTOM_DOMAIN
+      // to true (or remove the guard) to attach {subdomain}.leadpe.tech.
+      const USE_CUSTOM_DOMAIN = false;
+      const customDomain = `${subdomain}.leadpe.tech`;
+      const vercelDomain = `${projectName}.vercel.app`;
+      const liveUrl = USE_CUSTOM_DOMAIN
+        ? `https://${customDomain}`
+        : `https://${vercelDomain}`;
+
+      // Update env var to live and (optionally) attach custom domain
+      let latestDeployUrl: string | null = null;
       try {
         const projectResp = await fetch(`${VERCEL_API}/v9/projects/${projectName}`, { headers });
         const projectData = await projectResp.json();
@@ -291,15 +302,19 @@ serve(async (req) => {
             });
           }
 
-          // Add custom domain
-          await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/domains`, {
-            method: "POST", headers,
-            body: JSON.stringify({ name: customDomain }),
-          });
+          // Custom domain attach (skipped while DNS is broken)
+          if (USE_CUSTOM_DOMAIN) {
+            await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/domains`, {
+              method: "POST", headers,
+              body: JSON.stringify({ name: customDomain }),
+            });
+          } else {
+            console.log(`[deploy_live] DNS bypass active — serving on ${vercelDomain}, intended subdomain "${subdomain}" stored for later activation.`);
+          }
 
-          // Trigger redeployment
+          // Trigger redeployment so VITE_LEADPE_MODE=live takes effect
           if (githubOrg && githubRepo) {
-            await fetch(`${VERCEL_API}/v13/deployments`, {
+            const redeployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
               method: "POST", headers,
               body: JSON.stringify({
                 name: projectName,
@@ -307,6 +322,10 @@ serve(async (req) => {
                 projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
               }),
             });
+            try {
+              const redeployData = await redeployResp.json();
+              if (redeployData?.url) latestDeployUrl = `https://${redeployData.url}`;
+            } catch (_e) { /* ignore */ }
           }
         }
       } catch (vercelErr) {
@@ -316,21 +335,28 @@ serve(async (req) => {
       // Update build_requests
       await supabase.from("build_requests").update({
         status: "live",
-        deploy_url: `https://${customDomain}`,
+        deploy_url: liveUrl,
         deployed_at: new Date().toISOString(),
       }).eq("id", buildRequestId);
 
-      // Update profile
+      // Update profile (keep the intended subdomain — we'll re-attach it after DNS is fixed)
       if (userId) {
         await supabase.from("profiles").update({
           website_status: "live",
-          site_url: `https://${customDomain}`,
+          site_url: liveUrl,
           subdomain: subdomain,
         }).eq("user_id", userId);
       }
 
       return new Response(
-        JSON.stringify({ success: true, liveUrl: `https://${customDomain}` }),
+        JSON.stringify({
+          success: true,
+          liveUrl,
+          customDomainAttached: USE_CUSTOM_DOMAIN,
+          intendedCustomDomain: customDomain,
+          vercelDomain,
+          latestDeployUrl,
+        }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
