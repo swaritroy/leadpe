@@ -51,6 +51,7 @@ export default function GetWebsite() {
   // Step 2: Package
   const [selectedPackage, setSelectedPackage] = useState("standard");
   const [expandedPkg, setExpandedPkg] = useState<string | null>(null);
+  const [addGrowth, setAddGrowth] = useState(false);
 
   // Step 3: Assets
   const [colorPref, setColorPref] = useState("#00C853");
