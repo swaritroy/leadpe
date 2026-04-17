@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import { generateSEO, generateWelcomeMessage } from "@/lib/aiService";
 import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
+import SEO from "@/components/SEO";
 
 const businessTypes = [
   "Coaching Centre", "Doctor / Clinic", "Lawyer / CA", "Salon / Parlour",
