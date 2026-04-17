@@ -143,11 +143,36 @@ export default function GetWebsite() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async () => {
+    // Ghost order prevention — strict validation gate
+    const customerName = (profile?.full_name || name || "").trim();
+    const customerWhatsapp = whatsapp.replace(/\D/g, "");
+    if (!user) {
+      toast({ title: "Please sign in to place an order.", variant: "destructive" });
+      return;
+    }
+    if (customerName.length < 3) {
+      toast({ title: "Name must be at least 3 characters.", variant: "destructive" });
+      return;
+    }
+    if (businessName.trim().length < 3) {
+      toast({ title: "Business name must be at least 3 characters.", variant: "destructive" });
+      setStep(1);
+      return;
+    }
+    if (!businessType || !city.trim()) {
+      toast({ title: "Please complete business details.", variant: "destructive" });
+      setStep(1);
+      return;
+    }
+    if (customerWhatsapp.length !== 10) {
+      toast({ title: "Enter a valid 10-digit WhatsApp number.", variant: "destructive" });
+      setStep(1);
+      return;
+    }
+    if (loading) return;
     setLoading(true);
     setUploadProgress(0);
     try {
-      const customerName = profile?.full_name || name || businessName;
-      const customerWhatsapp = whatsapp.replace(/\D/g, "");
 
       // Upload images asynchronously with compression
       let logoUrl: string | null = null;
@@ -710,7 +735,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                     <ArrowLeft size={16} className="mr-2" /> Back
                   </Button>
                   <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-14 rounded-xl text-white font-bold text-base" style={{ backgroundColor: "#00C853" }}>
-                    {loading ? (uploadProgress > 0 && uploadProgress < 100 ? `Uploading ${uploadProgress}%...` : "Placing Order...") : "Place Free Order →"}
+                    {loading ? (uploadProgress > 0 && uploadProgress < 100 ? `Uploading ${uploadProgress}%...` : "Launching Site...") : "Launch My AI Business Site →"}
                   </Button>
                 </div>
                 <button onClick={handleSubmit} disabled={loading} className="w-full text-center text-sm py-2" style={{ color: "#999" }}>
