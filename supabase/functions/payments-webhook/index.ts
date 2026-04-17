@@ -51,15 +51,24 @@ serve(async (req) => {
 async function handleCheckoutCompleted(session: any, env: StripeEnv) {
   console.log("Checkout completed:", session.id, "mode:", session.mode);
   const userId = session.metadata?.userId;
-  
+
   if (session.mode === "payment" && userId) {
+    // 1-year professional hosting subscription
+    const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
     // One-time payment — update profile plan
     await supabase.from("profiles").update({
       plan_type: "growth",
       plan_status: "active",
       status: "active",
-      plan_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      plan_renewal_date: oneYearFromNow,
     } as any).eq("user_id", userId);
+
+    // Set subscription_expiry on businesses owned by this user
+    await supabase.from("businesses").update({
+      subscription_expiry: oneYearFromNow,
+      subscription_active: true,
+    } as any).eq("owner_id", userId);
 
     // Record payment
     await supabase.from("payments").insert({
