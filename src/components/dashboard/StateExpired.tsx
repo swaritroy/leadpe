@@ -40,7 +40,7 @@ export default function StateExpired({ profile, user }: StateExpiredProps) {
           owner_whatsapp: profile.whatsapp_number || null,
           package_id: lastOrder?.package_id || "basic",
           package_price: lastOrder?.package_price || 800,
-          coder_earning: 640,
+          coder_earning: Math.round(((lastOrder?.package_price as number) || 800) * 0.60),
           website_purpose: "business",
           status: "pending",
           hard_deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),

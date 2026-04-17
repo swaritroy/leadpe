@@ -166,8 +166,8 @@ export default function ActivationPanel({ buildRequests, profiles, onRefresh }: 
                       </div>
                     )}
                     <div className="flex items-center gap-2 mt-1">
-                      <span style={{ fontSize: 12, color: "#666" }}>Earning: ₹{request.coder_earning || 640}</span>
-                      <button onClick={() => copyText(String(request.coder_earning || 640))} style={{ fontSize: 11, color: "#00C853", background: "none", border: "none", cursor: "pointer" }}>Copy</button>
+                      <span style={{ fontSize: 12, color: "#666" }}>Coder earns: ₹{request.coder_earning || Math.round((request.package_price || 800) * 0.60)}</span>
+                      <button onClick={() => copyText(String(request.coder_earning || Math.round((request.package_price || 800) * 0.60)))} style={{ fontSize: 11, color: "#00C853", background: "none", border: "none", cursor: "pointer" }}>Copy</button>
                     </div>
                   </div>
                 )}
