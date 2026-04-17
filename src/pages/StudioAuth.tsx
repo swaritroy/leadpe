@@ -229,12 +229,16 @@ export default function StudioAuth() {
     setLoading(true);
     const res1 = await supabase.auth.signInWithPassword({ email: `${digits}@leadpe.com`, password: siPw });
     if (!res1.error && res1.data?.user) {
-      const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", res1.data.user.id).maybeSingle();
-      const role = roleData?.role;
-      if (role !== "developer" && role !== "vibe_coder") {
-        setLoading(false);
-        setError("This account is not a Studio account. Try the main sign in.");
+      const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", res1.data.user.id);
+      const roles = (roleData ?? []).map((r: any) => r.role);
+      const isCoder = roles.includes("developer") || roles.includes("vibe_coder");
+      if (!isCoder) {
+        // Sign out FIRST so PublicRoute doesn't see a business session and bounce to /onboarding
         await supabase.auth.signOut();
+        await refreshRole();
+        await refreshProfile();
+        setLoading(false);
+        setError("This number is registered as a Business account. Use the main Sign In at /auth, or Join Studio with a different number.");
         return;
       }
       await refreshRole();
