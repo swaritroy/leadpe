@@ -19,13 +19,15 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
       return;
     }
 
+    // Wait for role to load before deciding — prevents coders being routed as business
+    if (!role) return;
+
     // Redirect logged-in users to their dashboard
     if (role === "developer" || role === "vibe_coder") {
       navigate("/dev/dashboard", { replace: true });
     } else if (role === "admin") {
       navigate("/admin", { replace: true });
-    } else {
-      // Business user — check profile completeness
+    } else if (role === "business") {
       const isComplete = profile?.whatsapp_number && profile?.business_name && profile?.business_type && profile?.city;
       if (!isComplete) {
         navigate("/onboarding", { replace: true });
