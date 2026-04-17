@@ -313,7 +313,7 @@ export default function DevOnboarding() {
                   { icon: "📋", title: "You get a build request", body: "A local business needs a website. LeadPe assigns it to you automatically." },
                   { icon: "🤖", title: "We give you a ready AI prompt", body: "Copy the prompt. Paste it in any AI website builder. Your website is ready in 2 hours." },
                   { icon: "🔗", title: "Submit your GitHub link", body: "Connect GitHub inside the builder. Paste the link in LeadPe. We deploy it automatically." },
-                  { icon: "💰", title: "Get paid to your UPI", body: "Business pays. You get 80% directly to your UPI within 1 hour. Plus ₹30 every month per live site — forever." }
+                  { icon: "💰", title: "Get paid to your UPI", body: "Business pays. You get 60% directly to your UPI within 1 hour. Plus ₹30 every month per live site — forever." }
                 ].map((card, i) => (
                   <div key={i} style={{ backgroundColor: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", gap: 16 }}>
                     <div style={{ fontSize: 32 }}>{card.icon}</div>

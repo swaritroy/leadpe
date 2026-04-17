@@ -162,7 +162,7 @@ export default function ClientDashboard() {
 
   const getTrialBar = () => {
     if (isGrowthPlan) return null;
-    if (isFreePlanUser && !isExpired) return { bg: "#FFF3E0", text: "Your website is live forever — upgrade to receive customers on WhatsApp", color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
+    if (isFreePlanUser && !isExpired) return { bg: "#FFF3E0", text: "1 Year Professional Hosting included — upgrade to receive customers on WhatsApp", color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     if (!trial) return null;
     if (isExpired) return { bg: "#FFF3E0", text: "Your website is still live — upgrade to connect with customers", color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };
     if (trial.isTrialEning) return { bg: "#FFF3E0", text: `⚠️ Free trial ends in ${trial.daysLeft} days`, color: "#E65100", btnText: "Get Growth Plan →", btnColor: "#FF6B00" };

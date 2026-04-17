@@ -301,7 +301,7 @@ export default function Index() {
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹0</span></div>
               <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS} days. No card needed.</p>
               <ul className="space-y-2.5 mb-6">
-                {["Website built in 48 hours", "Website live FOREVER on leadpe.tech", "Never taken down", "See before paying anything"].map((f) => (
+                {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.tech", "See before paying anything"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>
