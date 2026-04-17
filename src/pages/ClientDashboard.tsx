@@ -12,6 +12,7 @@ import StateBBuilding from "@/components/dashboard/StateBBuilding";
 import StateCLive from "@/components/dashboard/StateCLive";
 import StateExpired from "@/components/dashboard/StateExpired";
 import StateDeployFailed from "@/components/dashboard/StateDeployFailed";
+import SubscriptionRenewalCard from "@/components/dashboard/SubscriptionRenewalCard";
 
 interface Lead {
   id: string;
@@ -273,14 +274,17 @@ export default function ClientDashboard() {
       )}
 
       {isLive && (
-        <StateCLive
-          buildRequest={buildRequest}
-          business={business}
-          profile={profile}
-          leads={leads}
-          trial={trial}
-          user={user}
-        />
+        <>
+          <SubscriptionRenewalCard expiryDate={(business as any)?.subscription_expiry} />
+          <StateCLive
+            buildRequest={buildRequest}
+            business={business}
+            profile={profile}
+            leads={leads}
+            trial={trial}
+            user={user}
+          />
+        </>
       )}
 
       {/* NEW CUSTOMER TOAST */}
