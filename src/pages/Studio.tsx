@@ -73,20 +73,20 @@ export default function Studio() {
             Use ChatGPT + Lovable to build websites for local businesses. No coding. No degree. Just AI.
           </p>
 
-          <div className="flex flex-col items-center gap-2 mt-5 px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7 px-4">
             <Link to="/studio/auth"
-              className="w-full sm:w-auto block text-center rounded-xl text-sm font-semibold"
-              style={{ backgroundColor: "#00C853", color: "#fff", padding: "14px 32px", textDecoration: "none", minHeight: 48 }}>
+              className="w-full sm:w-auto block text-center rounded-xl text-base font-semibold"
+              style={{ backgroundColor: "#00C853", color: "#fff", padding: "16px 36px", textDecoration: "none", minHeight: 52 }}>
               Start Earning Free →
             </Link>
             <Link to="/studio/auth"
               className="w-full sm:w-auto block text-center rounded-xl text-sm font-medium"
-              style={{ color: "#666", padding: "10px", textDecoration: "none" }}>
+              style={{ color: "#666", padding: "12px", textDecoration: "none" }}>
               Already a member? Sign In
             </Link>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 mt-3" style={{ color: "#999", fontSize: 12 }}>
+          <div className="flex flex-wrap justify-center gap-4 mt-5 text-xs sm:text-sm" style={{ color: "#999" }}>
             <span>✓ Free to join</span>
             <span>✓ No coding</span>
             <span>✓ Earn from day 1</span>
@@ -95,8 +95,8 @@ export default function Studio() {
       </section>
 
       {/* Stats Strip */}
-      <section style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", borderBottom: "1px solid #E0E0E0", padding: "20px 16px" }}>
-        <div className="max-w-4xl mx-auto grid grid-cols-4 gap-2">
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#fff", borderTop: "1px solid #E0E0E0", borderBottom: "1px solid #E0E0E0", padding: "28px 16px" }}>
+        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-2">
           {[
             { value: "₹30", label: "/client/mo" },
             { value: "60%", label: "Your share" },
@@ -104,32 +104,32 @@ export default function Studio() {
             { value: "₹0", label: "To start" }
           ].map((s) =>
             <div key={s.label} className="text-center">
-              <div style={{ fontFamily: font.heading, fontSize: 22, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: "#666", marginTop: 3 }}>{s.label}</div>
+              <div style={{ fontFamily: font.heading, fontWeight: 700, color: "#00C853", lineHeight: 1 }} className="text-3xl sm:text-4xl">{s.value}</div>
+              <div style={{ color: "#666", marginTop: 6 }} className="text-xs sm:text-sm">{s.label}</div>
             </div>
           )}
         </div>
       </section>
 
       {/* How It Works */}
-      <section style={{ backgroundColor: "#fff", padding: "40px 16px" }}>
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>How It Works</h2>
-          <p style={{ color: "#666", fontSize: 13, textAlign: "center", marginBottom: 24 }}>3 simple steps. Earn from day one.</p>
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#fff", padding: "56px 16px" }}>
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 6 }}>How It Works</h2>
+          <p className="text-sm sm:text-base" style={{ color: "#666", textAlign: "center", marginBottom: 32 }}>3 simple steps. Earn from day one.</p>
 
-          <div className="grid md:grid-cols-3 gap-3">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
             {[
               { step: 1, emoji: "🤖", title: "Build with AI", desc: "Paste our prompt in Lovable. Website ready in 2-4 hours.", time: "⏱️ 2-4 hrs" },
               { step: 2, emoji: "📤", title: "Submit Link", desc: "Paste your preview URL. Auto quality checks run instantly.", time: "⏱️ 5 min" },
               { step: 3, emoji: "💰", title: "Earn Forever", desc: "Paid within 24h via UPI. Plus ₹30/month per live site.", time: "💸 Forever" }
             ].map((s) =>
               <motion.div key={s.step} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                style={{ backgroundColor: "#fff", borderRadius: 14, padding: "20px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", borderTop: "3px solid #00C853", textAlign: "center" }}>
-                <span className="inline-block rounded-full text-[10px] font-semibold" style={{ backgroundColor: "#E8F5E9", color: "#00C853", padding: "3px 10px", marginBottom: 10 }}>Step {s.step}</span>
-                <div style={{ fontSize: 32, marginBottom: 8, lineHeight: 1 }}>{s.emoji}</div>
-                <h3 className="text-base" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", marginBottom: 6 }}>{s.title}</h3>
-                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, marginBottom: 10 }}>{s.desc}</p>
-                <span className="inline-block rounded-full text-[10px] font-medium" style={{ backgroundColor: "#F5F5F5", color: "#999", padding: "4px 10px" }}>{s.time}</span>
+                style={{ backgroundColor: "#fff", borderRadius: 16, padding: "28px 20px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "3px solid #00C853", textAlign: "center" }}>
+                <span className="inline-block rounded-full text-xs font-semibold" style={{ backgroundColor: "#E8F5E9", color: "#00C853", padding: "4px 12px", marginBottom: 12 }}>Step {s.step}</span>
+                <div style={{ fontSize: 44, marginBottom: 12, lineHeight: 1 }}>{s.emoji}</div>
+                <h3 className="text-lg sm:text-xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 }}>{s.title}</h3>
+                <p className="text-sm" style={{ color: "#666", lineHeight: 1.6, marginBottom: 12 }}>{s.desc}</p>
+                <span className="inline-block rounded-full text-xs font-medium" style={{ backgroundColor: "#F5F5F5", color: "#999", padding: "4px 12px" }}>{s.time}</span>
               </motion.div>
             )}
           </div>
