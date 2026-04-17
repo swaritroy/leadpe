@@ -154,18 +154,9 @@ export default function Business() {
       await supabase.auth.signInWithPassword({ email, password: code });
     }
 
-    // 6. Build request
-    await (supabase.from("build_requests") as any).insert({
-      business_id: authData?.user?.id || null,
-      business_name: businessName,
-      business_type: businessType,
-      city,
-      owner_name: ownerName,
-      owner_whatsapp: digits,
-      plan_selected: plan,
-      status: "pending",
-      deadline: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-    });
+    // NOTE: Build request is intentionally NOT created here.
+    // It is created later from /get-website after the owner submits
+    // photos, colors, package, and other website details.
 
     // 7. Background AI generation (no WhatsApp redirect)
     generateSEO({ name: businessName, type: businessType, city, ownerName })
