@@ -278,28 +278,87 @@ serve(async (req) => {
         ? `https://${customDomain}`
         : `https://${vercelDomain}`;
 
-      // Update env var to live and (optionally) attach custom domain
+      // ══════════════════════════════════════════════
+      // AUTO-SEO: Generate metadata, schema, OG tags
+      // ══════════════════════════════════════════════
+      let seoData: any = null;
+      try {
+        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const seoResp = await fetch(`${SUPABASE_URL}/functions/v1/generate-seo`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessName: br.business_name,
+            businessType: br.business_type,
+            city: br.city,
+            ownerName: br.owner_name,
+            whatsapp: br.owner_whatsapp,
+            siteUrl: liveUrl,
+          }),
+        });
+        if (seoResp.ok) {
+          seoData = await seoResp.json();
+          // Persist SEO
+          await supabase.from("business_seo").upsert({
+            business_id: buildRequestId,
+            business_name: br.business_name,
+            page_title: seoData.page_title || seoData.title,
+            meta_description: seoData.meta_description || seoData.description,
+            keywords: seoData.keywords,
+            google_description: seoData.google_description,
+            whatsapp_bio: seoData.whatsapp_bio,
+            h1_heading: seoData.h1_heading || seoData.h1,
+            about_text: seoData.about_text,
+            generated_at: new Date().toISOString(),
+          }, { onConflict: "business_id" });
+        } else {
+          console.error("SEO generation failed:", seoResp.status, await seoResp.text());
+        }
+      } catch (seoErr) {
+        console.error("SEO generation error:", seoErr);
+      }
+
+      // Ping Google IndexNow
+      try {
+        await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(liveUrl + "/sitemap.xml")}`);
+      } catch (_e) { /* best effort */ }
+
+      // Update env var to live + inject SEO vars, then attach custom domain
       let latestDeployUrl: string | null = null;
       try {
         const projectResp = await fetch(`${VERCEL_API}/v9/projects/${projectName}`, { headers });
         const projectData = await projectResp.json();
 
         if (projectResp.ok && projectData.id) {
-          // Update VITE_LEADPE_MODE to live
           const envResp = await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/env`, { headers });
           const envData = await envResp.json();
-          const existingEnv = envData.envs?.find((e: any) => e.key === "VITE_LEADPE_MODE");
 
-          if (existingEnv) {
-            await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/env/${existingEnv.id}`, {
-              method: "PATCH", headers,
-              body: JSON.stringify({ value: "live", target: ["production"] }),
-            });
-          } else {
-            await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/env`, {
-              method: "POST", headers,
-              body: JSON.stringify([{ key: "VITE_LEADPE_MODE", value: "live", type: "plain", target: ["production"] }]),
-            });
+          const envVarsToSet: Record<string, string> = {
+            VITE_LEADPE_MODE: "live",
+            VITE_SITE_URL: liveUrl,
+          };
+          if (seoData) {
+            envVarsToSet.VITE_SEO_TITLE = (seoData.page_title || seoData.title || "").slice(0, 70);
+            envVarsToSet.VITE_SEO_DESCRIPTION = (seoData.meta_description || seoData.description || "").slice(0, 160);
+            envVarsToSet.VITE_SEO_KEYWORDS = seoData.keywords || "";
+            envVarsToSet.VITE_SEO_H1 = seoData.h1_heading || seoData.h1 || "";
+            envVarsToSet.VITE_SEO_OG_IMAGE = seoData.og_image || "";
+          }
+
+          for (const [key, value] of Object.entries(envVarsToSet)) {
+            const existing = envData.envs?.find((e: any) => e.key === key);
+            if (existing) {
+              await fetch(`${VERCEL_API}/v9/projects/${projectData.id}/env/${existing.id}`, {
+                method: "PATCH", headers,
+                body: JSON.stringify({ value, target: ["production"] }),
+              });
+            } else {
+              await fetch(`${VERCEL_API}/v10/projects/${projectData.id}/env`, {
+                method: "POST", headers,
+                body: JSON.stringify([{ key, value, type: "plain", target: ["production"] }]),
+              });
+            }
           }
 
           // Custom domain attach (skipped while DNS is broken)
@@ -356,6 +415,11 @@ serve(async (req) => {
           intendedCustomDomain: customDomain,
           vercelDomain,
           latestDeployUrl,
+          seo: seoData ? {
+            title: seoData.page_title || seoData.title,
+            description: seoData.meta_description || seoData.description,
+            keywords: seoData.keywords,
+          } : null,
         }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
