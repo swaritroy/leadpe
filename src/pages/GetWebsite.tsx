@@ -774,7 +774,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                   <Button onClick={() => setStep(2)} variant="outline" className="flex-1 h-12 rounded-xl" style={{ borderColor: "#E0E0E0" }}>
                     <ArrowLeft size={16} className="mr-2" /> Back
                   </Button>
-                  <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-14 rounded-xl text-white font-bold text-base" style={{ backgroundColor: "#00C853" }}>
+                  <Button onClick={handleSubmit} disabled={loading} className="flex-1 h-14 rounded-xl text-white font-bold text-base mx-0 my-0 px-px" style={{ backgroundColor: "#00C853" }}>
                     {loading ? (uploadProgress > 0 && uploadProgress < 100 ? `Uploading ${uploadProgress}%...` : "Launching Site...") : "Launch My AI Business Site →"}
                   </Button>
                 </div>
