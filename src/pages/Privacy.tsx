@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 export default function Privacy() {
   const h2 = { color: "#1A1A1A", fontFamily: "Syne, sans-serif" };
@@ -7,6 +8,11 @@ export default function Privacy() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Privacy Policy | LeadPe"
+        description="How LeadPe collects, uses and protects your business and customer data. GDPR-aware, India-compliant privacy practices."
+        path="/privacy"
+      />
       <Navbar />
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-[680px] mx-auto bg-white rounded-2xl p-8" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>

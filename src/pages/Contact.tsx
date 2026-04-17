@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 export default function Contact() {
   const { toast } = useToast();
@@ -40,6 +41,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Contact LeadPe | Talk to Our Team"
+        description="Reach the LeadPe team for support, partnerships, demos and renewals. We respond on WhatsApp and email."
+        path="/contact"
+      />
       <Navbar />
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-4xl mx-auto">

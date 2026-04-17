@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 export default function Refund() {
   const h2 = { color: "#1A1A1A", fontFamily: "Syne, sans-serif" };
@@ -7,6 +8,11 @@ export default function Refund() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Refund & Cancellation Policy | LeadPe"
+        description="LeadPe's refund and cancellation policy for one-time website builds and the ₹299/mo Growth Plan."
+        path="/refund"
+      />
       <Navbar />
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-[680px] mx-auto bg-white rounded-2xl p-8" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>

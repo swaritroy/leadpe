@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { ChevronDown, ArrowRight } from "lucide-react";
+import SEO from "@/components/SEO";
 
 export default function Studio() {
   const [sitesPerMonth, setSitesPerMonth] = useState(5);
@@ -27,6 +28,11 @@ export default function Studio() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7", fontFamily: font.body }}>
+      <SEO
+        title="LeadPe Studio | Build & Earn as a Digital Creator"
+        description="Build websites for local Indian businesses with AI. Earn ₹480-₹1,800 per build + ₹30/month passive income per live site. No coding required."
+        path="/studio"
+      />
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ borderBottom: "1px solid #E0E0E0", height: 56 }}>
         <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">

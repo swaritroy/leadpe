@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicRoute from "@/components/PublicRoute";
+import StudioGuard from "@/components/StudioGuard";
+import ClientGuard from "@/components/ClientGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 
@@ -72,46 +74,46 @@ const AppContent = () => {
 
             {/* Onboarding — protected, business only */}
             <Route path="/onboarding" element={
-              <ProtectedRoute allowedRoles={["business"]}>
+              <ClientGuard>
                 <Onboarding />
-              </ProtectedRoute>
+              </ClientGuard>
             } />
 
-            {/* Get website — protected business */}
+            {/* Get website — business only */}
             <Route path="/get-website" element={
-              <ProtectedRoute allowedRoles={["business"]}>
+              <ClientGuard>
                 <GetWebsite />
-              </ProtectedRoute>
+              </ClientGuard>
             } />
             <Route path="/demo/:orderId" element={<DemoPreview />} />
 
-            {/* Protected — business */}
+            {/* Protected — business (ClientGuard forces coders/admin away) */}
             <Route path="/client/dashboard" element={
-              <ProtectedRoute allowedRoles={["business"]}>
+              <ClientGuard>
                 <ClientDashboard />
-              </ProtectedRoute>
+              </ClientGuard>
             } />
             <Route path="/client/settings" element={
-              <ProtectedRoute allowedRoles={["business"]}>
+              <ClientGuard>
                 <ClientSettings />
-              </ProtectedRoute>
+              </ClientGuard>
             } />
             <Route path="/payment" element={
-              <ProtectedRoute allowedRoles={["business"]}>
+              <ClientGuard>
                 <Payment />
-              </ProtectedRoute>
+              </ClientGuard>
             } />
 
-            {/* Protected — vibe coder */}
+            {/* Protected — vibe coder (StudioGuard forces clients to /client/dashboard) */}
             <Route path="/dev/dashboard" element={
-              <ProtectedRoute allowedRoles={["developer", "vibe_coder"]}>
+              <StudioGuard>
                 <DevDashboard />
-              </ProtectedRoute>
+              </StudioGuard>
             } />
             <Route path="/dev/onboarding" element={
-              <ProtectedRoute allowedRoles={["developer", "vibe_coder"]}>
+              <StudioGuard>
                 <DevOnboarding />
-              </ProtectedRoute>
+              </StudioGuard>
             } />
 
             {/* Protected — admin */}
