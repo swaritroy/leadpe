@@ -228,7 +228,7 @@ export default function GetWebsite() {
           package_price: pkg.price,
           total_price: pkg.price,
           color_preference: colorPref,
-          special_requirements: additionalDetails || null,
+          special_requirements: [additionalDetails, addGrowth ? "[GROWTH_PLAN_OPTIN] User opted in to ₹299/mo Growth plan at checkout" : ""].filter(Boolean).join("\n\n") || null,
           logo_url: logoUrl,
           photos_urls: photoUrls.length > 0 ? photoUrls : null,
           status: "pending",
