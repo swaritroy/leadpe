@@ -180,6 +180,7 @@ export type Database = {
           special_offer: string | null
           starting_price: string | null
           subscription_active: boolean
+          subscription_expiry: string | null
           theme_json: Json | null
           timing: string | null
           trial_active: boolean | null
@@ -208,6 +209,7 @@ export type Database = {
           special_offer?: string | null
           starting_price?: string | null
           subscription_active?: boolean
+          subscription_expiry?: string | null
           theme_json?: Json | null
           timing?: string | null
           trial_active?: boolean | null
@@ -236,6 +238,7 @@ export type Database = {
           special_offer?: string | null
           starting_price?: string | null
           subscription_active?: boolean
+          subscription_expiry?: string | null
           theme_json?: Json | null
           timing?: string | null
           trial_active?: boolean | null
@@ -611,6 +614,7 @@ export type Database = {
           business_type: string | null
           city: string | null
           color_preference: string | null
+          commission_rate: number
           created_at: string | null
           customer_name: string
           customer_whatsapp: string
@@ -650,6 +654,7 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           color_preference?: string | null
+          commission_rate?: number
           created_at?: string | null
           customer_name: string
           customer_whatsapp: string
@@ -689,6 +694,7 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           color_preference?: string | null
+          commission_rate?: number
           created_at?: string | null
           customer_name?: string
           customer_whatsapp?: string
