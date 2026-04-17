@@ -136,76 +136,75 @@ export default function Studio() {
         </div>
       </section>
 
-      {/* Earnings Calculator - Simplified */}
-      <section style={{ backgroundColor: "#F5FFF7", padding: "40px 16px" }}>
-        <div className="max-w-[400px] mx-auto">
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>Your Earnings</h2>
-          <p style={{ color: "#666", fontSize: 13, textAlign: "center", marginBottom: 20 }}>Slide to see potential income.</p>
+      {/* Earnings Calculator */}
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#F5FFF7", padding: "56px 16px" }}>
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 6 }}>Your Earnings</h2>
+          <p className="text-sm sm:text-base" style={{ color: "#666", textAlign: "center", marginBottom: 24 }}>Slide to see potential income.</p>
 
-          <div style={{ backgroundColor: "#fff", borderRadius: 14, padding: "24px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-            <p style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Websites per month:</p>
-            <div className="flex items-baseline justify-center gap-2 mb-3">
-              <span style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>{sitesPerMonth}</span>
-              <span style={{ fontSize: 13, color: "#666" }}>sites/month</span>
+          <div style={{ backgroundColor: "#fff", borderRadius: 16, padding: "32px 24px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <p className="text-sm" style={{ color: "#666", marginBottom: 4 }}>Websites per month:</p>
+            <div className="flex items-baseline justify-center gap-2 mb-4">
+              <span style={{ fontFamily: font.heading, fontWeight: 700, color: "#00C853", lineHeight: 1 }} className="text-5xl sm:text-6xl">{sitesPerMonth}</span>
+              <span className="text-base" style={{ color: "#666" }}>sites/month</span>
             </div>
             <input type="range" min={1} max={20} value={sitesPerMonth}
               onChange={(e) => setSitesPerMonth(parseInt(e.target.value))}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer mb-4"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer mb-5"
               style={{ accentColor: "#00C853", backgroundColor: "#E8F5E9" }} />
 
-            {/* Simple 2-row grid */}
-            <div className="grid grid-cols-2 gap-px" style={{ backgroundColor: "#E0E0E0", borderRadius: 10, overflow: "hidden" }}>
-              <div className="bg-white p-3">
-                <p style={{ fontSize: 10, color: "#666", marginBottom: 2 }}>This Month</p>
-                <p style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>₹{buildingIncome.toLocaleString()}</p>
+            <div className="grid grid-cols-2 gap-px" style={{ backgroundColor: "#E0E0E0", borderRadius: 12, overflow: "hidden" }}>
+              <div className="bg-white p-4">
+                <p className="text-xs" style={{ color: "#666", marginBottom: 4 }}>This Month</p>
+                <p className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>₹{buildingIncome.toLocaleString()}</p>
               </div>
-              <div className="bg-white p-3">
-                <p style={{ fontSize: 10, color: "#666", marginBottom: 2 }}>Year 1 Total</p>
-                <p style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>₹{yearTotal.toLocaleString()}+</p>
+              <div className="bg-white p-4">
+                <p className="text-xs" style={{ color: "#666", marginBottom: 4 }}>Year 1 Total</p>
+                <p className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#00C853", lineHeight: 1 }}>₹{yearTotal.toLocaleString()}+</p>
               </div>
             </div>
 
-            <p style={{ fontSize: 10, color: "#999", textAlign: "center", marginTop: 10 }}>
+            <p className="text-xs" style={{ color: "#999", textAlign: "center", marginTop: 12 }}>
               Based on Standard package (₹1,500). Your share = ₹1,200
             </p>
 
-            <Link to="/studio/auth" className="block mt-4 text-center rounded-xl text-sm font-semibold"
-              style={{ backgroundColor: "#00C853", color: "#fff", padding: "14px", textDecoration: "none", minHeight: 48 }}>
+            <Link to="/studio/auth" className="block mt-5 text-center rounded-xl text-base font-semibold"
+              style={{ backgroundColor: "#00C853", color: "#fff", padding: "16px", textDecoration: "none", minHeight: 52 }}>
               Start Earning Free →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Packages - Compact */}
-      <section style={{ backgroundColor: "#fff", padding: "40px 16px" }}>
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>What You Build</h2>
-          <p style={{ color: "#666", fontSize: 13, textAlign: "center", marginBottom: 24 }}>Accept any request. Work at your pace.</p>
+      {/* Packages */}
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#fff", padding: "56px 16px" }}>
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 6 }}>What You Build</h2>
+          <p className="text-sm sm:text-base" style={{ color: "#666", textAlign: "center", marginBottom: 32 }}>Accept any request. Work at your pace.</p>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {WEBSITE_PACKAGES.map((pkg) => {
               const colors: Record<string, string> = { basic: "#999", standard: "#00C853", premium: "#7C3AED", complex: "#FF6B00" };
               const c = colors[pkg.id] || "#00C853";
               return (
                 <div key={pkg.id} style={{
-                  backgroundColor: "#fff", borderRadius: 12, padding: "16px 12px",
-                  boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
+                  backgroundColor: "#fff", borderRadius: 14, padding: "20px 16px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
                   borderTop: `3px solid ${c}`,
                 }}>
-                  <span className="inline-block rounded-full text-[10px] font-bold mb-2" style={{ backgroundColor: `${c}15`, color: c, padding: "2px 8px" }}>
+                  <span className="inline-block rounded-full text-xs font-bold mb-3" style={{ backgroundColor: `${c}15`, color: c, padding: "3px 10px" }}>
                     {pkg.badge}
                   </span>
-                  <div style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", lineHeight: 1 }}>
+                  <div className="text-2xl sm:text-3xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", lineHeight: 1 }}>
                     {pkg.priceLabel || `₹${pkg.price.toLocaleString()}`}
                   </div>
-                  <p style={{ fontSize: 10, color: "#999", marginTop: 2 }}>one-time</p>
-                  <div style={{ height: 1, backgroundColor: "#F0F0F0", margin: "8px 0" }} />
-                  <p style={{ fontSize: 10, color: "#666" }}>You Earn:</p>
-                  <p style={{ fontFamily: font.heading, fontSize: 16, fontWeight: 700, color: c, lineHeight: 1, marginTop: 1 }}>
+                  <p className="text-xs" style={{ color: "#999", marginTop: 4 }}>one-time</p>
+                  <div style={{ height: 1, backgroundColor: "#F0F0F0", margin: "12px 0" }} />
+                  <p className="text-xs" style={{ color: "#666" }}>You Earn:</p>
+                  <p className="text-lg sm:text-xl" style={{ fontFamily: font.heading, fontWeight: 700, color: c, lineHeight: 1, marginTop: 2 }}>
                     ₹{pkg.coderEarning.toLocaleString()}
                   </p>
-                  <p style={{ fontSize: 10, color: "#666", marginTop: 2 }}>+ ₹30/mo passive</p>
+                  <p className="text-xs" style={{ color: "#666", marginTop: 4 }}>+ ₹30/mo passive</p>
                 </div>
               );
             })}
@@ -214,24 +213,24 @@ export default function Studio() {
       </section>
 
       {/* Tools */}
-      <section style={{ backgroundColor: "#F5FFF7", padding: "40px 16px" }}>
+      <section className="px-4 sm:px-6 lg:px-8" style={{ backgroundColor: "#F5FFF7", padding: "56px 16px" }}>
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl sm:text-2xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 4 }}>Tools You Use</h2>
-          <p style={{ color: "#666", fontSize: 13, textAlign: "center", marginBottom: 24 }}>All free. Set up in 10 minutes.</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", textAlign: "center", marginBottom: 6 }}>Tools You Use</h2>
+          <p className="text-sm sm:text-base" style={{ color: "#666", textAlign: "center", marginBottom: 32 }}>All free. Set up in 10 minutes.</p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
             {[
               { emoji: "🤖", name: "ChatGPT", desc: "Generate content automatically.", free: "Free ✓", url: "https://chatgpt.com" },
               { emoji: "🎨", name: "Lovable", desc: "Build websites visually. No code.", free: "Free tier ✓", url: "https://lovable.dev" }
             ].map((t) =>
-              <div key={t.name} style={{ backgroundColor: "#fff", borderRadius: 14, padding: "20px 14px", boxShadow: "0 1px 6px rgba(0,0,0,0.05)", textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 8, lineHeight: 1 }}>{t.emoji}</div>
-                <h3 className="text-sm" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>{t.name}</h3>
-                <p style={{ fontSize: 11, color: "#666", marginBottom: 6, lineHeight: 1.5 }}>{t.desc}</p>
-                <p style={{ fontSize: 11, color: "#00C853", fontWeight: 600, marginBottom: 8 }}>{t.free}</p>
+              <div key={t.name} style={{ backgroundColor: "#fff", borderRadius: 16, padding: "28px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", textAlign: "center" }}>
+                <div style={{ fontSize: 44, marginBottom: 12, lineHeight: 1 }}>{t.emoji}</div>
+                <h3 className="text-lg sm:text-xl" style={{ fontFamily: font.heading, fontWeight: 700, color: "#1A1A1A", marginBottom: 6 }}>{t.name}</h3>
+                <p className="text-sm" style={{ color: "#666", marginBottom: 8, lineHeight: 1.5 }}>{t.desc}</p>
+                <p className="text-sm" style={{ color: "#00C853", fontWeight: 600, marginBottom: 12 }}>{t.free}</p>
                 <button onClick={() => window.open(t.url, "_blank")}
-                  className="w-full rounded-lg text-xs font-semibold"
-                  style={{ backgroundColor: "#fff", color: "#00C853", border: "1.5px solid #00C853", padding: "8px", cursor: "pointer", minHeight: 36 }}>
+                  className="w-full rounded-lg text-sm font-semibold"
+                  style={{ backgroundColor: "#fff", color: "#00C853", border: "1.5px solid #00C853", padding: "12px", cursor: "pointer", minHeight: 44 }}>
                   Open →
                 </button>
               </div>
