@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { ChevronDown, ArrowRight } from "lucide-react";
+import SEO from "@/components/SEO";
 
 export default function Studio() {
   const [sitesPerMonth, setSitesPerMonth] = useState(5);

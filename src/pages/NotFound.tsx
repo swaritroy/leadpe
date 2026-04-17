@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import LeadPeLogo from "@/components/LeadPeLogo";
+import SEO from "@/components/SEO";
 
 const NotFound = () => {
   const location = useLocation();

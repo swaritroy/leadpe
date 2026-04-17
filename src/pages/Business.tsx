@@ -276,6 +276,11 @@ export default function Business() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Get Your AI Business Website | LeadPe"
+        description="Launch your AI-built business website in 48 hours. WhatsApp leads, local SEO, 1-year professional hosting included. Pay only for results."
+        path="/business"
+      />
       <nav className="bg-white border-b" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <LeadPeLogo theme="light" size="sm" />

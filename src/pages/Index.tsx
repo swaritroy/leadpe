@@ -8,6 +8,7 @@ import { TRIAL_DAYS, MONTHLY_PRICE } from "@/lib/constants";
 import LeadPeLogo from "@/components/LeadPeLogo";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const businessTypes = [
   { icon: "🏫", name: "Coaching Centre" },

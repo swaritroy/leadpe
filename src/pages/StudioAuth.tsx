@@ -76,6 +76,8 @@ function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v
   );
 }
 
+import SEO from "@/components/SEO";
+
 export default function StudioAuth() {
   const navigate = useNavigate();
   const { toast } = useToast();

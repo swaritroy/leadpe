@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 export default function Refund() {
   const h2 = { color: "#1A1A1A", fontFamily: "Syne, sans-serif" };
