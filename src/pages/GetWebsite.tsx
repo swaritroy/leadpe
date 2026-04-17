@@ -51,6 +51,7 @@ export default function GetWebsite() {
   // Step 2: Package
   const [selectedPackage, setSelectedPackage] = useState("standard");
   const [expandedPkg, setExpandedPkg] = useState<string | null>(null);
+  const [addGrowth, setAddGrowth] = useState(false);
 
   // Step 3: Assets
   const [colorPref, setColorPref] = useState("#00C853");
@@ -227,7 +228,7 @@ export default function GetWebsite() {
           package_price: pkg.price,
           total_price: pkg.price,
           color_preference: colorPref,
-          special_requirements: additionalDetails || null,
+          special_requirements: [additionalDetails, addGrowth ? "[GROWTH_PLAN_OPTIN] User opted in to ₹299/mo Growth plan at checkout" : ""].filter(Boolean).join("\n\n") || null,
           logo_url: logoUrl,
           photos_urls: photoUrls.length > 0 ? photoUrls : null,
           status: "pending",
@@ -557,34 +558,40 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
               };
               return (
               <motion.div key="s2" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                <div className="bg-white rounded-2xl p-6 shadow-lg mb-4" style={{ border: "1px solid #E0F2E9" }}>
-                  <h2 className="text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Choose Your Package</h2>
-                  <p className="text-sm mb-1" style={{ color: "#999" }}>Free demo before any payment.</p>
-                  {businessType && <p className="text-xs mb-5" style={{ color: "#00C853" }}>✓ Features tailored for {businessType}</p>}
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg mb-4" style={{ border: "1px solid #E0F2E9" }}>
+                  <h2 className="text-lg sm:text-xl font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Choose Your Package</h2>
+                  <p className="text-xs sm:text-sm mb-1" style={{ color: "#999" }}>Free demo before any payment.</p>
+                  {businessType && <p className="text-[11px] sm:text-xs mb-4" style={{ color: "#00C853" }}>✓ Features tailored for {businessType}</p>}
                   <div className="space-y-3">
                     {WEBSITE_PACKAGES.filter(p => p.id !== "complex").map((p) => {
                       const tf = tierMap[p.id];
                       const features = tf?.features || catFeatures.starter;
                       const visibleCount = 4;
                       const hasMore = features.length > visibleCount;
+                      const isPopular = p.id === "standard";
                       return (
-                      <div key={p.id} className="rounded-xl overflow-hidden transition-all"
+                      <div key={p.id} className="rounded-xl overflow-hidden transition-all relative"
                         style={{ border: selectedPackage === p.id ? "2px solid #00C853" : "2px solid #E0E0E0", backgroundColor: selectedPackage === p.id ? "#F0FFF4" : "#fff" }}>
-                        <div className="p-4">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: p.color }}>{p.badge}</span>
-                              <span className="font-bold" style={{ color: "#1A1A1A" }}>{p.name}</span>
-                            </div>
-                            <span className="font-extrabold text-lg" style={{ color: "#1A1A1A" }}>₹{p.price.toLocaleString()}</span>
+                        {isPopular && (
+                          <div className="absolute top-0 right-3 text-[10px] font-extrabold px-2 py-0.5 rounded-b-md text-white tracking-wide" style={{ backgroundColor: "#FF6B00" }}>
+                            ⭐ POPULAR
                           </div>
-                          <p className="text-xs mb-3" style={{ color: "#999" }}>Demo in {p.deliveryDays} days</p>
+                        )}
+                        <div className="p-3 sm:p-4">
+                          <div className="flex items-center justify-between mb-1 gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full text-white whitespace-nowrap" style={{ backgroundColor: p.color }}>{p.badge}</span>
+                              <span className="font-bold text-sm sm:text-base truncate" style={{ color: "#1A1A1A" }}>{p.name}</span>
+                            </div>
+                            <span className="font-extrabold text-base sm:text-lg whitespace-nowrap" style={{ color: "#1A1A1A" }}>₹{p.price.toLocaleString()}</span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs mb-2" style={{ color: "#999" }}>Demo in {p.deliveryDays} days</p>
 
                           {/* Features list */}
                           <ul className="space-y-1 mb-2">
                             {features.slice(0, visibleCount).map((f) => (
-                              <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
-                                <Check size={12} style={{ color: "#00C853" }} /> {f}
+                              <li key={f} className="text-[11px] sm:text-xs flex items-start gap-1.5" style={{ color: "#444" }}>
+                                <Check size={12} style={{ color: "#00C853", flexShrink: 0, marginTop: 2 }} /> <span className="break-words">{f}</span>
                               </li>
                             ))}
                           </ul>
@@ -593,29 +600,29 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                           {expandedPkg === p.id && hasMore && (
                             <ul className="space-y-1 mb-2">
                               {features.slice(visibleCount).map((f) => (
-                                <li key={f} className="text-xs flex items-center gap-1.5" style={{ color: "#444" }}>
-                                  <Check size={12} style={{ color: "#00C853" }} /> {f}
+                                <li key={f} className="text-[11px] sm:text-xs flex items-start gap-1.5" style={{ color: "#444" }}>
+                                  <Check size={12} style={{ color: "#00C853", flexShrink: 0, marginTop: 2 }} /> <span className="break-words">{f}</span>
                                 </li>
                               ))}
                             </ul>
                           )}
 
                           {/* Revision policy */}
-                          <div className="rounded-lg px-3 py-2 mb-3" style={{ backgroundColor: "#F8F8F8" }}>
+                          <div className="rounded-lg px-2.5 py-1.5 mb-2.5" style={{ backgroundColor: "#F8F8F8" }}>
                             <p className="text-[10px]" style={{ color: "#999" }}>
                               ✏️ 2 revisions included. No changes after that.
                             </p>
                           </div>
 
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-2">
                             {hasMore ? (
                               <button onClick={() => setExpandedPkg(expandedPkg === p.id ? null : p.id)}
-                                className="text-xs font-medium flex items-center gap-1" style={{ color: "#666" }}>
+                                className="text-[11px] sm:text-xs font-medium flex items-center gap-1" style={{ color: "#666" }}>
                                 {expandedPkg === p.id ? <><ChevronUp size={14} /> Less</> : <><ChevronDown size={14} /> +{features.length - visibleCount} more</>}
                               </button>
                             ) : <span />}
                             <button onClick={() => setSelectedPackage(p.id)}
-                              className="text-sm font-bold px-4 py-1.5 rounded-lg transition-all"
+                              className="text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 rounded-lg transition-all whitespace-nowrap"
                               style={{
                                 backgroundColor: selectedPackage === p.id ? "#00A843" : "#00C853",
                                 color: "#fff",
@@ -628,11 +635,37 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                     );})}
                   </div>
 
-                  {/* Growth plan upsell */}
-                  <div className="mt-4 rounded-xl p-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C85330" }}>
-                    <p className="text-xs font-bold" style={{ color: "#1A1A1A" }}>💚 Growth Plan Add-on — ₹299/mo</p>
-                    <p className="text-[10px] mt-1" style={{ color: "#666" }}>4 changes/month (small edits only, resets monthly)</p>
-                  </div>
+                  {/* Growth plan optional add-on */}
+                  <button
+                    onClick={() => setAddGrowth(!addGrowth)}
+                    className="mt-4 w-full rounded-xl p-3 text-left transition-all flex items-start gap-3"
+                    style={{
+                      backgroundColor: addGrowth ? "#F0FFF4" : "#fff",
+                      border: addGrowth ? "2px solid #00C853" : "2px dashed #00C85360",
+                    }}
+                  >
+                    <div className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ borderColor: "#00C853", backgroundColor: addGrowth ? "#00C853" : "#fff" }}>
+                      {addGrowth && <Check size={12} className="text-white" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-bold" style={{ color: "#1A1A1A" }}>
+                        💚 Add Growth Plan — ₹299/mo {addGrowth && <span style={{ color: "#00C853" }}>✓ Added</span>}
+                      </p>
+                      <p className="text-[10px] sm:text-[11px] mt-1" style={{ color: "#666" }}>
+                        4 changes/month (small edits, resets monthly). Optional — you can add later.
+                      </p>
+                    </div>
+                  </button>
+
+                  {addGrowth && (
+                    <div className="mt-3 rounded-lg p-2.5 flex items-center justify-between" style={{ backgroundColor: "#F8F8F8" }}>
+                      <span className="text-xs font-medium" style={{ color: "#666" }}>Total today</span>
+                      <span className="text-sm font-extrabold" style={{ color: "#1A1A1A" }}>
+                        ₹{pkg.price.toLocaleString()} + ₹299/mo
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3">
