@@ -180,6 +180,44 @@ export default function ClientDashboard() {
     );
   }
 
+  // Subscription expired splash — blocks dashboard until renewed
+  if (isSubscriptionExpired && isLive) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#FFF8F8", padding: 24, fontFamily: font.body }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{ maxWidth: 420, width: "100%", backgroundColor: "#fff", borderRadius: 20, padding: 32, textAlign: "center", border: "2px solid #EF4444", boxShadow: "0 8px 32px rgba(239,68,68,0.15)" }}
+        >
+          <div style={{ fontSize: 56, marginBottom: 12 }}>⏰</div>
+          <h1 style={{ fontFamily: font.heading, fontSize: 24, fontWeight: 700, color: "#C62828", marginBottom: 8 }}>
+            Subscription Expired
+          </h1>
+          <p style={{ fontSize: 15, color: "#1A1A1A", marginBottom: 8 }}>
+            Your 1-year hosting period has ended.
+          </p>
+          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
+            Contact LeadPe to renew and bring your website back online.
+          </p>
+          <a
+            href="https://wa.me/919973383902?text=Hi%20LeadPe%2C%20I%20want%20to%20renew%20my%20website%20subscription"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "block", width: "100%", height: 48, lineHeight: "48px", borderRadius: 12, backgroundColor: "#00C853", color: "#fff", fontWeight: 700, fontSize: 15, textDecoration: "none", marginBottom: 10 }}
+          >
+            Contact LeadPe to Renew →
+          </a>
+          <button
+            onClick={handleSignOut}
+            style={{ background: "none", border: "none", color: "#999", fontSize: 13, cursor: "pointer" }}
+          >
+            Sign Out
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", fontFamily: font.body }}>
       {/* NAVBAR */}
