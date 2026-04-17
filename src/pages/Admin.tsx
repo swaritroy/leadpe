@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ActivationPanel from "@/components/admin/ActivationPanel";
+import RenewalReminders from "@/components/admin/RenewalReminders";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -794,6 +795,17 @@ export default function Admin() {
               )}
             </div>
           )}
+        </motion.div>
+
+        {/* Subscription Renewals */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => toggleSection("renewals")} className="flex items-center gap-2 text-lg font-bold font-display">
+              {expandedSections.has("renewals") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              🔔 Subscription Renewals
+            </button>
+          </div>
+          {expandedSections.has("renewals") && <RenewalReminders />}
         </motion.div>
 
         {/* Businesses Table */}
