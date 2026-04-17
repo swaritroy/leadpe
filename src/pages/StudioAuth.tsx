@@ -124,7 +124,10 @@ export default function StudioAuth() {
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     if (!jName.trim()) { setError("Please enter your full name."); return; }
     const digits = jPhone.replace(/\D/g, "");
-    if (digits.length !== 10) { setError("Please enter a valid 10-digit number."); return; }
+    if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
+      setError("Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
+      return;
+    }
     if (!jCity.trim()) { setError("Please enter your city."); return; }
     if (!jUpi.trim()) { setError("Please enter your UPI ID."); return; }
     if (jPw.length < 6) { setError("Password must be at least 6 characters."); return; }
@@ -217,7 +220,10 @@ export default function StudioAuth() {
     setError("");
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     const digits = siPhone.replace(/\D/g, "");
-    if (digits.length !== 10) { setError("Please enter a valid 10-digit number."); return; }
+    if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
+      setError("Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
+      return;
+    }
     if (!siPw) { setError("Please enter your password."); return; }
 
     setLoading(true);

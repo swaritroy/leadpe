@@ -58,7 +58,10 @@ export default function Auth() {
   const handleSignIn = useCallback(async () => {
     setError("");
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
-    if (siPhone.length !== 10) { setError("Enter a valid 10-digit number."); return; }
+    if (siPhone.length !== 10 || !/^[6-9]/.test(siPhone)) {
+      setError("Enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
+      return;
+    }
     if (!siPassword) { setError("Please enter your password."); return; }
     setLoading(true);
     const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -94,7 +97,10 @@ export default function Auth() {
     setError("");
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     if (!caName.trim()) { setError("Please enter your full name."); return; }
-    if (caPhone.length !== 10) { setError("Enter a valid 10-digit number."); return; }
+    if (caPhone.length !== 10 || !/^[6-9]/.test(caPhone)) {
+      setError("Enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
+      return;
+    }
     if (caPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (caPassword !== caConfirm) { setError("Passwords do not match."); return; }
 
