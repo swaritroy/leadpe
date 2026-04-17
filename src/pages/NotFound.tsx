@@ -13,6 +13,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO title="Page Not Found | LeadPe" description="The page you are looking for does not exist." path="/404" noindex />
       <div className="text-center px-4">
         <div className="mb-6"><LeadPeLogo theme="light" size="lg" /></div>
         <h1 className="text-7xl font-extrabold text-[#1A1A1A] mb-2" style={{ fontFamily: "Syne, sans-serif" }}>404</h1>

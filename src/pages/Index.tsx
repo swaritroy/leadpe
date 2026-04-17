@@ -89,6 +89,11 @@ export default function Index() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="LeadPe | AI-Powered Website Distribution for Local Businesses"
+        description="India's AI-Powered Digital Distribution. Live in 48 Hours. Pay Only for Results. Professional websites with WhatsApp leads from ₹800."
+        path="/"
+      />
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white border-b" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

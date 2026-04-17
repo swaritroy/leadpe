@@ -246,6 +246,12 @@ export default function StudioAuth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Join LeadPe Studio | Sign In or Create Builder Account"
+        description="Join the LeadPe Studio builder network. Earn from AI-built websites for Indian local businesses."
+        path="/studio/auth"
+        noindex
+      />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[460px]">
         <div className="text-center mb-6">
           <Link to="/studio" className="inline-flex items-center gap-2">

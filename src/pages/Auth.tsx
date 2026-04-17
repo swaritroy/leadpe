@@ -127,6 +127,12 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Sign In or Create Account | LeadPe"
+        description="Sign in to your LeadPe business dashboard or create a free account to launch your AI-built website in 48 hours."
+        path="/auth"
+        noindex
+      />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[460px]">
         <div className="text-center mb-6">
           <Link to="/"><LeadPeLogo theme="light" size="lg" /></Link>

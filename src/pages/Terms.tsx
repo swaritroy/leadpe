@@ -11,6 +11,11 @@ export default function Terms() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Terms & Conditions | LeadPe"
+        description="LeadPe platform terms — coder commission split, hosting term, revisions, refund and acceptable use."
+        path="/terms"
+      />
       <Navbar />
 
       <div className="pt-24 pb-20 px-4">

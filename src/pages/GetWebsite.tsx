@@ -433,6 +433,12 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
   // --- 4-STEP WIZARD ---
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
+      <SEO
+        title="Launch Your AI Business Site | LeadPe"
+        description="Build your AI-powered local business website in 48 hours. WhatsApp leads, local SEO, 1-year hosting included."
+        path="/get-website"
+        noindex
+      />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm" style={{ borderColor: "#E0F2E9" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2"><LeadPeLogo theme="light" size="sm" /></Link>
