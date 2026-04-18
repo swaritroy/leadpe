@@ -1,27 +1,26 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
-// Sends a single SMS via MSG91. Returns { ok, info }.
-async function sendMsg91Sms(authKey: string, senderId: string, phone: string, message: string) {
-  // MSG91 expects 91XXXXXXXXXX (no +)
+// Send a single SMS via Fast2SMS Quick route. No DLT, no template approval.
+async function sendFast2SmsSms(apiKey: string, phone: string, message: string) {
   const clean = phone.replace(/\D/g, "").slice(-10);
   if (clean.length !== 10 || !/^[6-9]/.test(clean)) {
     return { ok: false, info: `Invalid Indian number: ${phone}` };
   }
-  const to = `91${clean}`;
 
-  const url = `https://api.msg91.com/api/v2/sendsms`;
+  const url = "https://www.fast2sms.com/dev/bulkV2";
   const res = await fetch(url, {
     method: "POST",
     headers: {
+      "authorization": apiKey,
       "Content-Type": "application/json",
-      "authkey": authKey,
     },
     body: JSON.stringify({
-      sender: senderId,
-      route: "4", // transactional
-      country: "91",
-      sms: [{ message, to: [to] }],
+      route: "q", // quick SMS — no DLT/template required
+      message,
+      language: "english",
+      flash: 0,
+      numbers: clean,
     }),
   });
 
@@ -29,8 +28,13 @@ async function sendMsg91Sms(authKey: string, senderId: string, phone: string, me
   let data: Record<string, unknown> = {};
   try { data = JSON.parse(text); } catch { /* keep raw */ }
 
-  const ok = res.ok && (data.type === "success" || (typeof data.message === "string" && (data.message as string).length > 10));
-  return { ok, info: ok ? (data.message as string) || "sent" : (text || "MSG91 error") };
+  const ok = res.ok && data.return === true;
+  const info = ok
+    ? (Array.isArray((data as { request_id?: string[] }).request_id)
+        ? ((data as { request_id: string[] }).request_id[0] || "sent")
+        : ((data as { request_id?: string }).request_id || "sent"))
+    : (typeof data.message === "string" ? data.message : (text || "Fast2SMS error"));
+  return { ok, info };
 }
 
 Deno.serve(async (req) => {
@@ -38,11 +42,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const MSG91_AUTH_KEY = Deno.env.get("MSG91_AUTH_KEY");
-  const MSG91_SENDER_ID = Deno.env.get("MSG91_SENDER_ID") || "LEADPE";
+  const FAST2SMS_API_KEY = Deno.env.get("FAST2SMS_API_KEY");
 
-  if (!MSG91_AUTH_KEY) {
-    return new Response(JSON.stringify({ error: "MSG91_AUTH_KEY not configured" }), {
+  if (!FAST2SMS_API_KEY) {
+    return new Response(JSON.stringify({ error: "FAST2SMS_API_KEY not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
 
   for (const msg of pending) {
     try {
-      const { ok, info } = await sendMsg91Sms(MSG91_AUTH_KEY, MSG91_SENDER_ID, msg.to, msg.message);
+      const { ok, info } = await sendFast2SmsSms(FAST2SMS_API_KEY, msg.to, msg.message);
       const cleanPhone = msg.to.replace(/\D/g, "").slice(-10);
 
       if (ok) {
@@ -91,7 +94,7 @@ Deno.serve(async (req) => {
         });
 
         sent++;
-        console.log(`✅ MSG91 SMS sent to ${cleanPhone}: ${info}`);
+        console.log(`✅ Fast2SMS sent to ${cleanPhone}: ${info}`);
       } else {
         await supabase
           .from("scheduled_messages")
@@ -110,7 +113,7 @@ Deno.serve(async (req) => {
         });
 
         failed++;
-        console.error(`❌ MSG91 fail ${cleanPhone}: ${info}`);
+        console.error(`❌ Fast2SMS fail ${cleanPhone}: ${info}`);
       }
     } catch (e: unknown) {
       const errMsg = (e as Error).message;
@@ -136,7 +139,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ processed: pending.length, sent, failed, provider: "msg91" }),
+    JSON.stringify({ processed: pending.length, sent, failed, provider: "fast2sms" }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
