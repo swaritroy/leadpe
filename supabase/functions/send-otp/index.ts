@@ -73,16 +73,14 @@ serve(async (req) => {
       );
     }
 
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioFrom = Deno.env.get('TWILIO_WHATSAPP_FROM') || 'whatsapp:+14155238886';
+    const TWOFACTOR_API_KEY = Deno.env.get("TWOFACTOR_API_KEY");
+    const TWOFACTOR_TEMPLATE = Deno.env.get("TWOFACTOR_TEMPLATE_NAME") || "OTP1";
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
-    console.log("Phone:", cleanPhone);
-    console.log("OTP generated successfully");
+    console.log("Phone:", cleanPhone, "| OTP generated");
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      console.error("Missing Twilio credentials");
+    if (!TWOFACTOR_API_KEY) {
+      console.error("Missing TWOFACTOR_API_KEY");
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "OTP service unavailable. Try again later." }),
@@ -90,52 +88,50 @@ serve(async (req) => {
         );
       }
       return new Response(
-        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "Twilio not configured. Test OTP returned." }),
+        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "2Factor not configured. Test OTP returned." }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
-    const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-
-    console.log("Sending OTP via WhatsApp...");
-    let whatsappSent = false;
+    // 2Factor.in SMS OTP API
+    const url = `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${cleanPhone}/${otp}/${TWOFACTOR_TEMPLATE}`;
+    let smsSent = false;
+    let smsError: string | null = null;
 
     try {
-      const waResponse = await fetch(TWILIO_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          To: `whatsapp:+91${cleanPhone}`,
-          From: twilioFrom,
-          Body: `🔐 Your LeadPe verification code is: *${otp}*\n\nValid for 10 minutes. Do not share this code with anyone.`,
-        }),
-      });
+      const res = await fetch(url, { method: "GET" });
+      const data = await res.json();
+      console.log("2Factor response:", JSON.stringify(data));
 
-      const waResult = await waResponse.json();
-      console.log("Twilio WhatsApp response:", JSON.stringify(waResult));
-
-      if (waResponse.ok && waResult.sid) {
-        whatsappSent = true;
-        console.log("WhatsApp OTP sent successfully:", waResult.sid);
+      if (res.ok && data.Status === "Success") {
+        smsSent = true;
       } else {
-        console.error("Twilio WhatsApp failed:", JSON.stringify(waResult));
+        smsError = data.Details || data.Status || "2Factor API error";
+        console.error("2Factor failed:", smsError);
       }
-    } catch (waErr) {
-      console.error("WhatsApp API call failed:", waErr);
+    } catch (err) {
+      smsError = (err as Error).message;
+      console.error("2Factor API call failed:", err);
     }
 
-    if (whatsappSent) {
+    // Log to message_log
+    await supabase.from("message_log").insert({
+      to_number: cleanPhone,
+      message: `OTP: ${otp}`,
+      message_type: "otp",
+      channel: "sms",
+      status: smsSent ? "sent" : "failed",
+      delivery_status: smsSent ? "queued" : "failed",
+      error_message: smsError,
+      sent_at: new Date().toISOString(),
+    });
+
+    if (smsSent) {
       return new Response(
-        JSON.stringify({ success: true, whatsapp_sent: true }),
+        JSON.stringify({ success: true, sms_sent: true }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
-
-    console.error("WhatsApp OTP sending failed");
 
     if (IS_PRODUCTION) {
       return new Response(
@@ -145,7 +141,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, test_mode: true, test_otp: otp, whatsapp_error: "WhatsApp delivery failed" }),
+      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsError }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (e) {
