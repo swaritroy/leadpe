@@ -6,23 +6,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-  if (!TWILIO_ACCOUNT_SID) {
-    return new Response(JSON.stringify({ error: "TWILIO_ACCOUNT_SID is not configured" }), {
+  const TWOFACTOR_API_KEY = Deno.env.get('TWOFACTOR_API_KEY');
+  if (!TWOFACTOR_API_KEY) {
+    return new Response(JSON.stringify({ error: "TWOFACTOR_API_KEY is not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-  if (!TWILIO_AUTH_TOKEN) {
-    return new Response(JSON.stringify({ error: "TWILIO_AUTH_TOKEN is not configured" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const twilioFrom = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
-  const TWILIO_API_URL = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-  const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -47,46 +36,43 @@ Deno.serve(async (req) => {
 
   for (const msg of pending) {
     try {
-      let toNumber = msg.to.replace(/\D/g, "");
-      if (toNumber.length === 10) toNumber = "91" + toNumber;
-      if (!toNumber.startsWith("91")) toNumber = "91" + toNumber;
+      const cleanPhone = msg.to.replace(/\D/g, "").slice(-10);
+      if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
+        throw new Error(`Invalid Indian number: ${msg.to}`);
+      }
 
-      const res = await fetch(TWILIO_API_URL, {
-        method: "POST",
-        headers: {
-          'Authorization': authHeader,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          From: twilioFrom,
-          To: `whatsapp:+${toNumber}`,
-          Body: msg.message,
-        }),
+      const params = new URLSearchParams({
+        module: 'TRANS_SMS',
+        apikey: TWOFACTOR_API_KEY,
+        to: cleanPhone,
+        from: 'LEADPE',
+        msg: msg.message,
       });
 
+      const res = await fetch(`https://2factor.in/API/R1/?${params.toString()}`, { method: "GET" });
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && data.Status === 'Success') {
         await supabase
           .from("scheduled_messages")
           .update({ status: "sent", sent_at: new Date().toISOString() })
           .eq("id", msg.id);
 
         await supabase.from("message_log").insert({
-          to_number: toNumber,
+          to_number: cleanPhone,
           message: msg.message,
           message_type: msg.type || "general",
-          channel: "whatsapp",
+          channel: "sms",
           status: "sent",
-          delivery_status: data.status || "queued",
-          twilio_sid: data.sid,
+          delivery_status: "queued",
+          twilio_sid: data.Details || null,
           sent_at: new Date().toISOString(),
         });
 
         sent++;
-        console.log(`✅ Sent to ${toNumber}: ${data.sid}`);
+        console.log(`✅ SMS sent to ${cleanPhone}: ${data.Details}`);
       } else {
-        const errorMsg = data.message || data.more_info || "Unknown Twilio error";
+        const errorMsg = data.Details || data.Status || "Unknown 2Factor error";
 
         await supabase
           .from("scheduled_messages")
@@ -94,10 +80,10 @@ Deno.serve(async (req) => {
           .eq("id", msg.id);
 
         await supabase.from("message_log").insert({
-          to_number: toNumber,
+          to_number: cleanPhone,
           message: msg.message,
           message_type: msg.type || "general",
-          channel: "whatsapp",
+          channel: "sms",
           status: "failed",
           delivery_status: "failed",
           error_message: errorMsg,
@@ -105,7 +91,7 @@ Deno.serve(async (req) => {
         });
 
         failed++;
-        console.error(`❌ Failed ${toNumber}: ${errorMsg}`);
+        console.error(`❌ Failed ${cleanPhone}: ${errorMsg}`);
       }
     } catch (e: unknown) {
       await supabase
@@ -117,7 +103,7 @@ Deno.serve(async (req) => {
         to_number: msg.to,
         message: msg.message,
         message_type: msg.type || "general",
-        channel: "whatsapp",
+        channel: "sms",
         status: "failed",
         delivery_status: "error",
         error_message: (e as Error).message,
