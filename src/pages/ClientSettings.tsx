@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Phone, Save, ArrowLeft } from "lucide-react";
+import { Phone, Save, ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ const ClientSettings = () => {
     business_hours: "Mon-Sat 9AM-7PM",
     service1: "", service2: "", service3: "",
   });
+  const [notificationChannel, setNotificationChannel] = useState<"sms" | "whatsapp">("sms");
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -40,10 +41,29 @@ const ClientSettings = () => {
           service3: pricing[2]?.price ?? "",
         });
       }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("notification_channel")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (prof?.notification_channel === "whatsapp" || prof?.notification_channel === "sms") {
+        setNotificationChannel(prof.notification_channel);
+      }
       setLoading(false);
     };
     fetchBusiness();
   }, [user]);
+
+  const handleChannelChange = async (next: "sms" | "whatsapp") => {
+    if (next === "whatsapp") {
+      toast({ title: "WhatsApp coming soon", description: "We're rolling out WhatsApp alerts. SMS keeps working." });
+      return;
+    }
+    setNotificationChannel(next);
+    if (user) {
+      await supabase.from("profiles").update({ notification_channel: next }).eq("user_id", user.id);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -135,6 +155,33 @@ const ClientSettings = () => {
                   <Input value={form[key as keyof typeof form]} onChange={e => setForm({ ...form, [key]: e.target.value })} className="rounded-xl bg-secondary border-border" />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-display flex items-center gap-2">
+                <Bell size={18} className="text-primary" /> Lead Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">Where should we send your new customer alerts?</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleChannelChange("sms")}
+                  className={`min-h-12 rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${notificationChannel === "sms" ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-foreground"}`}
+                >
+                  SMS ✓ Active
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChannelChange("whatsapp")}
+                  className="min-h-12 rounded-xl border border-border bg-secondary px-4 py-3 text-sm font-semibold text-muted-foreground"
+                >
+                  WhatsApp (soon)
+                </button>
+              </div>
             </CardContent>
           </Card>
 
