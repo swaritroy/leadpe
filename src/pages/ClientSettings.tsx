@@ -165,22 +165,12 @@ const ClientSettings = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-muted-foreground">Where should we send your new customer alerts?</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleChannelChange("sms")}
-                  className={`min-h-12 rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${notificationChannel === "sms" ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border text-foreground"}`}
-                >
-                  SMS ✓ Active
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChannelChange("whatsapp")}
-                  className="min-h-12 rounded-xl border border-border bg-secondary px-4 py-3 text-sm font-semibold text-muted-foreground"
-                >
-                  WhatsApp (soon)
-                </button>
+              <div className="rounded-xl border border-border bg-secondary px-4 py-3">
+                <p className="text-sm font-semibold text-foreground mb-1">WhatsApp & SMS alerts — Coming Soon</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  We're finalising our messaging partner so every new lead buzzes your phone instantly.
+                  For now, all leads appear live on your dashboard the moment a customer submits.
+                </p>
               </div>
             </CardContent>
           </Card>
