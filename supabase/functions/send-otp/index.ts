@@ -74,7 +74,6 @@ serve(async (req) => {
     }
 
     const TWOFACTOR_API_KEY = Deno.env.get("TWOFACTOR_API_KEY");
-    const TWOFACTOR_TEMPLATE = Deno.env.get("TWOFACTOR_TEMPLATE_NAME") || "OTP1";
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone, "| OTP generated");
@@ -93,15 +92,23 @@ serve(async (req) => {
       );
     }
 
-    // 2Factor.in SMS OTP API
-    const url = `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${cleanPhone}/${otp}/${TWOFACTOR_TEMPLATE}`;
+    // 2Factor.in TRANSACTIONAL SMS (forces SMS delivery, not voice)
+    const smsBody = `Your LeadPe verification code is ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+    const params = new URLSearchParams({
+      module: 'TRANS_SMS',
+      apikey: TWOFACTOR_API_KEY,
+      to: cleanPhone,
+      from: 'LEADPE',
+      msg: smsBody,
+    });
+    const url = `https://2factor.in/API/R1/?${params.toString()}`;
     let smsSent = false;
     let smsError: string | null = null;
 
     try {
       const res = await fetch(url, { method: "GET" });
       const data = await res.json();
-      console.log("2Factor response:", JSON.stringify(data));
+      console.log("2Factor TRANS_SMS response:", JSON.stringify(data));
 
       if (res.ok && data.Status === "Success") {
         smsSent = true;
