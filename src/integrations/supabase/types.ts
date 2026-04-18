@@ -823,6 +823,7 @@ export type Database = {
           monthly_changes_used: number | null
           monthly_passive: number | null
           name_changes_this_month: number | null
+          notification_channel: string
           number_changes_this_month: number | null
           onboarding_complete: boolean | null
           plan_renewal_date: string | null
@@ -872,6 +873,7 @@ export type Database = {
           monthly_changes_used?: number | null
           monthly_passive?: number | null
           name_changes_this_month?: number | null
+          notification_channel?: string
           number_changes_this_month?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
@@ -921,6 +923,7 @@ export type Database = {
           monthly_changes_used?: number | null
           monthly_passive?: number | null
           name_changes_this_month?: number | null
+          notification_channel?: string
           number_changes_this_month?: number | null
           onboarding_complete?: boolean | null
           plan_renewal_date?: string | null
