@@ -45,7 +45,7 @@ export default function StudioAuth() {
 
     setLoading(true);
     const email = jEmail.trim().toLowerCase();
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    let { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password: jPassword,
       options: {
@@ -59,6 +59,21 @@ export default function StudioAuth() {
         },
       },
     });
+
+    // Self-heal: if email already exists, try signing in with the password they typed
+    if (signUpError && /already|registered|exists/i.test(signUpError.message)) {
+      const { data: siData, error: siErr } = await supabase.auth.signInWithPassword({
+        email,
+        password: jPassword,
+      });
+      if (siErr || !siData.user) {
+        setLoading(false);
+        return setError("This email is already registered. Switch to Sign In and use your existing password, or use a different email.");
+      }
+      data = { user: siData.user, session: siData.session } as any;
+      signUpError = null;
+    }
+
     if (signUpError) {
       setLoading(false);
       return setError(signUpError.message);

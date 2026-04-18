@@ -119,13 +119,29 @@ export default function Auth() {
       return;
     }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: caPhone + "@leadpe.com",
+    const synthEmail = caPhone + "@leadpe.com";
+    let { data, error: signUpError } = await supabase.auth.signUp({
+      email: synthEmail,
       password: caPassword,
       options: {
         data: { full_name: caName.trim(), role: "business" },
       },
     });
+
+    // Self-heal: orphan auth user with no profile → sign in with provided password
+    if (signUpError && /already|registered|exists/i.test(signUpError.message)) {
+      const { data: siData, error: siErr } = await supabase.auth.signInWithPassword({
+        email: synthEmail,
+        password: caPassword,
+      });
+      if (siErr || !siData.user) {
+        setError("This number is already registered. Please use Sign In with your existing password.");
+        setLoading(false);
+        return;
+      }
+      data = { user: siData.user, session: siData.session } as any;
+      signUpError = null;
+    }
 
     if (signUpError) {
       setError(signUpError.message);
