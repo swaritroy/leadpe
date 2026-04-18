@@ -1,0 +1,4 @@
+TRUNCATE TABLE public.build_requests, public.orders, public.order_timeline, public.leads, public.signups, public.deployments, public.payments, public.scheduled_messages, public.message_log, public.change_requests, public.ratings, public.feedback, public.quality_reports, public.projects, public.businesses, public.business_seo, public.otp_verifications, public.earnings, public.coder_penalties, public.subscriptions RESTART IDENTITY CASCADE;
+DELETE FROM public.user_roles WHERE user_id = 'ddf3fb7e-67d2-4293-b9ec-0b51e6913c80';
+DELETE FROM public.profiles WHERE user_id = 'ddf3fb7e-67d2-4293-b9ec-0b51e6913c80';
+DELETE FROM auth.users WHERE id = 'ddf3fb7e-67d2-4293-b9ec-0b51e6913c80';
