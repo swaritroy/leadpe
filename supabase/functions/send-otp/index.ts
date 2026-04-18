@@ -92,36 +92,24 @@ serve(async (req) => {
       );
     }
 
-    // Fast2SMS Quick SMS route - no DLT required, delivers to all Indian numbers
-    const smsBody = `Your LeadPe verification code is ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+    // Fast2SMS OTP route - generic OTP template, NO DLT required, real SMS delivery
     let smsSent = false;
     let smsError: string | null = null;
     let providerResponse: unknown = null;
 
     try {
-      const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-        method: "POST",
-        headers: {
-          "authorization": FAST2SMS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          route: "q",
-          message: smsBody,
-          language: "english",
-          flash: 0,
-          numbers: cleanPhone,
-        }),
-      });
+      // GET request to OTP route - delivers "Your OTP: <otp>" via pre-approved generic template
+      const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${encodeURIComponent(FAST2SMS_API_KEY)}&variables_values=${otp}&route=otp&numbers=${cleanPhone}`;
+      const res = await fetch(url, { method: "GET" });
       const data = await res.json();
       providerResponse = data;
-      console.log("Fast2SMS response:", JSON.stringify(data));
+      console.log("Fast2SMS OTP response:", JSON.stringify(data));
 
       if (res.ok && data.return === true) {
         smsSent = true;
       } else {
-        smsError = data.message || JSON.stringify(data) || "Fast2SMS API error";
-        console.error("Fast2SMS failed:", smsError);
+        smsError = data.message || JSON.stringify(data) || "Fast2SMS OTP route error";
+        console.error("Fast2SMS OTP failed:", smsError);
       }
     } catch (err) {
       smsError = (err as Error).message;
