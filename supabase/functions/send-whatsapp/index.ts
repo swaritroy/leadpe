@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
 
-// Renamed in spirit: now sends SMS via 2Factor.in (kept function name for backward compat).
+// Sends SMS via Fast2SMS Quick route (no DLT required). Function name kept for backward compat.
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -17,10 +17,9 @@ serve(async (req) => {
       )
     }
 
-    const TWOFACTOR_API_KEY = Deno.env.get('TWOFACTOR_API_KEY');
-    if (!TWOFACTOR_API_KEY) throw new Error('TWOFACTOR_API_KEY is not configured');
+    const FAST2SMS_API_KEY = Deno.env.get('FAST2SMS_API_KEY');
+    if (!FAST2SMS_API_KEY) throw new Error('FAST2SMS_API_KEY is not configured');
 
-    // Clean phone -> 10-digit Indian
     const cleanPhone = to.toString().replace(/\D/g, "").slice(-10);
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return new Response(
@@ -29,25 +28,28 @@ serve(async (req) => {
       )
     }
 
-    // 2Factor Transactional SMS API
-    const url = `https://2factor.in/API/R1/`;
-    const params = new URLSearchParams({
-      module: 'TRANS_SMS',
-      apikey: TWOFACTOR_API_KEY,
-      to: cleanPhone,
-      from: 'LEADPE',
-      msg: message,
+    const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+      method: "POST",
+      headers: {
+        "authorization": FAST2SMS_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        route: "q",
+        message,
+        language: "english",
+        flash: 0,
+        numbers: cleanPhone,
+      }),
     });
-
-    const response = await fetch(`${url}?${params.toString()}`, { method: 'GET' });
     const data = await response.json();
 
-    if (!response.ok || data.Status !== 'Success') {
-      console.error('2Factor SMS error:', data);
-      throw new Error(data.Details || `2Factor API error [${response.status}]`);
+    if (!response.ok || data.return !== true) {
+      console.error('Fast2SMS error:', data);
+      throw new Error(data.message || `Fast2SMS API error [${response.status}]`);
     }
 
-    console.log('SMS sent successfully to', cleanPhone, ':', data.Details);
+    console.log('SMS sent to', cleanPhone, ':', JSON.stringify(data));
 
     return new Response(
       JSON.stringify({ success: true, data }),

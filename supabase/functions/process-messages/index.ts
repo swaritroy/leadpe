@@ -6,9 +6,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const TWOFACTOR_API_KEY = Deno.env.get('TWOFACTOR_API_KEY');
-  if (!TWOFACTOR_API_KEY) {
-    return new Response(JSON.stringify({ error: "TWOFACTOR_API_KEY is not configured" }), {
+  const FAST2SMS_API_KEY = Deno.env.get('FAST2SMS_API_KEY');
+  if (!FAST2SMS_API_KEY) {
+    return new Response(JSON.stringify({ error: "FAST2SMS_API_KEY is not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -41,18 +41,23 @@ Deno.serve(async (req) => {
         throw new Error(`Invalid Indian number: ${msg.to}`);
       }
 
-      const params = new URLSearchParams({
-        module: 'TRANS_SMS',
-        apikey: TWOFACTOR_API_KEY,
-        to: cleanPhone,
-        from: 'LEADPE',
-        msg: msg.message,
+      const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "authorization": FAST2SMS_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route: "q",
+          message: msg.message,
+          language: "english",
+          flash: 0,
+          numbers: cleanPhone,
+        }),
       });
-
-      const res = await fetch(`https://2factor.in/API/R1/?${params.toString()}`, { method: "GET" });
       const data = await res.json();
 
-      if (res.ok && data.Status === 'Success') {
+      if (res.ok && data.return === true) {
         await supabase
           .from("scheduled_messages")
           .update({ status: "sent", sent_at: new Date().toISOString() })
@@ -65,14 +70,14 @@ Deno.serve(async (req) => {
           channel: "sms",
           status: "sent",
           delivery_status: "queued",
-          twilio_sid: data.Details || null,
+          twilio_sid: Array.isArray(data.request_id) ? data.request_id[0] : (data.request_id || null),
           sent_at: new Date().toISOString(),
         });
 
         sent++;
-        console.log(`✅ SMS sent to ${cleanPhone}: ${data.Details}`);
+        console.log(`✅ SMS sent to ${cleanPhone}: ${JSON.stringify(data)}`);
       } else {
-        const errorMsg = data.Details || data.Status || "Unknown 2Factor error";
+        const errorMsg = data.message || JSON.stringify(data) || "Unknown Fast2SMS error";
 
         await supabase
           .from("scheduled_messages")

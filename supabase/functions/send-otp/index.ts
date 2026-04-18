@@ -73,14 +73,13 @@ serve(async (req) => {
       );
     }
 
-    const TWOFACTOR_API_KEY = Deno.env.get("TWOFACTOR_API_KEY");
-    const TWOFACTOR_TEMPLATE = Deno.env.get("TWOFACTOR_TEMPLATE_NAME") || "OTP1";
+    const FAST2SMS_API_KEY = Deno.env.get("FAST2SMS_API_KEY");
     const IS_PRODUCTION = Deno.env.get("ENVIRONMENT") === "production";
 
     console.log("Phone:", cleanPhone, "| OTP generated");
 
-    if (!TWOFACTOR_API_KEY) {
-      console.error("Missing TWOFACTOR_API_KEY");
+    if (!FAST2SMS_API_KEY) {
+      console.error("Missing FAST2SMS_API_KEY");
       if (IS_PRODUCTION) {
         return new Response(
           JSON.stringify({ success: false, message: "OTP service unavailable. Try again later." }),
@@ -88,33 +87,47 @@ serve(async (req) => {
         );
       }
       return new Response(
-        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "2Factor not configured. Test OTP returned." }),
+        JSON.stringify({ success: true, test_mode: true, test_otp: otp, message: "Fast2SMS not configured. Test OTP returned." }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
-    // 2Factor.in SMS OTP API
-    const url = `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${cleanPhone}/${otp}/${TWOFACTOR_TEMPLATE}`;
+    // Fast2SMS Quick SMS route - no DLT required, delivers to all Indian numbers
+    const smsBody = `Your LeadPe verification code is ${otp}. Valid for 10 minutes. Do not share with anyone.`;
     let smsSent = false;
     let smsError: string | null = null;
+    let providerResponse: unknown = null;
 
     try {
-      const res = await fetch(url, { method: "GET" });
+      const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "authorization": FAST2SMS_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route: "q",
+          message: smsBody,
+          language: "english",
+          flash: 0,
+          numbers: cleanPhone,
+        }),
+      });
       const data = await res.json();
-      console.log("2Factor response:", JSON.stringify(data));
+      providerResponse = data;
+      console.log("Fast2SMS response:", JSON.stringify(data));
 
-      if (res.ok && data.Status === "Success") {
+      if (res.ok && data.return === true) {
         smsSent = true;
       } else {
-        smsError = data.Details || data.Status || "2Factor API error";
-        console.error("2Factor failed:", smsError);
+        smsError = data.message || JSON.stringify(data) || "Fast2SMS API error";
+        console.error("Fast2SMS failed:", smsError);
       }
     } catch (err) {
       smsError = (err as Error).message;
-      console.error("2Factor API call failed:", err);
+      console.error("Fast2SMS API call failed:", err);
     }
 
-    // Log to message_log
     await supabase.from("message_log").insert({
       to_number: cleanPhone,
       message: `OTP: ${otp}`,
@@ -141,7 +154,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsError }),
+      JSON.stringify({ success: true, test_mode: true, test_otp: otp, sms_error: smsError, provider: providerResponse }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (e) {
