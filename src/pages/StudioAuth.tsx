@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 
 // OTP Input Component defined OUTSIDE
 function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v: string) => void; onComplete: () => void }) {
@@ -19,12 +20,8 @@ function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v
     newDigits[index] = digit;
     const newValue = newDigits.join("").replace(/ /g, "");
     onChange(newValue);
-    if (digit && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    if (newValue.length === 6) {
-      setTimeout(() => onComplete(), 300);
-    }
+    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+    if (newValue.length === 6) setTimeout(() => onComplete(), 300);
   }, [digits, onChange, onComplete]);
 
   const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
@@ -41,11 +38,8 @@ function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pasted.length > 0) {
       onChange(pasted);
-      const focusIdx = Math.min(pasted.length, 5);
-      inputRefs.current[focusIdx]?.focus();
-      if (pasted.length === 6) {
-        setTimeout(() => onComplete(), 500);
-      }
+      inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+      if (pasted.length === 6) setTimeout(() => onComplete(), 500);
     }
   }, [onChange, onComplete]);
 
@@ -76,8 +70,6 @@ function OtpInput({ value, onChange, onComplete }: { value: string; onChange: (v
   );
 }
 
-import SEO from "@/components/SEO";
-
 export default function StudioAuth() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -85,171 +77,135 @@ export default function StudioAuth() {
   const [tab, setTab] = useState<"join" | "signin">("join");
   const [screen, setScreen] = useState<"form" | "otp">("form");
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
-  const [showCpw, setShowCpw] = useState(false);
   const [error, setError] = useState("");
-  const [alreadyExists, setAlreadyExists] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
   // Join fields
   const [jName, setJName] = useState("");
+  const [jEmail, setJEmail] = useState("");
   const [jPhone, setJPhone] = useState("");
   const [jCity, setJCity] = useState("");
   const [jUpi, setJUpi] = useState("");
-  const [jPw, setJPw] = useState("");
-  const [jCpw, setJCpw] = useState("");
 
-  // OTP fields
-  const [suOtp, setSuOtp] = useState("");
+  // Sign in
+  const [siEmail, setSiEmail] = useState("");
+
+  // OTP
+  const [otp, setOtp] = useState("");
+  const [activeEmail, setActiveEmail] = useState("");
+  const [flow, setFlow] = useState<"join" | "signin">("join");
   const [timer, setTimer] = useState(60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (screen === "otp" && timer > 0) {
-      timerRef.current = setInterval(() => setTimer((prev) => prev - 1), 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
+      timerRef.current = setInterval(() => setTimer((p) => p - 1), 1000);
+    } else if (timerRef.current) clearInterval(timerRef.current);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [screen, timer]);
 
-  // Sign in fields
-  const [siPhone, setSiPhone] = useState("");
-  const [siPw, setSiPw] = useState("");
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
-  const handleSendOtp = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setError("");
-    setAlreadyExists(false);
-    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
-    if (!jName.trim()) { setError("Please enter your full name."); return; }
-    const digits = jPhone.replace(/\D/g, "");
-    if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
-      setError("Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
-      return;
-    }
-    if (!jCity.trim()) { setError("Please enter your city."); return; }
-    if (!jUpi.trim()) { setError("Please enter your UPI ID."); return; }
-    if (jPw.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (jPw !== jCpw) { setError("Passwords do not match."); return; }
-
-    setLoading(true);
-    try {
-      // Check if already registered
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("whatsapp_number", digits)
-        .maybeSingle();
-
-      if (existing) {
-        setAlreadyExists(true);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error: functionErr } = await supabase.functions.invoke("send-otp", { body: { phone: digits } });
-      if (functionErr || !data?.success) {
-        setLoading(false);
-        setError(data?.message || functionErr?.message || "Failed to send OTP. Please try again.");
-        return;
-      }
-      if (data.test_mode && data.test_otp) {
-        toast({ title: "Test Mode — SMS unavailable", description: `Your OTP is: ${data.test_otp}`, duration: 30000 });
-      } else {
-        toast({ title: "Code sent!", description: "Check your WhatsApp messages." });
-      }
-      setLoading(false);
-      setScreen("otp");
-      setSuOtp("");
-      setTimer(60);
-    } catch (err: any) {
-      setLoading(false);
-      setError(err.message || "Something went wrong.");
-    }
+  const sendEmailOtp = async (email: string, isSignup: boolean) => {
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: {
+        shouldCreateUser: isSignup,
+        emailRedirectTo: `${window.location.origin}/dev/dashboard`,
+        data: isSignup ? {
+          full_name: jName, role: "vibe_coder",
+          city: jCity, upi_id: jUpi, whatsapp_number: jPhone,
+        } : undefined,
+      },
+    });
+    return err;
   };
 
-  const handleVerifyAndJoin = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setError("");
-    if (suOtp.length !== 6) { setError("Please enter 6-digit code."); return; }
-
-    setLoading(true);
-    try {
-      const digits = jPhone.replace(/\D/g, "");
-      const { data, error: functionErr } = await supabase.functions.invoke("verify-otp", { body: { phone: digits, otp: suOtp } });
-      if (functionErr || !data.verified) {
-        setLoading(false);
-        setError(data?.message || functionErr?.message || "Invalid OTP.");
-        return;
-      }
-
-      const email = `${digits}@leadpe.com`;
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email, password: jPw,
-        options: { data: { full_name: jName, whatsapp_number: digits, role: "vibe_coder", city: jCity, upi_id: jUpi } },
-      });
-
-      if (authErr) {
-        setLoading(false);
-        if (authErr.message.includes("already registered")) {
-          setAlreadyExists(true);
-          setScreen("form");
-        } else {
-          setError(authErr.message);
-        }
-        return;
-      }
-
-      if (authData.user) {
-        await supabase.auth.signInWithPassword({ email, password: jPw });
-        await refreshRole();
-        await refreshProfile();
-        toast({ title: "Welcome to LeadPe Studio!", description: "Account created successfully." });
-        navigate("/dev/onboarding", { replace: true });
-      }
-      setLoading(false);
-    } catch (err: any) {
-      setLoading(false);
-      setError(err.message || "Verification failed.");
-    }
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
-    const digits = siPhone.replace(/\D/g, "");
-    if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
-      setError("Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9).");
-      return;
-    }
-    if (!siPw) { setError("Please enter your password."); return; }
+    if (!agreed) return setError("Please agree to the Terms and Conditions.");
+    if (!jName.trim()) return setError("Please enter your full name.");
+    if (!isValidEmail(jEmail)) return setError("Please enter a valid email address.");
+    const digits = jPhone.replace(/\D/g, "");
+    if (digits.length !== 10 || !/^[6-9]/.test(digits)) return setError("Enter a valid Indian WhatsApp number.");
+    if (!jCity.trim()) return setError("Please enter your city.");
+    if (!jUpi.trim()) return setError("Please enter your UPI ID.");
 
     setLoading(true);
-    const res1 = await supabase.auth.signInWithPassword({ email: `${digits}@leadpe.com`, password: siPw });
-    if (!res1.error && res1.data?.user) {
-      const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", res1.data.user.id);
+    const err = await sendEmailOtp(jEmail, true);
+    setLoading(false);
+    if (err) return setError(err.message);
+    setActiveEmail(jEmail.trim().toLowerCase());
+    setFlow("join");
+    setOtp("");
+    setTimer(60);
+    setScreen("otp");
+    toast({ title: "Code sent!", description: `Check your inbox at ${jEmail}` });
+  };
+
+  const handleSignInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!agreed) return setError("Please agree to the Terms and Conditions.");
+    if (!isValidEmail(siEmail)) return setError("Please enter a valid email address.");
+
+    setLoading(true);
+    const err = await sendEmailOtp(siEmail, false);
+    setLoading(false);
+    if (err) return setError(err.message);
+    setActiveEmail(siEmail.trim().toLowerCase());
+    setFlow("signin");
+    setOtp("");
+    setTimer(60);
+    setScreen("otp");
+    toast({ title: "Code sent!", description: `Check your inbox at ${siEmail}` });
+  };
+
+  const handleVerifyOtp = async () => {
+    setError("");
+    if (otp.length !== 6) return setError("Enter the 6-digit code.");
+    setLoading(true);
+    const { data, error: verifyErr } = await supabase.auth.verifyOtp({
+      email: activeEmail,
+      token: otp,
+      type: "email",
+    });
+    if (verifyErr || !data.user) {
+      setLoading(false);
+      return setError(verifyErr?.message || "Invalid or expired code.");
+    }
+
+    // Verify role for sign-in flow
+    if (flow === "signin") {
+      const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
       const roles = (roleData ?? []).map((r: any) => r.role);
       const isCoder = roles.includes("developer") || roles.includes("vibe_coder");
       if (!isCoder) {
-        // Sign out FIRST so PublicRoute doesn't see a business session and bounce to /onboarding
         await supabase.auth.signOut();
         await refreshRole();
         await refreshProfile();
         setLoading(false);
-        setError("This number is registered as a Business account. Use the main Sign In at /auth, or Join Studio with a different number.");
-        return;
+        return setError("This email is not a Studio account. Use the main Sign In at /auth, or Join Studio.");
       }
-      await refreshRole();
-      await refreshProfile();
-      setLoading(false);
-      navigate("/dev/dashboard", { replace: true });
-      return;
     }
 
+    await refreshRole();
+    await refreshProfile();
     setLoading(false);
-    setError("Incorrect number or password.");
+    toast({ title: flow === "join" ? "Welcome to LeadPe Studio!" : "Welcome back!" });
+    navigate(flow === "join" ? "/dev/onboarding" : "/dev/dashboard", { replace: true });
+  };
+
+  const handleResend = async () => {
+    if (timer > 0) return;
+    setLoading(true);
+    const err = await sendEmailOtp(activeEmail, flow === "join");
+    setLoading(false);
+    if (err) return setError(err.message);
+    setOtp("");
+    setTimer(60);
+    toast({ title: "Code resent", description: `Check your inbox at ${activeEmail}` });
   };
 
   const inputStyle = "rounded-xl h-12 bg-white border-[#E0E0E0] text-[#1A1A1A] text-base focus:border-[#00C853] focus:ring-[#00C853]";
@@ -277,7 +233,7 @@ export default function StudioAuth() {
         {screen === "form" && (
           <div className="flex justify-center gap-0 mb-6" style={{ borderBottom: "1px solid #E0E0E0" }}>
             {(["join", "signin"] as const).map((t) => (
-              <button key={t} onClick={() => { setTab(t); setError(""); setAlreadyExists(false); }}
+              <button key={t} onClick={() => { setTab(t); setError(""); }}
                 className="px-6 py-3 text-[15px] transition-all"
                 style={{ fontFamily: "DM Sans, sans-serif", fontWeight: tab === t ? 700 : 400, color: tab === t ? "#1A1A1A" : "#999", borderBottom: tab === t ? "2px solid #00C853" : "2px solid transparent" }}>
                 {t === "join" ? "Join Studio" : "Sign In"}
@@ -287,178 +243,118 @@ export default function StudioAuth() {
         )}
 
         <div className="bg-white rounded-2xl p-9" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          {/* Already exists message */}
-          {alreadyExists && (
-            <div className="mb-5 p-4 rounded-xl" style={{ border: "2px solid #ef4444", backgroundColor: "rgba(239,68,68,0.05)" }}>
-              <p className="font-bold text-sm mb-1" style={{ color: "#ef4444" }}>📱 Account already exists</p>
-              <p className="text-xs mb-3" style={{ color: "#666" }}>This number is already registered on LeadPe Studio. Please sign in instead.</p>
-              <button
-                onClick={() => { setTab("signin"); setAlreadyExists(false); setScreen("form"); setSiPhone(jPhone); }}
-                className="w-full h-10 rounded-lg font-semibold text-sm"
-                style={{ backgroundColor: "#00C853", color: "white" }}
-              >
-                Sign In →
-              </button>
-            </div>
-          )}
-
-          {error && !alreadyExists && (
+          {error && (
             <div className="mb-5 p-3 rounded-xl text-sm text-center" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
               {error}
             </div>
           )}
 
           <AnimatePresence mode="wait">
-            {tab === "join" ? (
-              screen === "form" ? (
-                <motion.form key="join-form" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleSendOtp} className="space-y-4">
-                  <div className="text-center mb-5">
-                    <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Join LeadPe Studio</h1>
-                    <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Free. Earn from day one.</p>
-                  </div>
+            {screen === "otp" ? (
+              <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <button type="button" onClick={() => { setScreen("form"); setOtp(""); setError(""); }} className="flex items-center gap-1.5 text-sm font-medium hover:text-[#00C853] transition-colors" style={{ color: "#666" }}>
+                  <ArrowLeft size={16} /> Back
+                </button>
+                <div className="text-center">
+                  <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Check your inbox</h1>
+                  <p className="text-sm" style={{ color: "#666" }}>We sent a 6-digit code to<br /><strong>{activeEmail}</strong></p>
+                </div>
 
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Full Name *</label>
-                    <Input value={jName} onChange={(e) => setJName(e.target.value)} className={inputStyle} placeholder="Rajesh Kumar" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>WhatsApp Number *</label>
-                    <Input type="tel" value={jPhone} onChange={(e) => setJPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} className={inputStyle} placeholder="98765 43210" />
-                    <p className="text-[11px] mt-1" style={{ color: "#999" }}>Build requests sent here</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>City *</label>
-                    <Input value={jCity} onChange={(e) => setJCity(e.target.value)} className={inputStyle} placeholder="Patna, Bihar" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>UPI ID *</label>
-                    <Input value={jUpi} onChange={(e) => setJUpi(e.target.value)} className={inputStyle} placeholder="name@paytm" />
-                    <p className="text-[11px] mt-1" style={{ color: "#999" }}>Earnings sent directly here 💰</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Password *</label>
-                    <div className="relative">
-                      <Input type={showPw ? "text" : "password"} value={jPw} onChange={(e) => setJPw(e.target.value)} className={`${inputStyle} pr-10`} placeholder="Min 6 characters" />
-                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }}>
-                        {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Confirm Password *</label>
-                    <div className="relative">
-                      <Input type={showCpw ? "text" : "password"} value={jCpw} onChange={(e) => setJCpw(e.target.value)} className={`${inputStyle} pr-10`} placeholder="Re-enter password" />
-                      <button type="button" onClick={() => setShowCpw(!showCpw)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }}>
-                        {showCpw ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
+                <OtpInput value={otp} onChange={setOtp} onComplete={handleVerifyOtp} />
 
-                  <div className="flex items-start gap-2">
-                    <Checkbox id="studio-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
-                    <label htmlFor="studio-terms" className="text-xs leading-tight" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
-                      I agree to LeadPe's{" "}
-                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium underline" style={{ color: "#00C853" }}>
-                        Terms and Conditions
-                      </a>{" "}
-                      including the Builder Agreement
-                    </label>
-                  </div>
+                <button type="button" onClick={handleVerifyOtp} disabled={loading || otp.length !== 6}
+                  className="w-full h-[52px] rounded-xl font-bold text-base transition-all disabled:opacity-60"
+                  style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
+                  {loading ? "Verifying..." : flow === "join" ? "Verify & Create Account →" : "Verify & Sign In →"}
+                </button>
 
-                  <button type="submit" disabled={loading || !agreed}
-                    className="w-full h-[52px] rounded-xl font-semibold text-base transition-all disabled:opacity-60"
-                    style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                        Sending...
-                      </span>
-                    ) : "Send Verification Code →"}
-                  </button>
-                </motion.form>
-              ) : (
-                <motion.form key="join-otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                  onSubmit={handleVerifyAndJoin} className="space-y-4">
-                  <button type="button" onClick={() => { setScreen("form"); setSuOtp(""); }} className="flex items-center gap-1.5 text-sm font-medium hover:text-[#00C853] transition-colors" style={{ color: "#666" }}>
-                    <ArrowLeft size={16} /> Back
-                  </button>
-                  <div className="text-center">
-                    <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Verify Your Number</h1>
-                  </div>
+                <div className="text-center">
+                  {timer > 0 ? (
+                    <p className="text-sm" style={{ color: "#999" }}>Resend in 00:{timer < 10 ? `0${timer}` : timer}</p>
+                  ) : (
+                    <button type="button" onClick={handleResend} className="text-sm font-bold" style={{ color: "#00C853" }}>Resend code →</button>
+                  )}
+                </div>
 
-                  <OtpInput value={suOtp} onChange={setSuOtp} onComplete={() => handleVerifyAndJoin()} />
+                <p className="text-xs text-center" style={{ color: "#999" }}>
+                  Tip: Check your spam folder if you don't see it within a minute.
+                </p>
+              </motion.div>
+            ) : tab === "join" ? (
+              <motion.form key="join" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleJoinSubmit} className="space-y-4">
+                <div className="text-center mb-5">
+                  <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Join LeadPe Studio</h1>
+                  <p className="text-sm" style={{ color: "#666" }}>Free. Earn from day one.</p>
+                </div>
 
-                  <p className="text-xs text-center" style={{ color: "#999" }}>
-                    Enter the 6-digit code sent to +91 {jPhone}
-                  </p>
-
-                  <div className="space-y-4">
-                    <button type="submit" disabled={loading || suOtp.length !== 6}
-                      className="w-full h-[52px] rounded-xl font-bold text-base transition-all disabled:opacity-60"
-                      style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-                          Verifying...
-                        </span>
-                      ) : "Verify & Create Account →"}
-                    </button>
-                    <div className="text-center">
-                      {timer > 0 ? (
-                        <p className="text-sm font-medium" style={{ color: "#999" }}>Resend in 00:{timer < 10 ? `0${timer}` : timer}</p>
-                      ) : (
-                        <button type="button" onClick={() => handleSendOtp()} className="text-sm font-bold transition-colors" style={{ color: "#00C853" }}>Resend OTP →</button>
-                      )}
-                    </div>
-                  </div>
-                </motion.form>
-              )
-            ) : (
-              <motion.form key="si" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleSignIn} className="space-y-5">
-                <div className="text-center mb-6">
-                  <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Welcome Back</h1>
-                  <p className="text-sm" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>Sign in to your Studio dashboard</p>
+                <div>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Full Name *</label>
+                  <Input value={jName} onChange={(e) => setJName(e.target.value)} className={inputStyle} placeholder="Rajesh Kumar" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>WhatsApp Number</label>
-                  <Input type="tel" value={siPhone} onChange={(e) => setSiPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} className={inputStyle} placeholder="98765 43210" />
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Email *</label>
+                  <Input type="email" value={jEmail} onChange={(e) => setJEmail(e.target.value)} className={inputStyle} placeholder="you@gmail.com" />
+                  <p className="text-[11px] mt-1" style={{ color: "#999" }}>We'll send a 6-digit login code here</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Password</label>
-                  <div className="relative">
-                    <Input type={showPw ? "text" : "password"} value={siPw} onChange={(e) => setSiPw(e.target.value)} className={`${inputStyle} pr-10`} placeholder="Your password" />
-                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }}>
-                      {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>WhatsApp Number *</label>
+                  <Input type="tel" value={jPhone} onChange={(e) => setJPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} className={inputStyle} placeholder="98765 43210" />
+                  <p className="text-[11px] mt-1" style={{ color: "#999" }}>Build requests sent here</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>City *</label>
+                  <Input value={jCity} onChange={(e) => setJCity(e.target.value)} className={inputStyle} placeholder="Patna, Bihar" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>UPI ID *</label>
+                  <Input value={jUpi} onChange={(e) => setJUpi(e.target.value)} className={inputStyle} placeholder="name@paytm" />
+                  <p className="text-[11px] mt-1" style={{ color: "#999" }}>Earnings sent directly here 💰</p>
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <Checkbox id="studio-si-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
-                  <label htmlFor="studio-si-terms" className="text-xs leading-tight" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
+                  <Checkbox id="studio-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
+                  <label htmlFor="studio-terms" className="text-xs leading-tight" style={{ color: "#666" }}>
                     I agree to LeadPe's{" "}
-                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium underline" style={{ color: "#00C853" }}>
-                      Terms and Conditions
-                    </a>
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium underline" style={{ color: "#00C853" }}>Terms and Conditions</a>{" "}including the Builder Agreement
                   </label>
                 </div>
 
                 <button type="submit" disabled={loading || !agreed}
                   className="w-full h-[52px] rounded-xl font-semibold text-base transition-all disabled:opacity-60"
                   style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                      Signing in...
-                    </span>
-                  ) : "Sign In →"}
+                  {loading ? "Sending code..." : "Send Email Code →"}
+                </button>
+              </motion.form>
+            ) : (
+              <motion.form key="si" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleSignInSubmit} className="space-y-5">
+                <div className="text-center mb-6">
+                  <h1 className="text-[26px] font-bold mb-1" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>Welcome Back</h1>
+                  <p className="text-sm" style={{ color: "#666" }}>Sign in with a code sent to your email</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#1A1A1A" }}>Email</label>
+                  <Input type="email" value={siEmail} onChange={(e) => setSiEmail(e.target.value)} className={inputStyle} placeholder="you@gmail.com" />
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Checkbox id="studio-si-terms" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} className="mt-0.5" />
+                  <label htmlFor="studio-si-terms" className="text-xs leading-tight" style={{ color: "#666" }}>
+                    I agree to LeadPe's{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium underline" style={{ color: "#00C853" }}>Terms and Conditions</a>
+                  </label>
+                </div>
+
+                <button type="submit" disabled={loading || !agreed}
+                  className="w-full h-[52px] rounded-xl font-semibold text-base transition-all disabled:opacity-60"
+                  style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
+                  {loading ? "Sending code..." : "Send Email Code →"}
                 </button>
               </motion.form>
             )}
           </AnimatePresence>
         </div>
 
-        <p className="text-sm text-center mt-6" style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}>
+        <p className="text-sm text-center mt-6" style={{ color: "#666" }}>
           Business owner?{" "}
           <Link to="/auth" className="font-medium" style={{ color: "#00C853" }}>Sign in here →</Link>
         </p>
