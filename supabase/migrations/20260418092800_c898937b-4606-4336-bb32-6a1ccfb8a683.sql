@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS notification_channel text NOT NULL DEFAULT 'sms';

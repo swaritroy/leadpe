@@ -1,14 +1,48 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+
+// Sends a single SMS via MSG91. Returns { ok, info }.
+async function sendMsg91Sms(authKey: string, senderId: string, phone: string, message: string) {
+  // MSG91 expects 91XXXXXXXXXX (no +)
+  const clean = phone.replace(/\D/g, "").slice(-10);
+  if (clean.length !== 10 || !/^[6-9]/.test(clean)) {
+    return { ok: false, info: `Invalid Indian number: ${phone}` };
+  }
+  const to = `91${clean}`;
+
+  const url = `https://api.msg91.com/api/v2/sendsms`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "authkey": authKey,
+    },
+    body: JSON.stringify({
+      sender: senderId,
+      route: "4", // transactional
+      country: "91",
+      sms: [{ message, to: [to] }],
+    }),
+  });
+
+  const text = await res.text();
+  let data: Record<string, unknown> = {};
+  try { data = JSON.parse(text); } catch { /* keep raw */ }
+
+  const ok = res.ok && (data.type === "success" || (typeof data.message === "string" && (data.message as string).length > 10));
+  return { ok, info: ok ? (data.message as string) || "sent" : (text || "MSG91 error") };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const FAST2SMS_API_KEY = Deno.env.get('FAST2SMS_API_KEY');
-  if (!FAST2SMS_API_KEY) {
-    return new Response(JSON.stringify({ error: "FAST2SMS_API_KEY is not configured" }), {
+  const MSG91_AUTH_KEY = Deno.env.get("MSG91_AUTH_KEY");
+  const MSG91_SENDER_ID = Deno.env.get("MSG91_SENDER_ID") || "LEADPE";
+
+  if (!MSG91_AUTH_KEY) {
+    return new Response(JSON.stringify({ error: "MSG91_AUTH_KEY not configured" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -36,28 +70,10 @@ Deno.serve(async (req) => {
 
   for (const msg of pending) {
     try {
+      const { ok, info } = await sendMsg91Sms(MSG91_AUTH_KEY, MSG91_SENDER_ID, msg.to, msg.message);
       const cleanPhone = msg.to.replace(/\D/g, "").slice(-10);
-      if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
-        throw new Error(`Invalid Indian number: ${msg.to}`);
-      }
 
-      const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-        method: "POST",
-        headers: {
-          "authorization": FAST2SMS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          route: "q",
-          message: msg.message,
-          language: "english",
-          flash: 0,
-          numbers: cleanPhone,
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data.return === true) {
+      if (ok) {
         await supabase
           .from("scheduled_messages")
           .update({ status: "sent", sent_at: new Date().toISOString() })
@@ -70,15 +86,13 @@ Deno.serve(async (req) => {
           channel: "sms",
           status: "sent",
           delivery_status: "queued",
-          twilio_sid: Array.isArray(data.request_id) ? data.request_id[0] : (data.request_id || null),
+          twilio_sid: info,
           sent_at: new Date().toISOString(),
         });
 
         sent++;
-        console.log(`✅ SMS sent to ${cleanPhone}: ${JSON.stringify(data)}`);
+        console.log(`✅ MSG91 SMS sent to ${cleanPhone}: ${info}`);
       } else {
-        const errorMsg = data.message || JSON.stringify(data) || "Unknown Fast2SMS error";
-
         await supabase
           .from("scheduled_messages")
           .update({ status: "failed" })
@@ -91,14 +105,15 @@ Deno.serve(async (req) => {
           channel: "sms",
           status: "failed",
           delivery_status: "failed",
-          error_message: errorMsg,
+          error_message: info,
           sent_at: new Date().toISOString(),
         });
 
         failed++;
-        console.error(`❌ Failed ${cleanPhone}: ${errorMsg}`);
+        console.error(`❌ MSG91 fail ${cleanPhone}: ${info}`);
       }
     } catch (e: unknown) {
+      const errMsg = (e as Error).message;
       await supabase
         .from("scheduled_messages")
         .update({ status: "failed" })
@@ -111,17 +126,17 @@ Deno.serve(async (req) => {
         channel: "sms",
         status: "failed",
         delivery_status: "error",
-        error_message: (e as Error).message,
+        error_message: errMsg,
         sent_at: new Date().toISOString(),
       });
 
       failed++;
-      console.error(`❌ Error for ${msg.id}:`, (e as Error).message);
+      console.error(`❌ Error for ${msg.id}:`, errMsg);
     }
   }
 
   return new Response(
-    JSON.stringify({ processed: pending.length, sent, failed }),
+    JSON.stringify({ processed: pending.length, sent, failed, provider: "msg91" }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
