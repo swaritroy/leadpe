@@ -164,6 +164,20 @@ export default function AdminOutbox() {
         </Button>
       </div>
 
+      {/* Bulk action */}
+      {filtered.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            onClick={markAllSent}
+            variant="outline"
+            className="h-9 rounded-lg text-xs"
+            style={{ borderColor: "#00C853", color: "#00C853" }}
+          >
+            <Check size={14} className="mr-2" /> Mark all {filtered.length} as sent
+          </Button>
+        </div>
+      )}
+
       {/* Queued cards */}
       {loading ? (
         <div className="rounded-2xl border border-[#E0F2E9] bg-white p-6 text-center text-sm text-muted-foreground">
