@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
+
+[functions.notify-admin]
+verify_jwt = false
+
+[functions.daily-summary]
+verify_jwt = false
