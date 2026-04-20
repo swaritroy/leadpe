@@ -77,6 +77,18 @@ export default function AdminOutbox() {
     setRows((rs) => rs.filter((r) => r.id !== id));
   };
 
+  const markAllSent = async () => {
+    if (filtered.length === 0) return;
+    if (!confirm(`Mark all ${filtered.length} visible messages as sent?`)) return;
+    const ids = filtered.map((r) => r.id);
+    await (supabase as any)
+      .from("scheduled_messages")
+      .update({ status: "sent_manual", sent_at: new Date().toISOString() })
+      .in("id", ids);
+    toast({ title: `${ids.length} marked as sent`, description: "Outbox cleared." });
+    setRows((rs) => rs.filter((r) => !ids.includes(r.id)));
+  };
+
   const sendQuick = () => {
     const clean = quickPhone.replace(/\D/g, "");
     if (clean.length < 10 || !quickText.trim()) {
@@ -151,6 +163,20 @@ export default function AdminOutbox() {
           <RefreshCw size={14} className="mr-2" /> Refresh
         </Button>
       </div>
+
+      {/* Bulk action */}
+      {filtered.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            onClick={markAllSent}
+            variant="outline"
+            className="h-9 rounded-lg text-xs"
+            style={{ borderColor: "#00C853", color: "#00C853" }}
+          >
+            <Check size={14} className="mr-2" /> Mark all {filtered.length} as sent
+          </Button>
+        </div>
+      )}
 
       {/* Queued cards */}
       {loading ? (
