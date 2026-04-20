@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import ActivationPanel from "@/components/admin/ActivationPanel";
 import RenewalReminders from "@/components/admin/RenewalReminders";
+import AdminOutbox from "@/components/admin/AdminOutbox";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -175,7 +176,7 @@ export default function Admin() {
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "outbox", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
@@ -795,6 +796,17 @@ export default function Admin() {
               )}
             </div>
           )}
+        </motion.div>
+
+        {/* Outbox 📬 — manual one-click send to clients */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => toggleSection("outbox")} className="flex items-center gap-2 text-lg font-bold font-display">
+              {expandedSections.has("outbox") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              📬 Outbox — Send to clients
+            </button>
+          </div>
+          {expandedSections.has("outbox") && <AdminOutbox />}
         </motion.div>
 
         {/* Subscription Renewals */}

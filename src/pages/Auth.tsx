@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 import SEO from "@/components/SEO";
+import { notifyAdmin } from "@/lib/notify";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -155,6 +156,18 @@ export default function Auth() {
         .from("profiles")
         .update({ whatsapp_number: caPhone })
         .eq("user_id", data.user.id);
+
+      // Admin alert + queue welcome message for client
+      notifyAdmin(
+        "business_signup",
+        { name: caName.trim(), phone: caPhone, city: "-" },
+        {
+          to: caPhone,
+          message: `Welcome to LeadPe, ${caName.trim()}! 🎉\n\nYour free trial is active. We'll have your website live in 48 hours.\n\nReply here anytime — LeadPe Team 🌱`,
+          type: "welcome",
+          client_name: caName.trim(),
+        }
+      );
 
       await checkProfileAndRedirect(data.user.id);
     }
