@@ -417,6 +417,18 @@ export default function DevDashboard() {
     toast({ title: "Build accepted!", description: "Open the brief and start building." });
     setActiveBuilds(prev => [...prev, { ...request, status: "building", assigned_coder_id: user.id }]);
     setAcceptingId(null);
+
+    // Notify admin: a coder claimed this build
+    try {
+      const { notifyAdmin } = await import("@/lib/notify");
+      await notifyAdmin("coder_accepted", {
+        coder_name: profile?.full_name || "Unknown",
+        business_name: request.business_name || "?",
+        deadline: "48h",
+      });
+    } catch (e) {
+      console.error("notifyAdmin coder_accepted failed:", e);
+    }
   };
   
   const handleViewBrief = (request: BuildRequest) => {
