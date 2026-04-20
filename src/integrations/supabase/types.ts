@@ -1086,31 +1086,46 @@ export type Database = {
       }
       scheduled_messages: {
         Row: {
+          business_id: string | null
+          client_name: string | null
           created_at: string | null
+          event_type: string | null
           id: string
           message: string
+          recipient_type: string | null
           sent_at: string | null
           status: string | null
           to: string
           type: string | null
+          whatsapp_url: string | null
         }
         Insert: {
+          business_id?: string | null
+          client_name?: string | null
           created_at?: string | null
+          event_type?: string | null
           id?: string
           message: string
+          recipient_type?: string | null
           sent_at?: string | null
           status?: string | null
           to: string
           type?: string | null
+          whatsapp_url?: string | null
         }
         Update: {
+          business_id?: string | null
+          client_name?: string | null
           created_at?: string | null
+          event_type?: string | null
           id?: string
           message?: string
+          recipient_type?: string | null
           sent_at?: string | null
           status?: string | null
           to?: string
           type?: string | null
+          whatsapp_url?: string | null
         }
         Relationships: []
       }
