@@ -81,6 +81,35 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       gateway_order_id: session.id,
       activated_at: new Date().toISOString(),
     });
+
+    // Notify admin via Twilio + queue thank-you for client in Outbox
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          event_type: "payment_received",
+          payload: {
+            business_name: session.customer_details?.name || userId,
+            amount: session.amount_total ? Math.round(session.amount_total / 100) : 0,
+            plan: "growth",
+          },
+          client_message: session.customer_details?.phone
+            ? {
+                to: session.customer_details.phone,
+                message: `✅ Payment received — thank you!\n\nYour LeadPe Growth plan is now active. Leads will start flowing to your WhatsApp.\n\nLeadPe Team 🌱`,
+                type: "payment_received",
+                client_name: session.customer_details?.name || "",
+              }
+            : undefined,
+        }),
+      });
+    } catch (e) {
+      console.error("notify-admin call failed:", e);
+    }
   }
 }
 

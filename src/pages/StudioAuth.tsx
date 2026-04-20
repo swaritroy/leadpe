@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
+import { notifyAdmin } from "@/lib/notify";
 
 export default function StudioAuth() {
   const navigate = useNavigate();
@@ -88,6 +89,18 @@ export default function StudioAuth() {
         whatsapp_number: digits,
         vetting_status: "pending_vetting",
       }).eq("user_id", data.user.id);
+
+      // Admin alert + queue welcome to dev
+      notifyAdmin(
+        "dev_signup",
+        { name: jName.trim(), email, city: jCity.trim() },
+        {
+          to: digits,
+          message: `Welcome to LeadPe Studio, ${jName.trim()}! 👨‍💻\n\nYour builder account is awaiting admin approval (usually within 24h). You'll get a message once approved.\n\nLeadPe Team 🌱`,
+          type: "welcome",
+          client_name: jName.trim(),
+        }
+      );
 
       await refreshRole();
       await refreshProfile();

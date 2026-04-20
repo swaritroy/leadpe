@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWhatsApp, getMessage } from "@/lib/whatsappService";
+import { notifyAdmin } from "@/lib/notify";
 
 interface LeadCaptureFormProps {
   businessId: string;
@@ -98,6 +99,23 @@ export default function LeadCaptureForm({ businessId, businessName, ownerWhatsap
         businessId,
         'newLead',
         'hinglish'
+      );
+
+      // Admin alert + queue "new lead" message for the business owner in Outbox
+      notifyAdmin(
+        "new_lead",
+        {
+          business_name: businessName,
+          customer_name: formData.name,
+          phone: phoneDigits,
+        },
+        {
+          to: ownerWhatsapp,
+          message: `🔔 New lead for ${businessName}!\n\n${formData.name} (${phoneDigits})\nLooking for: ${formData.interest}\n${formData.message ? `Note: ${formData.message}\n` : ""}\nReply fast — LeadPe 🌱`,
+          type: "new_lead",
+          client_name: formData.name,
+          business_id: businessId,
+        }
       );
 
       setSuccess(true);

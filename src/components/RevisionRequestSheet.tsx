@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_WHATSAPP } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import { notifyAdmin } from "@/lib/notify";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
@@ -63,10 +64,12 @@ export default function RevisionRequestSheet({ open, onClose, buildRequest, busi
         .eq("user_id", buildRequest.business_id);
     }
 
-    // WhatsApp notify admin
-    const issuesList = feedback.selected.join(", ");
-    const msg = `✏️ REVISION REQUEST\nBusiness: ${businessName}\nRevision: ${newCount}/${maxRevisions}\nIssues: ${issuesList}\nDetails: ${feedback.description || "None"}\nFix and resubmit: leadpe.tech/studio`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+    // Notify admin via Twilio (instant WhatsApp on 9973383902)
+    notifyAdmin("revision_requested", {
+      business_name: businessName,
+      count: newCount,
+      message: `${feedback.selected.join(", ")} — ${feedback.description || "no notes"}`,
+    });
 
     toast({ title: "Changes sent to your builder ✅", description: "Updated website ready in 24 hours." });
     setSelected([]);
