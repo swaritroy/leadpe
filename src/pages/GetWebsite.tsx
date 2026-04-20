@@ -12,6 +12,7 @@ import { WEBSITE_PACKAGES } from "@/lib/packages";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { getFeaturesForCategory, getPackageTierFromId } from "@/lib/packageFeatures";
 import SEO from "@/components/SEO";
+import { notifyAdmin } from "@/lib/notify";
 
 const businessTypes = [
   "Doctor / Clinic", "CA / Lawyer / CS", "Coaching Institute", "Contractor / Plumber",
@@ -342,7 +343,25 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           .eq("user_id", user.id);
       }
 
-      // 7. Show success animation then redirect
+      // 7. Notify admin + queue welcome to client
+      notifyAdmin(
+        "order_placed",
+        {
+          business_name: businessName,
+          package_id: selectedPackage,
+          amount: pkg.price,
+          city,
+        },
+        {
+          to: customerWhatsapp,
+          message: `Your LeadPe order is in! 🎉\n\n${businessName} (${pkg.name}) — we're starting your build now. You'll get the demo link in 48 hours.\n\nLeadPe Team 🌱`,
+          type: "welcome",
+          client_name: customerName,
+          business_id: user?.id,
+        }
+      );
+
+      // 8. Show success animation then redirect
       setShowSuccess(true);
       setTimeout(() => {
         navigate("/client/dashboard", { replace: true });
