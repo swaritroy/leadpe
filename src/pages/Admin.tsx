@@ -194,11 +194,55 @@ export default function Admin() {
     checkAdmin();
   }, [user, navigate, toast]);
   
-  // Fetch all data
-  const fetchData = useCallback(async () => {
+  // Cache + ref guard so /admin doesn't full-screen reload on every visit
+  const hasFetchedRef = useRef(false);
+  const CACHE_KEY = "lp:admin:cache:v1";
+  const CACHE_TTL_MS = 5 * 60 * 1000;
+
+  type AdminCache = {
+    ts: number;
+    profiles: Profile[];
+    deployments: Deployment[];
+    leads: Lead[];
+    earnings: Earning[];
+    buildRequests: BuildRequest[];
+    pendingMessages: any[];
+    orders: any[];
+    messageLog: any[];
+    pendingPayments: any[];
+  };
+
+  // Hydrate from sessionStorage on first render
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (!raw) return;
+      const c: AdminCache = JSON.parse(raw);
+      setProfiles(c.profiles || []);
+      setDeployments(c.deployments || []);
+      setLeads(c.leads || []);
+      setEarnings(c.earnings || []);
+      setBuildRequests(c.buildRequests || []);
+      setAvailableCoders((c.profiles || []).filter((p: Profile) => p.role === "vibe_coder"));
+      setPendingMessages(c.pendingMessages || []);
+      setOrders(c.orders || []);
+      setMessageLog(c.messageLog || []);
+      setPendingPayments(c.pendingPayments || []);
+      setLoading(false);
+    } catch { /* ignore */ }
+  }, []);
+
+  // Fetch all data — silent=true skips the full-screen spinner
+  const fetchData = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
-    
+    if (!silent) {
+      // Only show full spinner when we have no cached data
+      try {
+        const hasCache = !!sessionStorage.getItem(CACHE_KEY);
+        if (!hasCache) setLoading(true);
+      } catch { setLoading(true); }
+    }
+
     try {
       const { data: profilesData } = await (supabase.from("profiles") as any)
         .select("*")
@@ -224,61 +268,85 @@ export default function Admin() {
       setDeployments(deploymentsData || []);
       setLeads(leadsData || []);
       setEarnings(earningsData || []);
-      setBuildRequests(buildRequestsData || []);
       
-      // Set available coders
       const coders = (profilesData || []).filter(p => p.role === "vibe_coder");
       setAvailableCoders(coders);
       
-      // Enrich build requests with coder names
       const enrichedRequests = (buildRequestsData || []).map(request => {
         const coder = coders.find(c => c.id === request.assigned_coder_id);
-        return {
-          ...request,
-          coder_name: coder?.full_name || "Unassigned"
-        };
+        return { ...request, coder_name: coder?.full_name || "Unassigned" };
       });
       setBuildRequests(enrichedRequests);
 
-      // Fetch pending messages
       const { data: msgsData } = await (supabase.from("scheduled_messages") as any)
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       setPendingMessages(msgsData || []);
 
-      // Fetch orders
       const { data: ordersData } = await (supabase as any).from("orders")
         .select("*")
         .order("created_at", { ascending: false });
       setOrders(ordersData || []);
 
-      // Fetch message log
       const { data: msgLogData } = await (supabase as any).from("message_log")
         .select("*")
         .order("sent_at", { ascending: false })
         .limit(100);
       setMessageLog(msgLogData || []);
 
-      // Fetch pending UPI payments
       const { data: paymentsData } = await (supabase as any).from("payments")
         .select("*")
         .eq("status", "pending_verification")
         .order("created_at", { ascending: false });
       setPendingPayments(paymentsData || []);
+
+      // Persist cache
+      try {
+        const cache: AdminCache = {
+          ts: Date.now(),
+          profiles: profilesData || [],
+          deployments: deploymentsData || [],
+          leads: leadsData || [],
+          earnings: earningsData || [],
+          buildRequests: enrichedRequests,
+          pendingMessages: msgsData || [],
+          orders: ordersData || [],
+          messageLog: msgLogData || [],
+          pendingPayments: paymentsData || [],
+        };
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+      } catch { /* quota — ignore */ }
     } catch (err) {
       console.error("Fetch error:", err);
     }
-    
+
     setLoading(false);
   }, [user]);
-  
+
   useEffect(() => {
-    fetchData();
-    // Silent background refresh every 5 min — does not toggle loading
-    const interval = setInterval(() => {
-      void fetchData();
-    }, 5 * 60 * 1000);
+    if (!user) return;
+    // Skip refetch within TTL on remount/navigation
+    if (hasFetchedRef.current) return;
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const c: AdminCache = JSON.parse(raw);
+        if (Date.now() - c.ts < CACHE_TTL_MS) {
+          hasFetchedRef.current = true;
+          // Silent background revalidate
+          void fetchData(true);
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+    hasFetchedRef.current = true;
+    void fetchData(false);
+  }, [user, fetchData]);
+
+  // Silent background refresh every 5 min — does not flash spinner
+  useEffect(() => {
+    const interval = setInterval(() => { void fetchData(true); }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
   
