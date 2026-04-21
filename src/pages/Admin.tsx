@@ -672,7 +672,7 @@ export default function Admin() {
             <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={fetchData} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
+            <button onClick={() => fetchData(true)} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
               <RefreshCw size={18} style={{ color: "#00E676" }} />
             </button>
             <span className="text-sm text-muted-foreground hidden sm:inline">
