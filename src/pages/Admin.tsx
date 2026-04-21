@@ -272,80 +272,12 @@ export default function Admin() {
     setLoading(false);
   }, [user]);
   
-  const generateActionItems = (profiles: Profile[], deployments: Deployment[]) => {
-    const items: ActionItem[] = [];
-    
-    deployments.forEach(d => {
-      if (d.trial_day === 6 && !d.converted) {
-        items.push({
-          id: `trial6-${d.id}`,
-          type: "trial_day6",
-          title: "Trial ening tomorrow",
-          description: `Day 6 of 7 - needs conversion push`,
-          businessName: d.business_name,
-          whatsapp: d.owner_whatsapp,
-          action: `Hi ${d.owner_name || "there"}! Your trial ends tomorrow. Continue for just ₹299/month. Reply YES to activate!`,
-          priority: "high"
-        });
-      }
-      
-      if (d.trial_day === 3 && !d.day3_sent) {
-        items.push({
-          id: `trial3-${d.id}`,
-          type: "trial_day3",
-          title: "Google Business setup needed",
-          description: `Day 3 - Set up Google Maps listing`,
-          businessName: d.business_name,
-          whatsapp: d.owner_whatsapp,
-          action: `Set up Google Business for ${d.business_name}`,
-          priority: "medium"
-        });
-      }
-    });
-    
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    
-    profiles.filter(p => p.role === "vibe_coder" && new Date(p.created_at) > lastWeek).forEach(p => {
-      items.push({
-        id: `coder-${p.id}`,
-        type: "new_coder",
-        title: "New vibe coder signup",
-        description: "Welcome and onboard",
-        businessName: p.full_name,
-        whatsapp: p.whatsapp_number,
-        action: `Welcome to LeadPe Studio, ${p.full_name}! Here's how to deploy your first site...`,
-        priority: "medium"
-      });
-    });
-    
-    deployments.forEach(d => {
-      const daysSinceDeploy = Math.floor((Date.now() - new Date(d.created_at).getTime()) / (1000 * 60 * 60 * 24));
-      const hasLeads = d.lead_count && d.lead_count > 0;
-      
-      if (daysSinceDeploy >= 7 && !hasLeads) {
-        items.push({
-          id: `noleads-${d.id}`,
-          type: "no_leads",
-          title: "No leads after 7 days",
-          description: `Deployed ${daysSinceDeploy} days ago, 0 leads`,
-          businessName: d.business_name,
-          whatsapp: d.owner_whatsapp,
-          action: `Hi! Your site is live but no leads yet. Are you sharing your link?`,
-          priority: "low"
-        });
-      }
-    });
-    
-    setActionItems(items.sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    }));
-  };
-  
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    // Silent background refresh every 5 min — does not toggle loading
+    const interval = setInterval(() => {
+      void fetchData();
+    }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
   
