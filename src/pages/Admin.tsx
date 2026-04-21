@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ActivationPanel from "@/components/admin/ActivationPanel";
 import RenewalReminders from "@/components/admin/RenewalReminders";
 import AdminOutbox from "@/components/admin/AdminOutbox";
-import TwilioStatusCard from "@/components/admin/TwilioStatusCard";
 import { logEvent, ORDER_EVENTS } from "@/lib/evidence";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -138,6 +137,17 @@ interface BuildRequest {
   coder_name?: string;
 }
 
+interface ActionItem {
+  id: string;
+  type: "trial_day6" | "trial_day3" | "new_coder" | "no_leads";
+  title: string;
+  description: string;
+  businessName: string;
+  whatsapp: string;
+  action: string;
+  priority: "high" | "medium" | "low";
+}
+
 const planPrices: Record<string, number> = {
   basic: 0,
   growth: 299,
@@ -154,6 +164,7 @@ export default function Admin() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
@@ -165,7 +176,7 @@ export default function Admin() {
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "twilio", "outbox", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "outbox", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
@@ -194,55 +205,11 @@ export default function Admin() {
     checkAdmin();
   }, [user, navigate, toast]);
   
-  // Cache + ref guard so /admin doesn't full-screen reload on every visit
-  const hasFetchedRef = useRef(false);
-  const CACHE_KEY = "lp:admin:cache:v1";
-  const CACHE_TTL_MS = 5 * 60 * 1000;
-
-  type AdminCache = {
-    ts: number;
-    profiles: Profile[];
-    deployments: Deployment[];
-    leads: Lead[];
-    earnings: Earning[];
-    buildRequests: BuildRequest[];
-    pendingMessages: any[];
-    orders: any[];
-    messageLog: any[];
-    pendingPayments: any[];
-  };
-
-  // Hydrate from sessionStorage on first render
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(CACHE_KEY);
-      if (!raw) return;
-      const c: AdminCache = JSON.parse(raw);
-      setProfiles(c.profiles || []);
-      setDeployments(c.deployments || []);
-      setLeads(c.leads || []);
-      setEarnings(c.earnings || []);
-      setBuildRequests(c.buildRequests || []);
-      setAvailableCoders((c.profiles || []).filter((p: Profile) => p.role === "vibe_coder"));
-      setPendingMessages(c.pendingMessages || []);
-      setOrders(c.orders || []);
-      setMessageLog(c.messageLog || []);
-      setPendingPayments(c.pendingPayments || []);
-      setLoading(false);
-    } catch { /* ignore */ }
-  }, []);
-
-  // Fetch all data — silent=true skips the full-screen spinner
-  const fetchData = useCallback(async (silent = false) => {
+  // Fetch all data
+  const fetchData = useCallback(async () => {
     if (!user) return;
-    if (!silent) {
-      // Only show full spinner when we have no cached data
-      try {
-        const hasCache = !!sessionStorage.getItem(CACHE_KEY);
-        if (!hasCache) setLoading(true);
-      } catch { setLoading(true); }
-    }
-
+    setLoading(true);
+    
     try {
       const { data: profilesData } = await (supabase.from("profiles") as any)
         .select("*")
@@ -268,85 +235,131 @@ export default function Admin() {
       setDeployments(deploymentsData || []);
       setLeads(leadsData || []);
       setEarnings(earningsData || []);
+      setBuildRequests(buildRequestsData || []);
       
+      // Set available coders
       const coders = (profilesData || []).filter(p => p.role === "vibe_coder");
       setAvailableCoders(coders);
       
+      // Enrich build requests with coder names
       const enrichedRequests = (buildRequestsData || []).map(request => {
         const coder = coders.find(c => c.id === request.assigned_coder_id);
-        return { ...request, coder_name: coder?.full_name || "Unassigned" };
+        return {
+          ...request,
+          coder_name: coder?.full_name || "Unassigned"
+        };
       });
       setBuildRequests(enrichedRequests);
+      
+      generateActionItems(profilesData || [], deploymentsData || []);
 
+      // Fetch pending messages
       const { data: msgsData } = await (supabase.from("scheduled_messages") as any)
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       setPendingMessages(msgsData || []);
 
+      // Fetch orders
       const { data: ordersData } = await (supabase as any).from("orders")
         .select("*")
         .order("created_at", { ascending: false });
       setOrders(ordersData || []);
 
+      // Fetch message log
       const { data: msgLogData } = await (supabase as any).from("message_log")
         .select("*")
         .order("sent_at", { ascending: false })
         .limit(100);
       setMessageLog(msgLogData || []);
 
+      // Fetch pending UPI payments
       const { data: paymentsData } = await (supabase as any).from("payments")
         .select("*")
         .eq("status", "pending_verification")
         .order("created_at", { ascending: false });
       setPendingPayments(paymentsData || []);
-
-      // Persist cache
-      try {
-        const cache: AdminCache = {
-          ts: Date.now(),
-          profiles: profilesData || [],
-          deployments: deploymentsData || [],
-          leads: leadsData || [],
-          earnings: earningsData || [],
-          buildRequests: enrichedRequests,
-          pendingMessages: msgsData || [],
-          orders: ordersData || [],
-          messageLog: msgLogData || [],
-          pendingPayments: paymentsData || [],
-        };
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-      } catch { /* quota — ignore */ }
     } catch (err) {
       console.error("Fetch error:", err);
     }
-
+    
     setLoading(false);
   }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    // Skip refetch within TTL on remount/navigation
-    if (hasFetchedRef.current) return;
-    try {
-      const raw = sessionStorage.getItem(CACHE_KEY);
-      if (raw) {
-        const c: AdminCache = JSON.parse(raw);
-        if (Date.now() - c.ts < CACHE_TTL_MS) {
-          hasFetchedRef.current = true;
-          // Silent background revalidate
-          void fetchData(true);
-          return;
-        }
+  
+  const generateActionItems = (profiles: Profile[], deployments: Deployment[]) => {
+    const items: ActionItem[] = [];
+    
+    deployments.forEach(d => {
+      if (d.trial_day === 6 && !d.converted) {
+        items.push({
+          id: `trial6-${d.id}`,
+          type: "trial_day6",
+          title: "Trial ening tomorrow",
+          description: `Day 6 of 7 - needs conversion push`,
+          businessName: d.business_name,
+          whatsapp: d.owner_whatsapp,
+          action: `Hi ${d.owner_name || "there"}! Your trial ends tomorrow. Continue for just ₹299/month. Reply YES to activate!`,
+          priority: "high"
+        });
       }
-    } catch { /* ignore */ }
-    hasFetchedRef.current = true;
-    void fetchData(false);
-  }, [user, fetchData]);
-
-  // Silent background refresh every 5 min — does not flash spinner
+      
+      if (d.trial_day === 3 && !d.day3_sent) {
+        items.push({
+          id: `trial3-${d.id}`,
+          type: "trial_day3",
+          title: "Google Business setup needed",
+          description: `Day 3 - Set up Google Maps listing`,
+          businessName: d.business_name,
+          whatsapp: d.owner_whatsapp,
+          action: `Set up Google Business for ${d.business_name}`,
+          priority: "medium"
+        });
+      }
+    });
+    
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    
+    profiles.filter(p => p.role === "vibe_coder" && new Date(p.created_at) > lastWeek).forEach(p => {
+      items.push({
+        id: `coder-${p.id}`,
+        type: "new_coder",
+        title: "New vibe coder signup",
+        description: "Welcome and onboard",
+        businessName: p.full_name,
+        whatsapp: p.whatsapp_number,
+        action: `Welcome to LeadPe Studio, ${p.full_name}! Here's how to deploy your first site...`,
+        priority: "medium"
+      });
+    });
+    
+    deployments.forEach(d => {
+      const daysSinceDeploy = Math.floor((Date.now() - new Date(d.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      const hasLeads = d.lead_count && d.lead_count > 0;
+      
+      if (daysSinceDeploy >= 7 && !hasLeads) {
+        items.push({
+          id: `noleads-${d.id}`,
+          type: "no_leads",
+          title: "No leads after 7 days",
+          description: `Deployed ${daysSinceDeploy} days ago, 0 leads`,
+          businessName: d.business_name,
+          whatsapp: d.owner_whatsapp,
+          action: `Hi! Your site is live but no leads yet. Are you sharing your link?`,
+          priority: "low"
+        });
+      }
+    });
+    
+    setActionItems(items.sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    }));
+  };
+  
   useEffect(() => {
-    const interval = setInterval(() => { void fetchData(true); }, 5 * 60 * 1000);
+    fetchData();
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
   
@@ -672,7 +685,7 @@ export default function Admin() {
             <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => fetchData(true)} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
+            <button onClick={fetchData} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
               <RefreshCw size={18} style={{ color: "#00E676" }} />
             </button>
             <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -740,15 +753,49 @@ export default function Admin() {
           )}
         </motion.div>
 
-        {/* Twilio Status — diagnostic test ping */}
+        {/* Action Needed */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => toggleSection("twilio")} className="flex items-center gap-2 text-lg font-bold font-display">
-              {expandedSections.has("twilio") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              📱 Twilio WhatsApp Status
+            <button onClick={() => toggleSection("actions")} className="flex items-center gap-2 text-lg font-bold font-display">
+              {expandedSections.has("actions") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              🚨 Needs Your Attention
+              {actionItems.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "#ef4444", color: "white" }}>
+                  {actionItems.length}
+                </span>
+              )}
             </button>
           </div>
-          {expandedSections.has("twilio") && <TwilioStatusCard />}
+          
+          {expandedSections.has("actions") && (
+            <div className="space-y-3">
+              {actionItems.length === 0 ? (
+                <div className="rounded-2xl border border-[#E0F2E9] p-6 text-center" style={{ backgroundColor: "#FFFFFF" }}>
+                  <CheckCircle size={32} style={{ color: "#00C853" }} className="mx-auto mb-2" />
+                  <p className="text-muted-foreground">All caught up! No urgent actions needed.</p>
+                </div>
+              ) : (
+                actionItems.slice(0, 10).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ 
+                    backgroundColor: "#FFFFFF",
+                    borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
+                  }}>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
+                        <span className="font-semibold">{item.title}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.businessName}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00C853" }}>
+                      <MessageCircle size={16} className="mr-2" /> WhatsApp
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Outbox 📬 — manual one-click send to clients */}

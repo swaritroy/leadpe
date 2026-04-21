@@ -140,9 +140,8 @@ export default function Index() {
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ backgroundColor: "#E8F5E9", color: "#00C853" }}>
               🇮🇳 Built for Indian Businesses
             </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-              India's AI-Powered Digital Distribution.<br />
-              <span style={{ color: "#00C853" }}>Live in 48 Hours.</span> Pay Only for Results.
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leaing-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
+              Professional Website.<br />Starts at ₹800.<br />Customers on WhatsApp.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
