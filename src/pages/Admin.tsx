@@ -164,7 +164,6 @@ export default function Admin() {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [earnings, setEarnings] = useState<Earning[]>([]);
-  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
@@ -176,7 +175,7 @@ export default function Admin() {
   const [businessSearch, setBusinessSearch] = useState("");
   const [businessFilter, setBusinessFilter] = useState<"all" | "trial" | "active" | "paused" | "churned">("all");
   const [coderSearch, setCoderSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "actions", "outbox", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["metrics", "twilio", "outbox", "businesses", "coders", "deployments", "revenue", "payouts", "quick", "orders", "leads", "payments", "vetting"]));
   
   const [sendingReports, setSendingReports] = useState(false);
   const [reportsProgress, setReportsProgress] = useState({ sent: 0, total: 0 });
