@@ -141,7 +141,8 @@ export default function Index() {
               🇮🇳 Built for Indian Businesses
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-              AI Website Builder for Indian Local Businesses — Live in 48 Hours
+              India's AI-Powered Digital Distribution.<br />
+              <span style={{ color: "#00C853" }}>Live in 48 Hours.</span> Pay Only for Results.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
@@ -399,46 +400,6 @@ export default function Index() {
               Join as Vibe Coder →
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* SEO CONTENT — natural keyword-rich text for Google indexing */}
-      <section className="py-16 bg-white border-t" style={{ borderColor: "#E0E0E0" }}>
-        <div className="container px-4 max-w-4xl mx-auto prose prose-sm md:prose-base">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-            What is LeadPe? India's AI-Powered Website Builder for Local Businesses
-          </h2>
-          <p className="mb-4 leading-relaxed" style={{ color: "#444" }}>
-            LeadPe is an AI-powered website builder and lead generation platform built specifically for Indian local businesses — coaching centres, doctors, lawyers, salons, gyms, plumbers, photographers, real estate agents, restaurants, and dance or music academies. We build a professional, mobile-first business website for you in 48 hours, deploy it live on a fast leadpe.tech subdomain (or your own custom domain), and connect every customer inquiry directly to your WhatsApp. No code, no technical knowledge, no agency fees of ₹20,000+. Our website packages start at just ₹800 one-time, with an optional Growth Plan at ₹{MONTHLY_PRICE}/month for unlimited WhatsApp leads, Google Maps integration, and weekly performance reports.
-          </p>
-
-          <h2 className="text-2xl md:text-3xl font-bold mt-8 mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-            Who Should Use LeadPe?
-          </h2>
-          <p className="mb-4 leading-relaxed" style={{ color: "#444" }}>
-            LeadPe is designed for small and medium business (MSME) owners across Tier-1, Tier-2, and Tier-3 cities in India who want customers to find them on Google but don't have the time, budget, or technical skill to manage a website. If you run a coaching institute in Patna, a beauty parlour in Indore, a dental clinic in Pune, a gym in Lucknow, a CA practice in Mumbai, a wedding photography studio in Jaipur, or a real estate agency in Hyderabad — LeadPe gets you online and generating WhatsApp leads in two days. We handle the design, copywriting, SEO metadata, JSON-LD local business schema, Google Search Console submission, and hosting. You just share your business details once.
-          </p>
-
-          <h2 className="text-2xl md:text-3xl font-bold mt-8 mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-            How AI Website Building Works at LeadPe
-          </h2>
-          <p className="mb-4 leading-relaxed" style={{ color: "#444" }}>
-            Our process is intentionally simple. Step 1 — sign up free in two minutes and tell us about your business: name, city, type, services, photos, and your WhatsApp number. Step 2 — our AI website builders combine your inputs with proven local-business design templates to build your custom website in 48 hours. Step 3 — you preview the demo, request up to two free revisions, and approve. Step 4 — your site goes live on a fast hosted subdomain, gets submitted to the Google Indexing API, and starts appearing in local search results within 2–7 days. Every customer who fills your contact form, books an appointment, or asks for pricing triggers an instant WhatsApp notification on your phone with their name, phone number, and message — so you can call back in minutes and close the sale.
-          </p>
-
-          <h2 className="text-2xl md:text-3xl font-bold mt-8 mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-            Why Local Businesses in India Need a Website in 2026
-          </h2>
-          <p className="mb-4 leading-relaxed" style={{ color: "#444" }}>
-            Over 750 million Indians now use Google daily to search for nearby services — "best dentist near me", "Class 10 maths tuition in Vaishali", "salon for haircut in Sector 18". If your business doesn't appear in those local search results, your competitors capture the customer. A WhatsApp number alone is no longer enough; customers want to verify your services, see photos, read reviews, and check prices before they even message you. A professional website with proper SEO, local business schema, mobile-first design, and Google Maps integration is now the single highest-ROI marketing investment for any local Indian MSME. One new customer per month at ₹1,500+ revenue easily pays for the entire LeadPe Growth Plan many times over.
-          </p>
-
-          <h2 className="text-2xl md:text-3xl font-bold mt-8 mb-4" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-            LeadPe vs Agencies, Fiverr, and DIY Builders
-          </h2>
-          <p className="mb-4 leading-relaxed" style={{ color: "#444" }}>
-            Traditional digital marketing agencies in India charge ₹20,000–₹50,000 upfront for a website plus ₹5,000+ monthly retainers, and still take 2–4 weeks to deliver. Fiverr freelancers cost ₹5,000+ but rarely understand the Indian local-business context, SEO, or WhatsApp lead routing. DIY builders like Wix or WordPress are free to start but require weeks of learning and still don't generate customers automatically. LeadPe combines the speed of AI generation, the polish of a professional designer, and the lead-routing intelligence of a CRM — all priced for the Indian small business owner. ₹800 to launch. ₹{MONTHLY_PRICE}/month to grow. Cancel anytime, no contracts, no hidden fees.
-          </p>
         </div>
       </section>
 
