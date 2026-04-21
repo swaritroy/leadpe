@@ -15,6 +15,7 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
 function fmt(eventType: string, p: Record<string, any>): string {
   const lines: Record<string, string> = {
+    test_ping: `🔧 LeadPe test ping — if you see this, Twilio is wired correctly.\nTime: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`,
     business_signup: `🆕 NEW BUSINESS SIGNUP\n${p.name || "?"} • ${p.city || "?"}\n📱 ${p.phone || "-"}`,
     dev_signup: `👨‍💻 NEW DEV SIGNUP (awaiting approval)\n${p.name || "?"} • ${p.email || "-"}\nCity: ${p.city || "-"}`,
     order_placed: `🛒 NEW ORDER\n${p.business_name || "?"} • ${p.package_id || "?"}\n₹${p.amount || 0} • ${p.city || "-"}`,

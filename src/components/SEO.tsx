@@ -10,8 +10,12 @@ interface SEOProps {
   noindex?: boolean;
 }
 
-const SITE_URL = "https://leadpe.tech";
-const DEFAULT_IMAGE = "https://leadpe.tech/og-default.jpg";
+const FALLBACK_URL = "https://leadpe.lovable.app";
+const SITE_URL =
+  typeof window !== "undefined" && window.location?.origin
+    ? window.location.origin
+    : FALLBACK_URL;
+const DEFAULT_IMAGE = `${SITE_URL}/og-default.jpg`;
 
 const ORG_SCHEMA = {
   "@context": "https://schema.org",
