@@ -137,17 +137,6 @@ interface BuildRequest {
   coder_name?: string;
 }
 
-interface ActionItem {
-  id: string;
-  type: "trial_day6" | "trial_day3" | "new_coder" | "no_leads";
-  title: string;
-  description: string;
-  businessName: string;
-  whatsapp: string;
-  action: string;
-  priority: "high" | "medium" | "low";
-}
-
 const planPrices: Record<string, number> = {
   basic: 0,
   growth: 299,
@@ -249,8 +238,6 @@ export default function Admin() {
         };
       });
       setBuildRequests(enrichedRequests);
-      
-      generateActionItems(profilesData || [], deploymentsData || []);
 
       // Fetch pending messages
       const { data: msgsData } = await (supabase.from("scheduled_messages") as any)
