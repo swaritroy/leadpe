@@ -671,49 +671,15 @@ export default function Admin() {
           )}
         </motion.div>
 
-        {/* Action Needed */}
+        {/* Twilio Status — diagnostic test ping */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => toggleSection("actions")} className="flex items-center gap-2 text-lg font-bold font-display">
-              {expandedSections.has("actions") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              🚨 Needs Your Attention
-              {actionItems.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "#ef4444", color: "white" }}>
-                  {actionItems.length}
-                </span>
-              )}
+            <button onClick={() => toggleSection("twilio")} className="flex items-center gap-2 text-lg font-bold font-display">
+              {expandedSections.has("twilio") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              📱 Twilio WhatsApp Status
             </button>
           </div>
-          
-          {expandedSections.has("actions") && (
-            <div className="space-y-3">
-              {actionItems.length === 0 ? (
-                <div className="rounded-2xl border border-[#E0F2E9] p-6 text-center" style={{ backgroundColor: "#FFFFFF" }}>
-                  <CheckCircle size={32} style={{ color: "#00C853" }} className="mx-auto mb-2" />
-                  <p className="text-muted-foreground">All caught up! No urgent actions needed.</p>
-                </div>
-              ) : (
-                actionItems.slice(0, 10).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ 
-                    backgroundColor: "#FFFFFF",
-                    borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
-                  }}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
-                        <span className="font-semibold">{item.title}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.businessName}</p>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
-                    </div>
-                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00C853" }}>
-                      <MessageCircle size={16} className="mr-2" /> WhatsApp
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+          {expandedSections.has("twilio") && <TwilioStatusCard />}
         </motion.div>
 
         {/* Outbox 📬 — manual one-click send to clients */}
