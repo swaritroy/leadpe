@@ -19,6 +19,7 @@ const StudioGuard = ({ children }: StudioGuardProps) => {
   const { user, role, loading, authReady } = useAuth();
   const navigate = useNavigate();
   const [vettingStatus, setVettingStatus] = useState<string | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const [vettingChecked, setVettingChecked] = useState(false);
 
   useEffect(() => {
@@ -36,15 +37,22 @@ const StudioGuard = ({ children }: StudioGuardProps) => {
       setVettingChecked(true);
       return;
     }
-    // Developer / vibe_coder → check approval
+    // Developer / vibe_coder → check onboarding + approval
     supabase
       .from("profiles")
-      .select("vetting_status")
+      .select("vetting_status, onboarding_complete")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
+        const complete = !!data?.onboarding_complete;
         setVettingStatus(data?.vetting_status ?? "pending_vetting");
+        setOnboardingComplete(complete);
         setVettingChecked(true);
+
+        // If onboarding not done, force them to /dev/onboarding (unless already there)
+        if (!complete && window.location.pathname !== "/dev/onboarding") {
+          navigate("/dev/onboarding", { replace: true });
+        }
       });
   }, [user, role, loading, authReady, navigate]);
 
