@@ -65,8 +65,11 @@ const StudioGuard = ({ children }: StudioGuardProps) => {
   }
   if (!user || role === "business") return null;
 
-  // Developer awaiting admin approval
-  if (role !== "admin" && vettingStatus !== "approved") {
+  // Allow access to onboarding page regardless of approval status
+  const isOnboardingRoute = window.location.pathname === "/dev/onboarding";
+
+  // Developer who completed onboarding but not yet approved → waiting screen
+  if (role !== "admin" && onboardingComplete && vettingStatus !== "approved" && !isOnboardingRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "#F5FFF7" }}>
         <div className="max-w-md w-full bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
@@ -77,8 +80,8 @@ const StudioGuard = ({ children }: StudioGuardProps) => {
             Awaiting Admin Approval
           </h1>
           <p className="text-sm leading-relaxed mb-6" style={{ color: "#666" }}>
-            Your developer account is under review. Our team verifies every coder to maintain quality on LeadPe.
-            You'll get an email the moment you're approved — usually within 24 hours.
+            Thanks for completing onboarding! Our team is reviewing your profile and test site.
+            You'll get a WhatsApp message the moment you're approved — usually within 24 hours.
           </p>
           <div className="text-xs px-4 py-3 rounded-lg" style={{ backgroundColor: "#F5FFF7", color: "#00863F" }}>
             Status: <strong>{vettingStatus === "rejected" ? "Not Approved" : "Pending Review"}</strong>
