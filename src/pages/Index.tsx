@@ -397,8 +397,8 @@ export default function Index() {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="rounded-2xl p-8 bg-white border cursor-pointer" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: "#F0F0F0", color: "#666666" }}>Starter Trial</span>
-              <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹800</span><span className="text-base ml-1" style={{ color: "#666666" }}> one-time</span></div>
-              <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS}-day trial. Pay only after demo.</p>
+              <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#00C853", fontFamily: "Syne" }}>FREE</span><span className="text-base ml-1" style={{ color: "#666666" }}> for {TRIAL_DAYS} days</span></div>
+              <p className="text-sm mb-6" style={{ color: "#999999" }}>No payment now. ₹800 only after you approve the demo.</p>
               <ul className="space-y-2.5 mb-6">
                 {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.online", "See your demo before paying"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
