@@ -159,14 +159,20 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [deployments, setDeployments] = useState<Deployment[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [earnings, setEarnings] = useState<Earning[]>([]);
+  // Restore cached data immediately so revisits don't show a full reload
+  const CACHE_KEY = "leadpe_admin_cache_v1";
+  const cached = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch { return null; }
+  })();
+
+  const [loading, setLoading] = useState(!cached);
+  const [profiles, setProfiles] = useState<Profile[]>(cached?.profiles || []);
+  const [deployments, setDeployments] = useState<Deployment[]>(cached?.deployments || []);
+  const [leads, setLeads] = useState<Lead[]>(cached?.leads || []);
+  const [earnings, setEarnings] = useState<Earning[]>(cached?.earnings || []);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
-  const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
+  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>(cached?.buildRequests || []);
+  const [availableCoders, setAvailableCoders] = useState<Profile[]>(cached?.availableCoders || []);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
   const [messageLog, setMessageLog] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
@@ -206,9 +212,9 @@ export default function Admin() {
   }, [user, navigate, toast]);
   
   // Fetch all data
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     
     try {
       const { data: profilesData } = await (supabase.from("profiles") as any)
@@ -279,6 +285,18 @@ export default function Admin() {
         .eq("status", "pending_verification")
         .order("created_at", { ascending: false });
       setPendingPayments(paymentsData || []);
+      // Persist a lightweight cache so revisits feel instant
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          profiles: profilesData || [],
+          deployments: deploymentsData || [],
+          leads: leadsData || [],
+          earnings: earningsData || [],
+          buildRequests: buildRequestsData || [],
+          availableCoders: (profilesData || []).filter((p: any) => p.role === "vibe_coder"),
+          ts: Date.now(),
+        }));
+      } catch {}
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -358,9 +376,11 @@ export default function Admin() {
   };
   
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    // First load: silent if cache exists, else show loader
+    fetchData(!!cached);
+    const interval = setInterval(() => fetchData(true), 5 * 60 * 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData]);
   
   // Metrics
@@ -685,7 +705,7 @@ export default function Admin() {
             <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={fetchData} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
+            <button onClick={() => fetchData(true)} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
               <RefreshCw size={18} style={{ color: "#00E676" }} />
             </button>
             <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -776,21 +796,16 @@ export default function Admin() {
                 </div>
               ) : (
                 actionItems.slice(0, 10).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ 
+                  <div key={item.id} className="rounded-xl border border-border p-4" style={{ 
                     backgroundColor: "#FFFFFF",
                     borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
                   }}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
-                        <span className="font-semibold">{item.title}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.businessName}</p>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
+                      <span className="font-semibold">{item.title}</span>
                     </div>
-                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00C853" }}>
-                      <MessageCircle size={16} className="mr-2" /> WhatsApp
-                    </Button>
+                    <p className="text-sm text-muted-foreground">{item.businessName}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 ))
               )}
