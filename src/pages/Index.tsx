@@ -165,6 +165,9 @@ export default function Index() {
                 Already a member? Sign In
               </Button>
             </div>
+            <p className="text-sm md:text-base font-medium mb-6" style={{ color: "#00C853" }}>
+              ✅ 100% Free to Start • No credit card • Pay only if you love the demo
+            </p>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm" style={{ color: "#666666" }}>
               {[
                 { icon: Lock, text: "No credit card" },
