@@ -357,10 +357,13 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           "order_placed",
           {
             business_name: businessName,
+            owner_name: customerName,
+            business_type: businessType,
             package_id: selectedPackage,
             amount: pkg.price,
             city,
             phone: customerWhatsapp,
+            whatsapp: customerWhatsapp,
           },
           {
             to: customerWhatsapp,
