@@ -1,83 +1,75 @@
 
+
 ## Goal
-- **Twilio → admin only**: Every key event sends a WhatsApp/SMS to YOU (9973383902) so you never miss activity.
-- **Admin Outbox**: Every client-facing message that *would* have gone out is queued in the admin panel as a ready-to-send card with a "Send via WhatsApp" button (opens `wa.me` with pre-filled text → you tap send).
-- MVP-only, scoped for first 10 clients. Twilio cost stays tiny (only YOUR number gets API messages).
+Migrate everything from `leadpe.tech` → `leadpe.online`, and enable real Vercel custom-domain attachment so live sites deploy at `{slug}.leadpe.online`.
 
-## Events that trigger admin alerts (to 9973383902 via Twilio)
-1. New business signup (name, city, WhatsApp, plan)
-2. New developer signup (name, email, awaiting approval)
-3. New order placed (business, package, ₹amount)
-4. Coder accepts build (coder name, business, deadline)
-5. Demo ready / submitted (demo URL)
-6. Website deployed live (live URL)
-7. Payment received (amount, business, plan)
-8. New customer lead captured (business, customer name + phone)
-9. Revision requested (business, request #)
-10. Build deadline approaching / missed
+## Scope: 33 files contain `leadpe.tech` (353 references)
 
-## Events that queue in Admin Outbox (client-facing, you send manually)
-- Welcome message to new business owner
-- Welcome to new developer (with approval status)
-- "Demo is ready" → business owner
-- "Website is LIVE" → business owner
-- "New lead 🔔" → business owner
-- "Payment received, thank you" → business owner
-- Day-3, Day-6 trial nudges → business owner
-- Custom reply templates (5 ready-made: greeting, follow-up, payment reminder, thank you, support)
+### 1. Domain string replacement (global find-replace `leadpe.tech` → `leadpe.online`)
+**Frontend (UI / SEO / brand):**
+- `index.html` (canonical, OG, JSON-LD schema, FAQ links)
+- `src/components/SEO.tsx` (`SITE_URL`, default OG image)
+- `src/components/SEOPreview.tsx`
+- `src/components/Footer.tsx`
+- `src/components/dashboard/StateBBuilding.tsx` (preview subdomain text)
+- `src/components/dashboard/StateCLive.tsx` (live URL builder + display)
+- `src/components/dashboard/StateExpired.tsx`
+- `src/components/admin/RenewalReminders.tsx`
+- `src/lib/clientBrief.ts` (example sites)
+- `src/lib/leadWidget.ts`, `src/lib/whatsappService.ts`, `src/lib/notify.ts` (any links)
+- `src/pages/Index.tsx`, `About.tsx`, `Privacy.tsx`, `Terms.tsx`, `Refund.tsx`, `Contact.tsx`, `Services.tsx`, `Admin.tsx`, `Studio.tsx`, `GetWebsite.tsx`
+- `public/robots.txt` → sitemap URL
+- `public/sitemap.xml` → all `<loc>` entries
 
-## Plan
+**Backend (edge functions):**
+- `supabase/functions/deploy-website/index.ts`
+- `supabase/functions/razorpay/index.ts`
+- `supabase/functions/payments-webhook/index.ts`
+- `supabase/functions/sitemap/index.ts` (`SITE_URL` constant + subdomain template)
+- `supabase/functions/ai-generate/index.ts` (CTO prompt: viral footer text, canonical link, exampleSites)
+- `supabase/functions/verify-otp/index.ts` & all other functions: CORS allowlist regex `\.leadpe\.tech$` → `\.leadpe\.online$`, plus the literal `https://leadpe.tech` origin
+- `supabase/functions/notify-admin/index.ts`, `daily-summary/index.ts`, `generate-seo/index.ts`, `process-messages/index.ts`, `send-whatsapp/index.ts`, `quality-check/index.ts`, `weekly-report/index.ts`, `auto-release/index.ts` — any remaining string references
 
-### 1. Edge function: `notify-admin` (NEW)
-- Single endpoint, called from app code on each event.
-- Input: `{ event_type, payload }`.
-- Sends formatted SMS to `9973383902` via Twilio gateway (`/Messages.json`, From = `TWILIO_WHATSAPP_FROM` for WA, or plain From for SMS).
-- Logs to `message_log` (admin-readable).
-- Uses connector gateway pattern (`LOVABLE_API_KEY` + `TWILIO_API_KEY` already set).
+**Email/support:** keep `support@leadpe.tech` in About/Privacy or change to `support@leadpe.online`?
 
-### 2. Edge function: `process-messages` (UNPAUSE for admin only)
-- Re-enable Twilio sending **only when `to === 9973383902`**.
-- All other recipients → status stays `queued_for_admin` (visible in Outbox, never auto-sent).
+### 2. Enable real Vercel subdomain attachment
+In `supabase/functions/deploy-website/index.ts` (`deploy_live` action):
+- Set `USE_CUSTOM_DOMAIN = true`
+- Change `customDomain` to `${subdomain}.leadpe.online`
+- Confirm the existing `POST /v10/projects/{id}/domains` Vercel API call runs (it already does — currently dead code behind the flag)
+- Update the comment block accordingly
 
-### 3. DB: extend `scheduled_messages`
-- Add columns: `recipient_type` ('admin' | 'client'), `client_name`, `event_type`, `whatsapp_url` (generated `wa.me/?text=...`).
-- No new table needed — reuse `scheduled_messages` + `message_log`.
-
-### 4. App-side hooks (insert calls to `notify-admin` + queue client message)
-Files to touch:
-- `src/pages/Auth.tsx` → on signup success: notify admin "New business signup"
-- `src/pages/StudioAuth.tsx` → on signup: notify admin "New dev signup, awaiting approval"
-- `src/pages/Onboarding.tsx` / `src/pages/GetWebsite.tsx` → on order placed: notify admin + queue welcome to client
-- `src/pages/Studio.tsx` (accept build) → notify admin
-- `src/components/BriefModal.tsx` (submit demo/deploy) → notify admin + queue "demo ready" / "live" to client
-- `supabase/functions/payments-webhook/index.ts` → notify admin on payment success
-- Lead capture path (widget endpoint or `leads` insert trigger) → notify admin + queue "new lead" to client
-- `src/components/RevisionRequestSheet.tsx` → notify admin
-
-### 5. Admin Outbox UI (NEW component on `/admin`)
-- New tab/section: **"Outbox 📬"**
-- Lists all rows from `scheduled_messages` where `recipient_type='client'` and `status='queued_for_admin'`, newest first.
-- Each card shows: client name + WhatsApp number, event type badge, message preview (editable textarea), big green **"Send via WhatsApp"** button → opens `https://wa.me/<number>?text=<encoded>` in new tab → marks row as `sent_manual` after click.
-- Filter chips: All / Welcome / Demo / Live / Lead / Payment / Trial nudge.
-- "Quick Replies" panel with 5 ready-made templates (one-click insert into custom number).
-
-### 6. Memory updates
-- Update `mem://infrastructure/whatsapp-automation-worker` → "Twilio sends only to admin (9973383902). Client messages queue to Admin Outbox for manual one-click send."
-
-## ASCII flow
-```text
-[App event] ──► notify-admin ──► Twilio ──► 📱 9973383902 (instant)
-     │
-     └──► insert into scheduled_messages
-              recipient_type='client'
-              status='queued_for_admin'
-              whatsapp_url='wa.me/...?text=...'
-                        │
-                        ▼
-            /admin → Outbox tab → [Send via WhatsApp] → wa.me opens → you tap send
+### 3. CORS allowlist (security)
+Update every edge function's CORS check to accept the new apex + wildcard:
 ```
+origin === "https://leadpe.online" || /\.leadpe\.online$/.test(origin)
+```
+Keep `leadpe.tech` entries during transition? **Decision needed (see Q1).**
 
-## Out of scope (MVP)
-- No bulk send, no scheduling future sends, no auto-reply.
-- Twilio Geo + SMS Pumping protection: I'll remind you to enable in Twilio console after deploy.
-- After 10 clients, we re-evaluate Meta WhatsApp Business API for direct client sends.
+### 4. SEO assets
+- Rewrite `public/sitemap.xml` with `https://leadpe.online/...`
+- Rewrite `public/robots.txt` sitemap line
+- Update JSON-LD `@id`, `url`, `logo` in `index.html` and `SEO.tsx`
+
+### 5. Memory update
+Update `mem://infrastructure/dns/wildcard-routing` and `mem://project/identity` to reflect `leadpe.online`.
+
+## Quick clarifying questions before I execute
+
+**Q1.** Keep `leadpe.tech` as an active alias during transition (CORS + redirect), or kill it completely?
+
+**Q2.** Change support email `support@leadpe.tech` → `support@leadpe.online`?
+
+**Q3.** In Vercel dashboard, have you already added `*.leadpe.online` and `leadpe.online` as domains to the relevant Vercel team/projects, with DNS (`CNAME *.leadpe.online → cname.vercel-dns.com`) propagated? If not, I'll flip `USE_CUSTOM_DOMAIN = true` but live deploys will fail until DNS is ready.
+
+## Out of scope
+- Lovable platform's own `leadpe.tech` custom domain — you must update that yourself in Lovable Project Settings → Domains (connect `leadpe.online`, set as primary, remove `.tech`).
+- Twilio/Stripe webhook URLs — those use `*.supabase.co` directly, no change needed.
+
+## Execution order (once approved)
+1. Frontend strings (35+ files)
+2. Edge functions strings + CORS
+3. Flip `USE_CUSTOM_DOMAIN = true` in `deploy-website`
+4. Update `sitemap.xml`, `robots.txt`, JSON-LD
+5. Update memory files
+
