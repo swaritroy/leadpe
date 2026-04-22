@@ -10,8 +10,8 @@ interface SEOProps {
   noindex?: boolean;
 }
 
-const SITE_URL = "https://leadpe.tech";
-const DEFAULT_IMAGE = "https://leadpe.tech/og-default.jpg";
+const SITE_URL = "https://leadpe.online";
+const DEFAULT_IMAGE = "https://leadpe.online/og-default.jpg";
 
 const ORG_SCHEMA = {
   "@context": "https://schema.org",

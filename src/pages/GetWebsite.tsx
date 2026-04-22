@@ -252,7 +252,7 @@ export default function GetWebsite() {
     <input id="lp-phone" type="tel" placeholder="WhatsApp Number" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:12px;box-sizing:border-box"/>
     <input id="lp-interest" type="text" placeholder="What are you looking for?" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:16px;box-sizing:border-box"/>
     <button onclick="submitLeadPeLead()" style="width:100%;background:#00C853;color:white;border:none;border-radius:10px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer">Get Callback 📲</button>
-    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Built with LeadPe 🌱 — Website Nahi? Customer Nahi. <a href="https://leadpe.tech" target="_blank" style="color:#00C853;text-decoration:none;font-weight:600">LeadPe</a></p>
+    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Built with LeadPe 🌱 — Website Nahi? Customer Nahi. <a href="https://leadpe.online" target="_blank" style="color:#00C853;text-decoration:none;font-weight:600">LeadPe</a></p>
   </div>
 </div>
 <script>
@@ -527,12 +527,12 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                         placeholder="your-business"
                       />
                       <span className="px-3 text-sm font-medium flex-shrink-0" style={{ color: "#999", backgroundColor: "#F5F5F5", height: "100%", display: "flex", alignItems: "center" }}>
-                        .leadpe.tech
+                        .leadpe.online
                       </span>
                     </div>
                     {subdomain.length >= 3 && !subdomainTaken && !checkingSubdomain && (
                       <p className="text-[10px] mt-1" style={{ color: "#00C853" }}>
-                        ✅ {subdomain}.leadpe.tech is available
+                        ✅ {subdomain}.leadpe.online is available
                       </p>
                     )}
                     {subdomainTaken && (

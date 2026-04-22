@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       // ═══ STEP 3: Activate user profile ═══
       if (userId) {
         const subdomain = ownerProfile?.subdomain || ownerProfile?.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "";
-        const liveUrl = subdomain ? `https://${subdomain}.leadpe.tech` : "";
+        const liveUrl = subdomain ? `https://${subdomain}.leadpe.online` : "";
         
         await supabase.from("profiles").update({
           status: "active",
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
         }
 
         // Update build_requests to live (fallback if deploy_live takes time)
-        const customDomain = ownerProfile?.subdomain ? `https://${ownerProfile.subdomain}.leadpe.tech` : buildRequest.deploy_url;
+        const customDomain = ownerProfile?.subdomain ? `https://${ownerProfile.subdomain}.leadpe.online` : buildRequest.deploy_url;
         await supabase.from("build_requests").update({
           status: "live",
           deploy_url: customDomain,
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
           try {
             const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
             const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-            const liveUrlMsg = ownerProfile.subdomain ? `${ownerProfile.subdomain}.leadpe.tech` : "your dashboard";
+            const liveUrlMsg = ownerProfile.subdomain ? `${ownerProfile.subdomain}.leadpe.online` : "your dashboard";
 
             await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
               method: "POST",

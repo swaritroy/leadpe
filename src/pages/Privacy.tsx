@@ -34,7 +34,7 @@ export default function Privacy() {
           <section>
             <h2 className="text-lg font-bold mb-3" style={h2}>5. Contact</h2>
             <ul className="text-sm space-y-1" style={p}>
-              <li>Email: support@leadpe.tech</li>
+              <li>Email: support@leadpe.online</li>
               <li>WhatsApp: +91 9973383902</li>
               <li>Address: Hajipur, Vaishali, Bihar — 844101</li>
             </ul>

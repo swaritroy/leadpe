@@ -83,7 +83,7 @@ serve(async (req) => {
                 "Type: " + businessType + "\n" +
                 "City: " + city + "\n" +
                 "You have 47 hours.\n" +
-                "Accept now: leadpe.tech/studio"
+                "Accept now: leadpe.online/studio"
             }
           });
         } catch (e) {
@@ -118,7 +118,7 @@ serve(async (req) => {
               "Package: " + build.package_id + "\n" +
               "24 hours passed.\n" +
               "No coder accepted.\n" +
-              "Build manually: leadpe.tech/admin"
+              "Build manually: leadpe.online/admin"
           }
         });
       } catch (e) {
@@ -217,7 +217,7 @@ serve(async (req) => {
               "Business: " + build.business_name + "\n" +
               "4 hour emergency window open.\n" +
               "Build manually NOW:\n" +
-              "leadpe.tech/admin"
+              "leadpe.online/admin"
           }
         });
       } catch (e) {

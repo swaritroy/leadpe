@@ -19,7 +19,7 @@ const Footer = () => (
         </div>
         <div className="text-center text-xs" style={{ color: "#999" }}>
           <p>LeadPe — Hajipur, Bihar, India</p>
-          <p>support@leadpe.tech</p>
+          <p>support@leadpe.online</p>
           <p className="mt-1">© 2026 LeadPe. Made in India 🇮🇳</p>
         </div>
       </div>

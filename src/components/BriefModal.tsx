@@ -250,9 +250,9 @@ ${widgetCode}
 VIRAL FOOTER (REQUIRED)
 ═══════════════════════════════════════════
 At the very bottom of every page footer:
-"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+"Built with LeadPe 🌱 — Get your free website at leadpe.online"
 Font size: 12px, Color: #999999
-"leadpe.tech" must be a clickable link to https://leadpe.tech (new tab)
+"leadpe.online" must be a clickable link to https://leadpe.online (new tab)
 
 ═══════════════════════════════════════════
 FOOTER

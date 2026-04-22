@@ -39,8 +39,8 @@ export default function About() {
               <li><strong>Founder:</strong> Swarit Roy</li>
               <li><strong>Established:</strong> 2026</li>
               <li><strong>Location:</strong> Hajipur, Vaishali, Bihar — 844101</li>
-              <li><strong>Website:</strong> leadpe.tech</li>
-              <li><strong>Email:</strong> support@leadpe.tech</li>
+              <li><strong>Website:</strong> leadpe.online</li>
+              <li><strong>Email:</strong> support@leadpe.online</li>
               <li><strong>WhatsApp:</strong> +91 9973383902</li>
             </ul>
           </section>

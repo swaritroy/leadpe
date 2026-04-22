@@ -270,7 +270,7 @@ export default function StateBBuilding({ buildRequest, businessName }: Props) {
             <p style={{ fontFamily: font.body, fontSize: 12, color: "#666", marginTop: 16, lineHeight: 1.5 }}>
               Your website will be live at:<br />
               <span style={{ color: "#00C853", fontWeight: 600 }}>
-                {businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}.leadpe.tech
+                {businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}.leadpe.online
               </span>
             </p>
           </div>

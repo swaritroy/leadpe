@@ -74,7 +74,7 @@ export default function StateExpired({ profile, user }: StateExpiredProps) {
               "Business: " + (profile.business_name || profile.full_name || "Unknown") + "\n" +
               "Type: " + (profile.business_type || "N/A") + "\n" +
               "City: " + (profile.city || "N/A") + "\n" +
-              "Accept now: leadpe.tech/studio"
+              "Accept now: leadpe.online/studio"
           }
         });
       } catch (e) {

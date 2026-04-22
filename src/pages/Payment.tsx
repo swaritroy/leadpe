@@ -72,7 +72,7 @@ export default function Payment() {
         await supabase.functions.invoke("send-whatsapp", {
           body: {
             to: "919973383902",
-            message: `💰 MANUAL UPI PAYMENT\n━━━━━━━━━━━━\nBusiness: ${profile?.business_name || "Unknown"}\nAmount: ₹${amount}\nUTR: ${cleanUtr}\nUser: ${user?.email || ""}\n━━━━━━━━━━━━\nVERIFY at: leadpe.tech/admin`,
+            message: `💰 MANUAL UPI PAYMENT\n━━━━━━━━━━━━\nBusiness: ${profile?.business_name || "Unknown"}\nAmount: ₹${amount}\nUTR: ${cleanUtr}\nUser: ${user?.email || ""}\n━━━━━━━━━━━━\nVERIFY at: leadpe.online/admin`,
           },
         });
       } catch {}

@@ -37,7 +37,7 @@ export default function Refund() {
             <h2 className="text-lg font-bold mb-3" style={h2}>3. How to Request a Refund</h2>
             <ul className="text-sm space-y-2 list-disc pl-5" style={p}>
               <li>WhatsApp: +91 9973383902</li>
-              <li>Email: support@leadpe.tech</li>
+              <li>Email: support@leadpe.online</li>
               <li>We respond within 24 hours.</li>
               <li>Approved refunds are processed within 5-7 business days to the original payment method.</li>
             </ul>

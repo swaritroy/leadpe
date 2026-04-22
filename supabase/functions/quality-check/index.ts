@@ -302,10 +302,10 @@ serve(async (req) => {
     });
 
     // ── CHECK 11: LeadPe Footer Credit ──
-    const hasLeadPeFooter = allLower.includes("built with leadpe") || allLower.includes("leadpe.tech") || allLower.includes("leadpe 🌱");
+    const hasLeadPeFooter = allLower.includes("built with leadpe") || allLower.includes("leadpe.online") || allLower.includes("leadpe 🌱");
     checkResults.push({
       key: "leadpe_footer", label: "LeadPe Footer Credit", passed: hasLeadPeFooter,
-      fix: 'Add "Built with LeadPe 🌱" with link to https://leadpe.tech in the footer.',
+      fix: 'Add "Built with LeadPe 🌱" with link to https://leadpe.online in the footer.',
     });
 
     // ═══ WEIGHTED SCORING ═══

@@ -15,7 +15,7 @@ export default function SEOPreview({
   keywords = [],
   showKeywords = false 
 }: SEOPreviewProps) {
-  const displayUrl = `leadpe.tech › ${slug}`;
+  const displayUrl = `leadpe.online › ${slug}`;
 
   return (
     <div className="space-y-4">

@@ -307,7 +307,7 @@ export default function Index() {
               <div className="mb-1"><span className="text-5xl font-bold" style={{ color: "#1A1A1A", fontFamily: "Syne" }}>₹800</span><span className="text-base ml-1" style={{ color: "#666666" }}> one-time</span></div>
               <p className="text-sm mb-6" style={{ color: "#999999" }}>{TRIAL_DAYS}-day trial. Pay only after demo.</p>
               <ul className="space-y-2.5 mb-6">
-                {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.tech", "See your demo before paying"].map((f) => (
+                {["Website built in 48 hours", "1 Year Professional Hosting Included", "Live on leadpe.online", "See your demo before paying"].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "#1A1A1A" }}><Check size={14} style={{ color: "#00C853" }} /> {f}</li>
                 ))}
               </ul>

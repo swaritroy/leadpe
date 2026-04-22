@@ -38,7 +38,7 @@ export default function RenewalReminders() {
     setSending(b.id);
     const expiry = new Date(b.subscription_expiry!);
     const days = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
-    const msg = `Hi ${b.owner_name || b.name},\n\nYour LeadPe website hosting expires in ${days} day(s) on ${expiry.toLocaleDateString("en-IN")}.\n\nRenew now (₹800/year) to keep your site live and continue receiving customers.\n\n👉 https://leadpe.tech/payment?plan=renewal\n\n— Team LeadPe`;
+    const msg = `Hi ${b.owner_name || b.name},\n\nYour LeadPe website hosting expires in ${days} day(s) on ${expiry.toLocaleDateString("en-IN")}.\n\nRenew now (₹800/year) to keep your site live and continue receiving customers.\n\n👉 https://leadpe.online/payment?plan=renewal\n\n— Team LeadPe`;
     try {
       await sendWhatsApp(b.whatsapp_number, msg);
       toast({ title: "Reminder sent ✅", description: b.name });

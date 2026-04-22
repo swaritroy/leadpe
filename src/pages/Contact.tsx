@@ -58,7 +58,7 @@ export default function Contact() {
                 <li><strong>Business Name:</strong> LeadPe</li>
                 <li><strong>Founder:</strong> Swarit Roy</li>
                 <li><strong>Address:</strong> Hajipur, Vaishali District, Bihar — 844101, India</li>
-                <li><strong>Email:</strong> support@leadpe.tech</li>
+                <li><strong>Email:</strong> support@leadpe.online</li>
                 <li><strong>WhatsApp:</strong> +91 9973383902</li>
                 <li><strong>Support Hours:</strong> Monday to Saturday, 10:00 AM — 7:00 PM IST</li>
               </ul>
