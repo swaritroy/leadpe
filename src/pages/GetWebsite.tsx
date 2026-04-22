@@ -351,23 +351,28 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           .eq("user_id", user.id);
       }
 
-      // 7. Notify admin + queue welcome to client
-      notifyAdmin(
-        "order_placed",
-        {
-          business_name: businessName,
-          package_id: selectedPackage,
-          amount: pkg.price,
-          city,
-        },
-        {
-          to: customerWhatsapp,
-          message: `Your LeadPe order is in! 🎉\n\n${businessName} (${pkg.name}) — we're starting your build now. You'll get the demo link in 48 hours.\n\nLeadPe Team 🌱`,
-          type: "welcome",
-          client_name: customerName,
-          business_id: user?.id,
-        }
-      );
+      // 7. Notify admin + queue welcome to client (await so the request actually flushes before redirect)
+      try {
+        await notifyAdmin(
+          "order_placed",
+          {
+            business_name: businessName,
+            package_id: selectedPackage,
+            amount: pkg.price,
+            city,
+            phone: customerWhatsapp,
+          },
+          {
+            to: customerWhatsapp,
+            message: `Your LeadPe order is in! 🎉\n\n${businessName} (${pkg.name}) — we're starting your build now. You'll get the demo link in 48 hours.\n\nLeadPe Team 🌱`,
+            type: "welcome",
+            client_name: customerName,
+            business_id: user?.id,
+          }
+        );
+      } catch (e) {
+        console.log("notifyAdmin failed (non-blocking):", e);
+      }
 
       // 8. Show success animation then redirect
       setShowSuccess(true);
