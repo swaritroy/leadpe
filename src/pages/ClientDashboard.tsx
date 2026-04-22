@@ -13,6 +13,7 @@ import StateCLive from "@/components/dashboard/StateCLive";
 import StateExpired from "@/components/dashboard/StateExpired";
 import StateDeployFailed from "@/components/dashboard/StateDeployFailed";
 import SubscriptionRenewalCard from "@/components/dashboard/SubscriptionRenewalCard";
+import PlanBanner from "@/components/PlanBanner";
 
 interface Lead {
   id: string;
@@ -258,30 +259,9 @@ export default function ClientDashboard() {
         </div>
       </nav>
 
-      {/* TRIAL BAR */}
-      {trialBar && (
-        <div style={{
-          backgroundColor: trialBar.bg, padding: "0 20px", height: 40,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <span style={{ fontFamily: font.body, fontSize: 13, color: trialBar.color }}>{trialBar.text}</span>
-          {trialBar.btnText && (
-            <button
-              onClick={() => {
-                sessionStorage.setItem("upgrade_intent", "true");
-                navigate("/payment?plan=growth&amount=299");
-              }}
-              style={{
-                background: "none", border: "none", fontFamily: font.body,
-                fontSize: 13, fontWeight: 600, color: trialBar.btnColor || "#1A1A1A",
-                cursor: "pointer",
-              }}
-            >
-              {trialBar.btnText}
-            </button>
-          )}
-        </div>
-      )}
+      {/* PLAN BANNER (Trial / Growth / Free) */}
+      <PlanBanner blurredLeadCount={leads.length} />
+
 
       {/* DASHBOARD STATES — strictly one at a time */}
       {hasNoWebsite && (

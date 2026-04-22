@@ -705,6 +705,9 @@ export default function Admin() {
             <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/admin/messages")} className="flex items-center gap-1 text-sm font-semibold text-[#00C853] hover:underline" title="Messages inbox">
+              <MessageCircle size={16} /> Inbox
+            </button>
             <button onClick={() => fetchData(true)} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
               <RefreshCw size={18} style={{ color: "#00E676" }} />
             </button>

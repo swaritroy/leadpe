@@ -111,6 +111,25 @@ Deno.serve(async (req) => {
     const adminBody = fmt(event_type, payload);
     const sent = await sendToAdmin(adminBody);
 
+    // Mirror into admin "messages" inbox so /admin/messages shows everything
+    try {
+      await supabase.from("messages").insert({
+        from_type: payload?.from_type || "system",
+        from_id: payload?.from_id || null,
+        from_name: payload?.business_name || payload?.name || payload?.coder_name || "System",
+        to_type: "admin",
+        message: adminBody,
+        meta: {
+          event_type,
+          whatsapp: payload?.whatsapp || payload?.phone || payload?.owner_whatsapp || null,
+          ...payload,
+        },
+        read: false,
+      });
+    } catch (mErr) {
+      console.warn("messages insert failed:", mErr);
+    }
+
     // Log admin send
     await supabase.from("message_log").insert({
       to_number: ADMIN_PHONE,

@@ -27,12 +27,15 @@ export type Database = {
           coder_earning: number | null
           created_at: string | null
           deadline: string | null
+          demo_deployed_at: string | null
           demo_url: string | null
           deploy_url: string | null
           deployed_at: string | null
           github_url: string | null
           hard_deadline: string | null
           id: string
+          live_deployed_at: string | null
+          live_url: string | null
           max_revisions: number | null
           owner_name: string | null
           owner_whatsapp: string | null
@@ -60,12 +63,15 @@ export type Database = {
           coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
+          demo_deployed_at?: string | null
           demo_url?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
+          live_deployed_at?: string | null
+          live_url?: string | null
           max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
@@ -93,12 +99,15 @@ export type Database = {
           coder_earning?: number | null
           created_at?: string | null
           deadline?: string | null
+          demo_deployed_at?: string | null
           demo_url?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
+          live_deployed_at?: string | null
+          live_url?: string | null
           max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
@@ -579,6 +588,45 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          created_at: string | null
+          from_id: string | null
+          from_name: string | null
+          from_type: string | null
+          id: string
+          message: string
+          meta: Json | null
+          read: boolean | null
+          to_id: string | null
+          to_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_id?: string | null
+          from_name?: string | null
+          from_type?: string | null
+          id?: string
+          message: string
+          meta?: Json | null
+          read?: boolean | null
+          to_id?: string | null
+          to_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_id?: string | null
+          from_name?: string | null
+          from_type?: string | null
+          id?: string
+          message?: string
+          meta?: Json | null
+          read?: boolean | null
+          to_id?: string | null
+          to_type?: string | null
+        }
+        Relationships: []
+      }
       order_timeline: {
         Row: {
           details: string | null
@@ -818,6 +866,8 @@ export type Database = {
           founding_member: boolean | null
           free_months_earned: number | null
           full_name: string | null
+          growth_ends_at: string | null
+          growth_started_at: string | null
           id: string
           monthly_capacity: string | null
           monthly_changes_used: number | null
@@ -844,7 +894,9 @@ export type Database = {
           total_sites_live: number | null
           trial_code: string | null
           trial_end_date: string | null
+          trial_ends_at: string | null
           trial_start_date: string | null
+          trial_started_at: string | null
           upi_id: string | null
           user_id: string
           vetting_notes: string | null
@@ -868,6 +920,8 @@ export type Database = {
           founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
+          growth_ends_at?: string | null
+          growth_started_at?: string | null
           id?: string
           monthly_capacity?: string | null
           monthly_changes_used?: number | null
@@ -894,7 +948,9 @@ export type Database = {
           total_sites_live?: number | null
           trial_code?: string | null
           trial_end_date?: string | null
+          trial_ends_at?: string | null
           trial_start_date?: string | null
+          trial_started_at?: string | null
           upi_id?: string | null
           user_id: string
           vetting_notes?: string | null
@@ -918,6 +974,8 @@ export type Database = {
           founding_member?: boolean | null
           free_months_earned?: number | null
           full_name?: string | null
+          growth_ends_at?: string | null
+          growth_started_at?: string | null
           id?: string
           monthly_capacity?: string | null
           monthly_changes_used?: number | null
@@ -944,7 +1002,9 @@ export type Database = {
           total_sites_live?: number | null
           trial_code?: string | null
           trial_end_date?: string | null
+          trial_ends_at?: string | null
           trial_start_date?: string | null
+          trial_started_at?: string | null
           upi_id?: string | null
           user_id?: string
           vetting_notes?: string | null
