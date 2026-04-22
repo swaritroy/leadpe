@@ -159,14 +159,20 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [deployments, setDeployments] = useState<Deployment[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [earnings, setEarnings] = useState<Earning[]>([]);
+  // Restore cached data immediately so revisits don't show a full reload
+  const CACHE_KEY = "leadpe_admin_cache_v1";
+  const cached = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch { return null; }
+  })();
+
+  const [loading, setLoading] = useState(!cached);
+  const [profiles, setProfiles] = useState<Profile[]>(cached?.profiles || []);
+  const [deployments, setDeployments] = useState<Deployment[]>(cached?.deployments || []);
+  const [leads, setLeads] = useState<Lead[]>(cached?.leads || []);
+  const [earnings, setEarnings] = useState<Earning[]>(cached?.earnings || []);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>([]);
-  const [availableCoders, setAvailableCoders] = useState<Profile[]>([]);
+  const [buildRequests, setBuildRequests] = useState<BuildRequest[]>(cached?.buildRequests || []);
+  const [availableCoders, setAvailableCoders] = useState<Profile[]>(cached?.availableCoders || []);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
   const [messageLog, setMessageLog] = useState<any[]>([]);
   const [copiedMsgId, setCopiedMsgId] = useState("");
@@ -206,9 +212,9 @@ export default function Admin() {
   }, [user, navigate, toast]);
   
   // Fetch all data
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     
     try {
       const { data: profilesData } = await (supabase.from("profiles") as any)
