@@ -171,6 +171,21 @@ export default function Admin() {
   const [leads, setLeads] = useState<Lead[]>(cached?.leads || []);
   const [earnings, setEarnings] = useState<Earning[]>(cached?.earnings || []);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [dismissedActionIds, setDismissedActionIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("admin_dismissed_actions");
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
+  const dismissActionItem = useCallback((id: string) => {
+    setDismissedActionIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem("admin_dismissed_actions", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, []);
+  const visibleActionItems = actionItems.filter(i => !dismissedActionIds.has(i.id));
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>(cached?.buildRequests || []);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>(cached?.availableCoders || []);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
@@ -575,10 +590,18 @@ export default function Admin() {
   
   const [vettingNotes, setVettingNotes] = useState<Record<string, string>>({});
 
-  const pendingVettingCoders = profiles.filter(p => p.role === "vibe_coder" && p.vetting_status === "pending_vetting" && p.onboarding_complete);
+  // Show all pending vibe coders (onboarding_complete may be false if they skipped the wizard;
+  // admin should still be able to approve/reject so they're not stuck).
+  const pendingVettingCoders = profiles.filter(p => p.role === "vibe_coder" && p.vetting_status === "pending_vetting");
 
   const handleApproveVetting = async (coder: Profile) => {
-    await (supabase.from("profiles") as any).update({ vetting_status: "approved" }).eq("user_id", coder.user_id);
+    const { error: updErr } = await (supabase.from("profiles") as any)
+      .update({ vetting_status: "approved", onboarding_complete: true })
+      .eq("user_id", coder.user_id);
+    if (updErr) {
+      toast({ title: "Approval failed", description: updErr.message, variant: "destructive" });
+      return;
+    }
     // WhatsApp notification
     try {
       await supabase.functions.invoke("send-whatsapp", {
@@ -594,7 +617,13 @@ export default function Admin() {
 
   const handleRejectVetting = async (coder: Profile) => {
     const notes = vettingNotes[coder.id] || "Your test website needs improvement. Please ensure it's mobile responsive, professional, and well-structured.";
-    await (supabase.from("profiles") as any).update({ vetting_status: "rejected", vetting_notes: notes }).eq("user_id", coder.user_id);
+    const { error: rejErr } = await (supabase.from("profiles") as any)
+      .update({ vetting_status: "rejected", vetting_notes: notes })
+      .eq("user_id", coder.user_id);
+    if (rejErr) {
+      toast({ title: "Rejection failed", description: rejErr.message, variant: "destructive" });
+      return;
+    }
     // WhatsApp notification
     try {
       await supabase.functions.invoke("send-whatsapp", {
@@ -782,33 +811,53 @@ export default function Admin() {
             <button onClick={() => toggleSection("actions")} className="flex items-center gap-2 text-lg font-bold font-display">
               {expandedSections.has("actions") ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               🚨 Needs Your Attention
-              {actionItems.length > 0 && (
+              {visibleActionItems.length > 0 && (
                 <span className="ml-2 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: "#ef4444", color: "white" }}>
-                  {actionItems.length}
+                  {visibleActionItems.length}
                 </span>
               )}
             </button>
+            {dismissedActionIds.size > 0 && (
+              <button
+                onClick={() => {
+                  setDismissedActionIds(new Set());
+                  try { localStorage.removeItem("admin_dismissed_actions"); } catch {}
+                }}
+                className="ml-auto text-xs px-3 py-1 rounded-full border border-border text-muted-foreground hover:bg-muted"
+              >
+                Restore dismissed ({dismissedActionIds.size})
+              </button>
+            )}
           </div>
           
           {expandedSections.has("actions") && (
             <div className="space-y-3">
-              {actionItems.length === 0 ? (
+              {visibleActionItems.length === 0 ? (
                 <div className="rounded-2xl border border-[#E0F2E9] p-6 text-center" style={{ backgroundColor: "#FFFFFF" }}>
                   <CheckCircle size={32} style={{ color: "#00C853" }} className="mx-auto mb-2" />
                   <p className="text-muted-foreground">All caught up! No urgent actions needed.</p>
                 </div>
               ) : (
-                actionItems.slice(0, 10).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-border p-4" style={{ 
+                visibleActionItems.slice(0, 10).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-border p-4 flex items-start gap-3" style={{ 
                     backgroundColor: "#FFFFFF",
                     borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
                   }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
-                      <span className="font-semibold">{item.title}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
+                        <span className="font-semibold">{item.title}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.businessName}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{item.businessName}</p>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <button
+                      onClick={() => dismissActionItem(item.id)}
+                      className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      title="Dismiss"
+                    >
+                      Dismiss
+                    </button>
                   </div>
                 ))
               )}
@@ -1160,7 +1209,7 @@ export default function Admin() {
                             request.plan_selected === "growth" ? "bg-green-500/20 text-green-500" :
                             "bg-purple-500/20 text-purple-500"
                           }`}>
-                            {request.plan_selected.toUpperCase()}
+                            {(request.plan_selected || "basic").toUpperCase()}
                           </span>
                         </td>
                         <td className="p-4">
@@ -1237,7 +1286,7 @@ export default function Admin() {
                     <div className="text-xs text-muted-foreground space-y-1 mb-3">
                       <div>{request.business_type} • {request.city}</div>
                       <div>Owner: {request.owner_name}</div>
-                      <div>Plan: {request.plan_selected.toUpperCase()}</div>
+                      <div>Plan: {(request.plan_selected || "basic").toUpperCase()}</div>
                       <div>Coder: {request.coder_name || "Unassigned"}</div>
                       <div className="flex items-center gap-1">
                         <Clock size={10} />
