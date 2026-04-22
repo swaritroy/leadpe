@@ -7,7 +7,7 @@ const Footer = () => (
       <div className="flex flex-col items-center gap-6">
         <div className="flex items-center gap-3">
           <LeadPeLogo theme="light" size="sm" />
-          <span className="text-sm" style={{ color: "#666" }}>India's AI-powered website platform</span>
+          <span className="text-sm font-medium" style={{ color: "#00C853" }}>Website Nahi? Customer Nahi. — LeadPe 🌱</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 text-sm" style={{ color: "#666" }}>
           <Link to="/about" className="hover:underline">About</Link>

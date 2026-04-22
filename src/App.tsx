@@ -37,6 +37,7 @@ const Payment = lazy(() => import("./pages/Payment"));
 const DevDashboard = lazy(() => import("./pages/DevDashboard"));
 const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminMessages = lazy(() => import("./pages/AdminMessages"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
 const queryClient = new QueryClient();
@@ -120,6 +121,11 @@ const AppContent = () => {
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Admin />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/messages" element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminMessages />
               </ProtectedRoute>
             } />
 

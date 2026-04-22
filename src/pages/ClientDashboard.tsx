@@ -13,6 +13,7 @@ import StateCLive from "@/components/dashboard/StateCLive";
 import StateExpired from "@/components/dashboard/StateExpired";
 import StateDeployFailed from "@/components/dashboard/StateDeployFailed";
 import SubscriptionRenewalCard from "@/components/dashboard/SubscriptionRenewalCard";
+import PlanBanner from "@/components/PlanBanner";
 
 interface Lead {
   id: string;
