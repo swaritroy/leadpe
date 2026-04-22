@@ -19,4 +19,17 @@ Disallow: /payment
 Disallow: /checkout/
 Disallow: /demo/
 
+# AI crawlers welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://leadpe.tech/sitemap.xml
