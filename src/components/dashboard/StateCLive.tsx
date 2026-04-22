@@ -263,7 +263,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
 
   // Use subdomain from profile, fallback to slug
   const subdomain = (profile as any)?.subdomain || business?.slug || profile?.business_name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "";
-  const liveUrl = subdomain ? `https://${subdomain}.leadpe.tech` : (buildRequest?.deploy_url || buildRequest?.live_url || "");
+  const liveUrl = subdomain ? `https://${subdomain}.leadpe.online` : (buildRequest?.deploy_url || buildRequest?.live_url || "");
 
   if (!liveUrl || buildRequest?.status !== "live") return null;
 
@@ -359,7 +359,7 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
       >
         <p style={{ fontFamily: font.body, fontSize: 13, color: "#999", marginBottom: 4 }}>Your website</p>
         <p style={{ fontFamily: font.heading, fontSize: 18, fontWeight: 700, color: "#1A1A1A", wordBreak: "break-all" }}>
-          {subdomain}.leadpe.tech
+          {subdomain}.leadpe.online
         </p>
         <button onClick={() => window.open(liveUrl, "_blank")}
           style={{

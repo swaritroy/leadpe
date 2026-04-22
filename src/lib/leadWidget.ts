@@ -21,7 +21,7 @@ export function generateLeadWidgetCode(businessData: {
     <input id="lp-interest" type="text" placeholder="What are you looking for?" style="width:100%;padding:12px 16px;border:1px solid #E0E0E0;border-radius:10px;font-size:16px;margin-bottom:14px;box-sizing:border-box;outline:none"/>
     <button id="lp-submit" onclick="lpSubmitLead()" style="width:100%;background:#00C853;color:white;border:none;border-radius:10px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer;margin-bottom:8px">Get Callback 📲</button>
     <button id="lp-vcf" onclick="lpDownloadVCF()" disabled style="width:100%;background:#E0E0E0;color:#999;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:not-allowed">📇 Save Contact Card (Enter phone first)</button>
-    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Built with LeadPe 🌱 — <a href="https://leadpe.tech" target="_blank" style="color:#00C853;text-decoration:none;font-weight:600">leadpe.tech</a></p>
+    <p style="text-align:center;margin:12px 0 0;font-size:11px;color:#999">Built with LeadPe 🌱 — <a href="https://leadpe.online" target="_blank" style="color:#00C853;text-decoration:none;font-weight:600">leadpe.online</a></p>
   </div>
 
   <!-- ============ MODULE 3: SMART QUOTE CALCULATOR ============ -->

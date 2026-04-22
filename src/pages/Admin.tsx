@@ -632,7 +632,7 @@ export default function Admin() {
           .single();
 
         if (prof?.whatsapp_number) {
-          const siteUrl = prof.subdomain ? `${prof.subdomain}.leadpe.tech` : "leadpe.tech/dashboard";
+          const siteUrl = prof.subdomain ? `${prof.subdomain}.leadpe.online` : "leadpe.online/dashboard";
           try {
             await supabase.functions.invoke("send-whatsapp", {
               body: {

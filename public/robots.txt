@@ -32,4 +32,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://leadpe.tech/sitemap.xml
+Sitemap: https://leadpe.online/sitemap.xml

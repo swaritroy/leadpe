@@ -185,7 +185,7 @@ serve(async (req) => {
             headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               to: data.ownerWhatsapp,
-              message: `Your website preview is ready! 🎉 Login to review it: leadpe.tech`,
+              message: `Your website preview is ready! 🎉 Login to review it: leadpe.online`,
             }),
           });
         } catch (e) {
@@ -267,12 +267,12 @@ serve(async (req) => {
       const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
       const projectName = `leadpe-${bName}-${bCity}`.replace(/-+/g, "-").replace(/-$/, "");
 
-      // ⚠️ DNS for *.leadpe.tech is not propagated yet.
+      // ⚠️ DNS for *.leadpe.online is not propagated yet.
       // Temporarily serve live sites on the Vercel-assigned subdomain
       // ({projectName}.vercel.app). Once DNS is healthy, flip USE_CUSTOM_DOMAIN
-      // to true (or remove the guard) to attach {subdomain}.leadpe.tech.
+      // to true (or remove the guard) to attach {subdomain}.leadpe.online.
       const USE_CUSTOM_DOMAIN = false;
-      const customDomain = `${subdomain}.leadpe.tech`;
+      const customDomain = `${subdomain}.leadpe.online`;
       const vercelDomain = `${projectName}.vercel.app`;
       const liveUrl = USE_CUSTOM_DOMAIN
         ? `https://${customDomain}`

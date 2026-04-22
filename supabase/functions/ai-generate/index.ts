@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const ALLOWED_ORIGINS = [
   "https://leadpe.lovable.app",
   "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
-  "https://leadpe.tech",
+  "https://leadpe.online",
 ];
 
 function getCorsHeaders(req: Request) {
@@ -266,7 +266,7 @@ CRITICAL RULES:
 3. Without this widget, the website is COMPLETELY USELESS — it is the core lead generation component
 4. Never generate generic websites — every website must feel custom-built for the specific business
 5. Always enhance client-provided content into professional, persuasive language
-6. Include the viral footer: "Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+6. Include the viral footer: "Built with LeadPe 🌱 — Get your free website at leadpe.online"
 7. Follow mobile-first design — 70% of Indian users are on mobile
 8. Every section needs specific content suggestions, not just placeholders
 9. Include conversion optimization tips throughout
@@ -412,7 +412,7 @@ In index.html <head>:
 <meta property="og:type" content="website">
 <meta property="og:locale" content="en_IN">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://SUBDOMAIN.leadpe.tech">
+<link rel="canonical" href="https://SUBDOMAIN.leadpe.online">
 
 Heading structure:
 - H1: Main headline (only ONE per page), must include ${data.city}
@@ -509,10 +509,10 @@ Option B: Create a React component that:
 
 At the very bottom of every page footer, add this line:
 Small gray text, centered:
-"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+"Built with LeadPe 🌱 — Get your free website at leadpe.online"
 - Font size: 12px
 - Color: #999999
-- "leadpe.tech" must be a clickable <a> link to https://leadpe.tech (target="_blank")
+- "leadpe.online" must be a clickable <a> link to https://leadpe.online (target="_blank")
 - This MUST appear on EVERY page of the website
 - Do NOT remove or hide this credit line
 
@@ -612,7 +612,7 @@ ${data.photos_urls ? "□ Client's actual photos used (NOT replaced with stock)"
 □ SEO title is custom (NOT "Vite + React" or "React App")
 □ Meta description is 80+ characters, includes ${data.city}
 □ JSON-LD LocalBusiness schema in <head>
-□ Footer has "Built with LeadPe 🌱" credit line with link to leadpe.tech
+□ Footer has "Built with LeadPe 🌱" credit line with link to leadpe.online
 □ Demo mode: VITE_LEADPE_MODE check implemented
 □ Framer Motion subtle animations on scroll
 □ All buttons 48px+ height on mobile

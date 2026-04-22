@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const SITE_URL = "https://leadpe.tech";
+const SITE_URL = "https://leadpe.online";
 
 const STATIC_ROUTES = [
   { loc: "/", priority: "1.0", changefreq: "daily" },
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     for (const b of businesses ?? []) {
       const slug = (b as { slug: string; updated_at: string | null }).slug;
       const lastmod = (b as { updated_at: string | null }).updated_at?.slice(0, 10) ?? today;
-      urls.push(`<url><loc>https://${slug}.leadpe.tech/</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`);
+      urls.push(`<url><loc>https://${slug}.leadpe.online/</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`);
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

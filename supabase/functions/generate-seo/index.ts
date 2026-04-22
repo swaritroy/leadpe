@@ -238,7 +238,7 @@ In index.html <head>:
 <meta property="og:description" content="${seoData.meta_description || ""}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="en_IN">
-<link rel="canonical" href="https://SUBDOMAIN.leadpe.tech">
+<link rel="canonical" href="https://SUBDOMAIN.leadpe.online">
 
 LocalBusiness Schema JSON-LD in <head>:
 <script type="application/ld+json">
@@ -309,10 +309,10 @@ VIRAL FOOTER (REQUIRED ON EVERY PAGE)
 ═══════════════════════════════════════════════════════
 At the very bottom of every page footer, add this line:
 Small gray text, centered:
-"Built with LeadPe 🌱 — Get your free website at leadpe.tech"
+"Built with LeadPe 🌱 — Get your free website at leadpe.online"
 - Font size: 12px
 - Color: #999999
-- "leadpe.tech" must be a clickable link to https://leadpe.tech (opens in new tab)
+- "leadpe.online" must be a clickable link to https://leadpe.online (opens in new tab)
 - This MUST appear on EVERY page of the website
 - Do NOT remove or hide this credit line
 

@@ -6,7 +6,7 @@ function getCorsHeaders(req: Request) {
   const isAllowed =
     /\.lovable\.app$/.test(origin) ||
     /\.lovableproject\.com$/.test(origin) ||
-    origin === "https://leadpe.tech" ||
+    origin === "https://leadpe.online" ||
     /\.leadpe\.tech$/.test(origin);
   const allowedOrigin = isAllowed ? origin : "*";
   return {
