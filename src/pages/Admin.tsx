@@ -776,21 +776,16 @@ export default function Admin() {
                 </div>
               ) : (
                 actionItems.slice(0, 10).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-border p-4 flex flex-col md:flex-row md:items-center justify-between gap-4" style={{ 
+                  <div key={item.id} className="rounded-xl border border-border p-4" style={{ 
                     backgroundColor: "#FFFFFF",
                     borderColor: item.priority === "high" ? "#ef4444" : item.priority === "medium" ? "#eab308" : undefined 
                   }}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
-                        <span className="font-semibold">{item.title}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.businessName}</p>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`w-2 h-2 rounded-full ${item.priority === "high" ? "bg-red-500" : item.priority === "medium" ? "bg-yellow-500" : "bg-blue-500"}`} />
+                      <span className="font-semibold">{item.title}</span>
                     </div>
-                    <Button onClick={() => sendWhatsApp(item.whatsapp, item.action)} className="h-10 px-4 rounded-lg text-black font-medium whitespace-nowrap" style={{ backgroundColor: "#00C853" }}>
-                      <MessageCircle size={16} className="mr-2" /> WhatsApp
-                    </Button>
+                    <p className="text-sm text-muted-foreground">{item.businessName}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 ))
               )}
