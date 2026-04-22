@@ -575,10 +575,18 @@ export default function Admin() {
   
   const [vettingNotes, setVettingNotes] = useState<Record<string, string>>({});
 
-  const pendingVettingCoders = profiles.filter(p => p.role === "vibe_coder" && p.vetting_status === "pending_vetting" && p.onboarding_complete);
+  // Show all pending vibe coders (onboarding_complete may be false if they skipped the wizard;
+  // admin should still be able to approve/reject so they're not stuck).
+  const pendingVettingCoders = profiles.filter(p => p.role === "vibe_coder" && p.vetting_status === "pending_vetting");
 
   const handleApproveVetting = async (coder: Profile) => {
-    await (supabase.from("profiles") as any).update({ vetting_status: "approved" }).eq("user_id", coder.user_id);
+    const { error: updErr } = await (supabase.from("profiles") as any)
+      .update({ vetting_status: "approved", onboarding_complete: true })
+      .eq("user_id", coder.user_id);
+    if (updErr) {
+      toast({ title: "Approval failed", description: updErr.message, variant: "destructive" });
+      return;
+    }
     // WhatsApp notification
     try {
       await supabase.functions.invoke("send-whatsapp", {
@@ -594,7 +602,13 @@ export default function Admin() {
 
   const handleRejectVetting = async (coder: Profile) => {
     const notes = vettingNotes[coder.id] || "Your test website needs improvement. Please ensure it's mobile responsive, professional, and well-structured.";
-    await (supabase.from("profiles") as any).update({ vetting_status: "rejected", vetting_notes: notes }).eq("user_id", coder.user_id);
+    const { error: rejErr } = await (supabase.from("profiles") as any)
+      .update({ vetting_status: "rejected", vetting_notes: notes })
+      .eq("user_id", coder.user_id);
+    if (rejErr) {
+      toast({ title: "Rejection failed", description: rejErr.message, variant: "destructive" });
+      return;
+    }
     // WhatsApp notification
     try {
       await supabase.functions.invoke("send-whatsapp", {
@@ -1160,7 +1174,7 @@ export default function Admin() {
                             request.plan_selected === "growth" ? "bg-green-500/20 text-green-500" :
                             "bg-purple-500/20 text-purple-500"
                           }`}>
-                            {request.plan_selected.toUpperCase()}
+                            {(request.plan_selected || "basic").toUpperCase()}
                           </span>
                         </td>
                         <td className="p-4">
@@ -1237,7 +1251,7 @@ export default function Admin() {
                     <div className="text-xs text-muted-foreground space-y-1 mb-3">
                       <div>{request.business_type} • {request.city}</div>
                       <div>Owner: {request.owner_name}</div>
-                      <div>Plan: {request.plan_selected.toUpperCase()}</div>
+                      <div>Plan: {(request.plan_selected || "basic").toUpperCase()}</div>
                       <div>Coder: {request.coder_name || "Unassigned"}</div>
                       <div className="flex items-center gap-1">
                         <Clock size={10} />
