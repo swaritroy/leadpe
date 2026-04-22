@@ -93,6 +93,17 @@ export default function Index() {
         title="LeadPe | AI-Powered Website Distribution for Local Businesses"
         description="India's AI-Powered Digital Distribution. Live in 48 Hours. Pay Only for Results. Professional websites with WhatsApp leads from ₹800."
         path="/"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            { "@type": "Question", name: "How much does a website cost on LeadPe?", acceptedAnswer: { "@type": "Answer", text: "A Basic LeadPe website costs ₹800 one-time, delivered in 48 hours. The Growth Plan is ₹299/month for WhatsApp lead delivery and customer features." } },
+            { "@type": "Question", name: "How long does it take to build my website?", acceptedAnswer: { "@type": "Answer", text: "48 hours. Your professional AI-built business website goes live in two days from order confirmation." } },
+            { "@type": "Question", name: "How do customers contact me?", acceptedAnswer: { "@type": "Answer", text: "Every customer inquiry from your LeadPe website is delivered directly to your WhatsApp in real time." } },
+            { "@type": "Question", name: "Will my website always stay live?", acceptedAnswer: { "@type": "Answer", text: "Yes. Your LeadPe website stays live forever on the Free Forever plan — we never take it down." } },
+            { "@type": "Question", name: "Can I use my own domain name?", acceptedAnswer: { "@type": "Answer", text: "Yes. Growth Plan users can connect their own custom domain (e.g., yourbusiness.com) from the dashboard." } },
+          ],
+        }}
       />
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white border-b" style={{ borderColor: "#E0E0E0", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
