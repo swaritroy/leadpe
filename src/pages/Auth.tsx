@@ -157,17 +157,19 @@ export default function Auth() {
         .update({ whatsapp_number: caPhone })
         .eq("user_id", data.user.id);
 
-      // Admin alert + queue welcome message for client
-      notifyAdmin(
-        "business_signup",
-        { name: caName.trim(), phone: caPhone, city: "-" },
-        {
-          to: caPhone,
-          message: `Welcome to LeadPe, ${caName.trim()}! 🎉\n\nYour free trial is active. We'll have your website live in 48 hours.\n\nReply here anytime — LeadPe Team 🌱`,
-          type: "welcome",
-          client_name: caName.trim(),
-        }
-      );
+      // Admin alert + queue welcome message for client (await so request flushes before redirect)
+      try {
+        await notifyAdmin(
+          "business_signup",
+          { name: caName.trim(), phone: caPhone, city: "-" },
+          {
+            to: caPhone,
+            message: `Welcome to LeadPe, ${caName.trim()}! 🎉\n\nYour free trial is active. We'll have your website live in 48 hours.\n\nReply here anytime — LeadPe Team 🌱`,
+            type: "welcome",
+            client_name: caName.trim(),
+          }
+        );
+      } catch (e) { console.log("notifyAdmin failed:", e); }
 
       await checkProfileAndRedirect(data.user.id);
     }

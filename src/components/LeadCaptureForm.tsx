@@ -101,22 +101,24 @@ export default function LeadCaptureForm({ businessId, businessName, ownerWhatsap
         'hinglish'
       );
 
-      // Admin alert + queue "new lead" message for the business owner in Outbox
-      notifyAdmin(
-        "new_lead",
-        {
-          business_name: businessName,
-          customer_name: formData.name,
-          phone: phoneDigits,
-        },
-        {
-          to: ownerWhatsapp,
-          message: `🔔 New lead for ${businessName}!\n\n${formData.name} (${phoneDigits})\nLooking for: ${formData.interest}\n${formData.message ? `Note: ${formData.message}\n` : ""}\nReply fast — LeadPe 🌱`,
-          type: "new_lead",
-          client_name: formData.name,
-          business_id: businessId,
-        }
-      );
+      // Admin alert + queue "new lead" message for the business owner in Outbox (await for reliability)
+      try {
+        await notifyAdmin(
+          "new_lead",
+          {
+            business_name: businessName,
+            customer_name: formData.name,
+            phone: phoneDigits,
+          },
+          {
+            to: ownerWhatsapp,
+            message: `🔔 New lead for ${businessName}!\n\n${formData.name} (${phoneDigits})\nLooking for: ${formData.interest}\n${formData.message ? `Note: ${formData.message}\n` : ""}\nReply fast — LeadPe 🌱`,
+            type: "new_lead",
+            client_name: formData.name,
+            business_id: businessId,
+          }
+        );
+      } catch (e) { console.log("notifyAdmin failed:", e); }
 
       setSuccess(true);
     } catch (err) {

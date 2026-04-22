@@ -348,22 +348,24 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
         const coderEarn = request.coder_earning || Math.round((request.package_price || 800) * 0.60);
         await updateCoderEarnings(userId, { id: request.id, coder_earning: coderEarn, business_name: request.business_name });
 
-        // Admin alert via Twilio + queue "demo ready" client message in Outbox
-        notifyAdmin(
-          "demo_ready",
-          {
-            business_name: request.business_name,
-            demo_url: deployResult.deployUrl,
-            coder: profile?.full_name,
-          },
-          {
-            to: request.owner_whatsapp,
-            message: `🎉 Your website preview is ready!\n\n${request.business_name}\n🔗 ${deployResult.deployUrl}\n\nLogin to your LeadPe dashboard to review.\nLeadPe 🌱`,
-            type: "demo_ready",
-            client_name: request.owner_name,
-            business_id: request.business_id,
-          }
-        );
+        // Admin alert via Twilio + queue "demo ready" client message in Outbox (await for reliability)
+        try {
+          await notifyAdmin(
+            "demo_ready",
+            {
+              business_name: request.business_name,
+              demo_url: deployResult.deployUrl,
+              coder: profile?.full_name,
+            },
+            {
+              to: request.owner_whatsapp,
+              message: `🎉 Your website preview is ready!\n\n${request.business_name}\n🔗 ${deployResult.deployUrl}\n\nLogin to your LeadPe dashboard to review.\nLeadPe 🌱`,
+              type: "demo_ready",
+              client_name: request.owner_name,
+              business_id: request.business_id,
+            }
+          );
+        } catch (e) { console.log("notifyAdmin failed:", e); }
 
         toast({ title: "🚀 Deployed!", description: `${deployResult.deployUrl} — ₹${coderEarn} earned!` });
         onClose();

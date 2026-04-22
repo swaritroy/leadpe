@@ -90,17 +90,19 @@ export default function StudioAuth() {
         vetting_status: "pending_vetting",
       }).eq("user_id", data.user.id);
 
-      // Admin alert + queue welcome to dev
-      notifyAdmin(
-        "dev_signup",
-        { name: jName.trim(), email, city: jCity.trim() },
-        {
-          to: digits,
-          message: `Welcome to LeadPe Studio, ${jName.trim()}! 👨‍💻\n\nYour builder account is awaiting admin approval (usually within 24h). You'll get a message once approved.\n\nLeadPe Team 🌱`,
-          type: "welcome",
-          client_name: jName.trim(),
-        }
-      );
+      // Admin alert + queue welcome to dev (await so request flushes before redirect)
+      try {
+        await notifyAdmin(
+          "dev_signup",
+          { name: jName.trim(), email, city: jCity.trim() },
+          {
+            to: digits,
+            message: `Welcome to LeadPe Studio, ${jName.trim()}! 👨‍💻\n\nYour builder account is awaiting admin approval (usually within 24h). You'll get a message once approved.\n\nLeadPe Team 🌱`,
+            type: "welcome",
+            client_name: jName.trim(),
+          }
+        );
+      } catch (e) { console.log("notifyAdmin failed:", e); }
 
       await refreshRole();
       await refreshProfile();
