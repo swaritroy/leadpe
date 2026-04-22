@@ -152,7 +152,7 @@ export default function Index() {
               🇮🇳 Built for Indian Businesses
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leaing-[1.15] mb-6" style={{ color: "#1A1A1A", fontFamily: "Syne, sans-serif" }}>
-              Professional Website.<br />Starts at ₹800.<br />Customers on WhatsApp.
+              Professional Website.<br />Free to Start.<br />Customers on WhatsApp.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leaing-relaxed" style={{ color: "#666666" }}>
               We build your website in 48 hours. Every customer inquiry comes directly to your WhatsApp. 🔔
@@ -165,6 +165,9 @@ export default function Index() {
                 Already a member? Sign In
               </Button>
             </div>
+            <p className="text-sm md:text-base font-medium mb-6" style={{ color: "#00C853" }}>
+              ✅ 100% Free to Start • No credit card • Pay only if you love the demo
+            </p>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm" style={{ color: "#666666" }}>
               {[
                 { icon: Lock, text: "No credit card" },
