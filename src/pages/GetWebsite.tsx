@@ -259,58 +259,66 @@ export default function GetWebsite() {
 async function submitLeadPeLead(){var n=document.getElementById('lp-name').value;var p=document.getElementById('lp-phone').value;var i=document.getElementById('lp-interest').value;if(!n||!p){alert('Please fill name and phone');return}var btn=document.querySelector('#leadpe-widget button');btn.textContent='Sending...';btn.disabled=true;try{var res=await fetch('${supabaseUrl}/rest/v1/leads',{method:'POST',headers:{'Content-Type':'application/json','apikey':'${supabaseKey}','Authorization':'Bearer ${supabaseKey}','Prefer':'return=minimal'},body:JSON.stringify({business_id:'${user?.id}',customer_name:n,phone:p.replace(/\\D/g,''),message:i,source:'website',status:'new'})});if(res.ok){document.getElementById('leadpe-widget').innerHTML='<div style="text-align:center;padding:40px 20px;background:#F0FFF4;border-radius:16px;border:2px solid #00C853"><div style="font-size:48px">✅</div><h3 style="color:#1A1A1A">Request Received!</h3><p style="color:#666">We will call you back within 2 hours.</p></div>'}else{btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}catch(e){btn.textContent='Get Callback 📲';btn.disabled=false;alert('Error. Please try again.')}}
 </script>`;
 
-      // 3. Generate AI build prompt with image URLs
-      let aiPrompt = "";
-      try {
-        const { data: aiData } = await supabase.functions.invoke("ai-generate", {
-          body: {
-            type: "build_prompt",
-            data: {
-              business_name: businessName,
-              business_type: businessType,
-              city: city,
-              whatsapp_number: customerWhatsapp,
-              owner_name: customerName,
-              one_line_description: oneLineDesc,
-              color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
-              special_requirements: additionalDetails || "",
-              package_name: pkg.name,
-              package_features: getFeaturesForCategory(businessType)[getPackageTierFromId(selectedPackage)].join(", "),
-              lead_widget_html: leadWidgetHtml,
-              logo_url: logoUrl || "",
-              photos_urls: photoUrls.join(", "),
-            },
-          },
-        });
-        aiPrompt = aiData?.result || "";
-      } catch {
-        console.log("AI prompt generation failed, using fallback");
-      }
+      // 3. Build a fast fallback prompt immediately (AI prompt is enriched in the background after insert)
+      const fallbackPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n${logoUrl ? `\nLOGO: ${logoUrl}` : ""}\n${photoUrls.length > 0 ? `\nPHOTOS: ${photoUrls.join(", ")}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
 
-      if (!aiPrompt) {
-        aiPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n${logoUrl ? `\nLOGO: ${logoUrl}` : ""}\n${photoUrls.length > 0 ? `\nPHOTOS: ${photoUrls.join(", ")}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
-      }
-
-      // 4. Insert build request
+      // 4. Insert build request immediately (don't block on Gemini)
       const hardDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-      const { error: brError } = await supabase.from("build_requests").insert({
-        business_id: user?.id || null,
-        business_name: businessName,
-        business_type: businessType,
-        city: city,
-        owner_name: customerName,
-        owner_whatsapp: customerWhatsapp,
-        package_id: selectedPackage,
-        package_price: pkg.price,
-        coder_earning: pkg.coderEarning,
-        ai_prompt: aiPrompt,
-        special_requirements: additionalDetails || null,
-        status: "pending",
-        hard_deadline: hardDeadline,
-        deadline: hardDeadline,
-      });
+      const { data: brRow, error: brError } = await supabase
+        .from("build_requests")
+        .insert({
+          business_id: user?.id || null,
+          business_name: businessName,
+          business_type: businessType,
+          city: city,
+          owner_name: customerName,
+          owner_whatsapp: customerWhatsapp,
+          package_id: selectedPackage,
+          package_price: pkg.price,
+          coder_earning: pkg.coderEarning,
+          ai_prompt: fallbackPrompt,
+          special_requirements: additionalDetails || null,
+          status: "pending",
+          hard_deadline: hardDeadline,
+          deadline: hardDeadline,
+        })
+        .select("id")
+        .single();
 
       if (brError) throw brError;
+
+      // 4b. Background: enrich the AI prompt via Gemini and update the row (don't block UI)
+      const buildRequestId = brRow?.id;
+      if (buildRequestId) {
+        supabase.functions
+          .invoke("ai-generate", {
+            body: {
+              type: "build_prompt",
+              data: {
+                business_name: businessName,
+                business_type: businessType,
+                city: city,
+                whatsapp_number: customerWhatsapp,
+                owner_name: customerName,
+                one_line_description: oneLineDesc,
+                color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
+                special_requirements: additionalDetails || "",
+                package_name: pkg.name,
+                package_features: getFeaturesForCategory(businessType)[getPackageTierFromId(selectedPackage)].join(", "),
+                lead_widget_html: leadWidgetHtml,
+                logo_url: logoUrl || "",
+                photos_urls: photoUrls.join(", "),
+              },
+            },
+          })
+          .then(({ data: aiData }) => {
+            const enriched = aiData?.result;
+            if (enriched) {
+              supabase.from("build_requests").update({ ai_prompt: enriched }).eq("id", buildRequestId);
+            }
+          })
+          .catch(() => console.log("AI prompt enrichment failed (build_request still usable)"));
+      }
 
       // 5. Create businesses row (required for leads RLS)
       if (user) {
@@ -343,23 +351,28 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           .eq("user_id", user.id);
       }
 
-      // 7. Notify admin + queue welcome to client
-      notifyAdmin(
-        "order_placed",
-        {
-          business_name: businessName,
-          package_id: selectedPackage,
-          amount: pkg.price,
-          city,
-        },
-        {
-          to: customerWhatsapp,
-          message: `Your LeadPe order is in! 🎉\n\n${businessName} (${pkg.name}) — we're starting your build now. You'll get the demo link in 48 hours.\n\nLeadPe Team 🌱`,
-          type: "welcome",
-          client_name: customerName,
-          business_id: user?.id,
-        }
-      );
+      // 7. Notify admin + queue welcome to client (await so the request actually flushes before redirect)
+      try {
+        await notifyAdmin(
+          "order_placed",
+          {
+            business_name: businessName,
+            package_id: selectedPackage,
+            amount: pkg.price,
+            city,
+            phone: customerWhatsapp,
+          },
+          {
+            to: customerWhatsapp,
+            message: `Your LeadPe order is in! 🎉\n\n${businessName} (${pkg.name}) — we're starting your build now. You'll get the demo link in 48 hours.\n\nLeadPe Team 🌱`,
+            type: "welcome",
+            client_name: customerName,
+            business_id: user?.id,
+          }
+        );
+      } catch (e) {
+        console.log("notifyAdmin failed (non-blocking):", e);
+      }
 
       // 8. Show success animation then redirect
       setShowSuccess(true);
