@@ -94,7 +94,7 @@ export default function StudioAuth() {
       try {
         await notifyAdmin(
           "dev_signup",
-          { name: jName.trim(), email, city: jCity.trim() },
+          { name: jName.trim(), email, city: jCity.trim(), phone: digits, whatsapp: digits, upi_id: jUpi.trim() },
           {
             to: digits,
             message: `Welcome to LeadPe Studio, ${jName.trim()}! 👨‍💻\n\nYour builder account is awaiting admin approval (usually within 24h). You'll get a message once approved.\n\nLeadPe Team 🌱`,

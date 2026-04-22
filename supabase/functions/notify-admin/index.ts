@@ -13,21 +13,27 @@ const corsHeaders = {
 const ADMIN_PHONE = "919973383902"; // E.164 without +
 
 function fmt(eventType: string, p: Record<string, any>): string {
+  // Normalize WhatsApp / phone field across all events
+  const wa = p.whatsapp || p.phone || p.owner_whatsapp || p.customer_whatsapp || p.to || "-";
+  const waLine = wa && wa !== "-" ? `\n📱 WhatsApp: +${String(wa).replace(/\D/g, "")}` : "";
+  const emailLine = p.email ? `\n✉️ ${p.email}` : "";
+  const cityLine = p.city ? `\n📍 ${p.city}` : "";
+
   const lines: Record<string, string> = {
-    business_signup: `🆕 NEW BUSINESS SIGNUP\n${p.name || "?"} • ${p.city || "?"}\n📱 ${p.phone || "-"}`,
-    dev_signup: `👨‍💻 NEW DEV SIGNUP (awaiting approval)\n${p.name || "?"} • ${p.email || "-"}\nCity: ${p.city || "-"}`,
-    order_placed: `🛒 NEW ORDER\n${p.business_name || "?"} • ${p.package_id || "?"}\n₹${p.amount || 0} • ${p.city || "-"}`,
-    coder_accepted: `✅ BUILD ACCEPTED\nCoder: ${p.coder_name || "?"}\nFor: ${p.business_name || "?"}\nDeadline: ${p.deadline || "48h"}`,
-    demo_ready: `🎨 DEMO READY\n${p.business_name || "?"}\n🔗 ${p.demo_url || "-"}`,
-    website_live: `🚀 WEBSITE LIVE\n${p.business_name || "?"}\n🔗 ${p.live_url || "-"}`,
-    payment_received: `💰 PAYMENT RECEIVED ₹${p.amount || 0}\n${p.business_name || "?"} • ${p.plan || "-"}`,
-    new_lead: `🔔 NEW LEAD for ${p.business_name || "?"}\n${p.customer_name || "?"} • ${p.phone || "-"}`,
-    revision_requested: `✏️ REVISION REQUESTED (#${p.count || 1})\n${p.business_name || "?"}`,
-    deadline_warning: `⏰ DEADLINE ALERT: ${p.business_name || "?"}\n${p.message || ""}`,
+    business_signup: `🆕 NEW BUSINESS SIGNUP\n👤 ${p.name || "?"}${cityLine}${waLine}${emailLine}`,
+    dev_signup: `👨‍💻 NEW DEV SIGNUP (awaiting approval)\n👤 ${p.name || "?"}${cityLine}${waLine}${emailLine}\n💼 UPI: ${p.upi_id || "-"}`,
+    order_placed: `🛒 NEW ORDER\n🏢 ${p.business_name || "?"}\n👤 Owner: ${p.owner_name || p.customer_name || "-"}${waLine}\n📦 Package: ${p.package_id || "?"} • ₹${p.amount || 0}${cityLine}\n🎯 Type: ${p.business_type || "-"}`,
+    coder_accepted: `✅ BUILD ACCEPTED\n👨‍💻 Coder: ${p.coder_name || "?"}${waLine}\n🏢 For: ${p.business_name || "?"}\n⏱ Deadline: ${p.deadline || "48h"}`,
+    demo_ready: `🎨 DEMO READY\n🏢 ${p.business_name || "?"}${waLine}\n🔗 ${p.demo_url || "-"}`,
+    website_live: `🚀 WEBSITE LIVE\n🏢 ${p.business_name || "?"}${waLine}\n🔗 ${p.live_url || "-"}`,
+    payment_received: `💰 PAYMENT RECEIVED ₹${p.amount || 0}\n🏢 ${p.business_name || "?"}${waLine}\n📦 Plan: ${p.plan || "-"}`,
+    new_lead: `🔔 NEW LEAD for ${p.business_name || "?"}\n👤 ${p.customer_name || "?"}${waLine}${emailLine}\n💬 ${(p.message || "-").toString().slice(0, 120)}`,
+    revision_requested: `✏️ REVISION REQUESTED (#${p.count || 1})\n🏢 ${p.business_name || "?"}${waLine}\n💬 ${(p.feedback || p.message || "-").toString().slice(0, 200)}`,
+    deadline_warning: `⏰ DEADLINE ALERT\n🏢 ${p.business_name || "?"}${waLine}\n${p.message || ""}`,
     daily_summary: `📊 DAILY SUMMARY\n🆕 Signups: ${p.signups ?? 0}\n🛒 Orders: ${p.orders ?? 0}\n🎨 Demos: ${p.demos ?? 0}\n💰 Payments: ₹${p.payments ?? 0}\n📬 Outbox pending: ${p.outbox ?? 0}`,
     test: `🧪 TEST PING from LeadPe Admin Notifier\n${p.note || "If you received this, Twilio is configured correctly."}`,
   };
-  return lines[eventType] || `📢 ${eventType}\n${JSON.stringify(p).slice(0, 300)}`;
+  return lines[eventType] || `📢 ${eventType}${waLine}\n${JSON.stringify(p).slice(0, 300)}`;
 }
 
 async function twilioPost(
