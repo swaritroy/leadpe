@@ -171,6 +171,21 @@ export default function Admin() {
   const [leads, setLeads] = useState<Lead[]>(cached?.leads || []);
   const [earnings, setEarnings] = useState<Earning[]>(cached?.earnings || []);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [dismissedActionIds, setDismissedActionIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("admin_dismissed_actions");
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
+  const dismissActionItem = useCallback((id: string) => {
+    setDismissedActionIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem("admin_dismissed_actions", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, []);
+  const visibleActionItems = actionItems.filter(i => !dismissedActionIds.has(i.id));
   const [buildRequests, setBuildRequests] = useState<BuildRequest[]>(cached?.buildRequests || []);
   const [availableCoders, setAvailableCoders] = useState<Profile[]>(cached?.availableCoders || []);
   const [pendingMessages, setPendingMessages] = useState<any[]>([]);
