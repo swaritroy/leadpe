@@ -13,6 +13,7 @@ const Footer = () => (
           <Link to="/about" className="hover:underline">About</Link>
           <Link to="/services" className="hover:underline">Services</Link>
           <Link to="/contact" className="hover:underline">Contact</Link>
+          <Link to="/blog" className="hover:underline">Blog</Link>
           <Link to="/terms" className="hover:underline">Terms</Link>
           <Link to="/privacy" className="hover:underline">Privacy</Link>
           <Link to="/refund" className="hover:underline">Refund Policy</Link>

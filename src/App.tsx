@@ -29,6 +29,8 @@ import Services from "./pages/Services";
 import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 // Protected pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
@@ -70,6 +72,8 @@ const AppContent = () => {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/refund" element={<Refund />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/checkout/return" element={<CheckoutReturn />} />
 

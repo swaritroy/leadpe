@@ -170,6 +170,88 @@ export default function Index() {
         </div>
       </section>
 
+      {/* TRUSTED BY */}
+      <section className="py-14 bg-white border-b" style={{ borderColor: "#E0E0E0" }}>
+        <div className="container px-4">
+          <p className="text-center text-xs font-semibold tracking-widest uppercase mb-8" style={{ color: "#666666" }}>
+            Trusted by Growing Businesses Across India
+          </p>
+
+          {/* Logo strip — desktop grid, mobile horizontal scroll */}
+          <div className="flex md:grid md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 md:mx-0 md:px-0 max-w-5xl mx-auto">
+            {[
+              { name: "Shiva Study Centre", city: "Hajipur", emoji: "🎓", href: "https://www.shivastudycentre.org", live: true },
+              { name: "Doctor Clinic", city: "Coming soon", emoji: "🩺", live: false },
+              { name: "CA Office", city: "Coming soon", emoji: "📊", live: false },
+              { name: "Coaching Centre", city: "Coming soon", emoji: "📚", live: false },
+              { name: "Local Shop", city: "Coming soon", emoji: "🛍️", live: false },
+              { name: "Contractor", city: "Coming soon", emoji: "🔨", live: false },
+            ].map((b) => {
+              const inner = (
+                <div className="flex flex-col items-center justify-center text-center px-3 py-4 h-full">
+                  <div className="text-2xl mb-1">{b.emoji}</div>
+                  <div className="text-xs font-semibold leading-tight" style={{ color: b.live ? "#1A1A1A" : "#999999" }}>{b.name}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: b.live ? "#00C853" : "#BBBBBB" }}>
+                    {b.live ? "● LIVE" : b.city}
+                  </div>
+                </div>
+              );
+              const baseClass = "snap-start shrink-0 w-[140px] md:w-auto rounded-xl border bg-white transition-all";
+              return b.live ? (
+                <a
+                  key={b.name}
+                  href={b.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${baseClass} hover:-translate-y-0.5 hover:shadow-md cursor-pointer`}
+                  style={{ borderColor: "#00C853" }}
+                  aria-label={`Visit ${b.name} — live LeadPe website`}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={b.name} className={`${baseClass} opacity-70`} style={{ borderColor: "#E0E0E0" }}>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Proof card */}
+          <a
+            href="https://www.shivastudycentre.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 max-w-2xl mx-auto block rounded-2xl border-2 bg-white px-5 py-5 md:px-7 md:py-6 hover:-translate-y-0.5 transition-all min-h-[48px]"
+            style={{ borderColor: "#00C853", boxShadow: "0 4px 16px rgba(0,200,83,0.12)" }}
+            aria-label="Visit Shiva Study Centre — a real LeadPe client website"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-full" style={{ backgroundColor: "#E8F8EE", color: "#00A047" }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#00C853" }} />
+                Live Client Website
+              </span>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-bold text-base md:text-lg truncate" style={{ color: "#1A1A1A" }}>
+                  Shiva Study Centre — Hajipur, Bihar
+                </div>
+                <div className="text-xs md:text-sm mt-0.5" style={{ color: "#666666" }}>
+                  Built by LeadPe in 48 hours
+                </div>
+                <div className="text-sm mt-2 font-medium underline underline-offset-2 break-all" style={{ color: "#00C853" }}>
+                  www.shivastudycentre.org
+                </div>
+              </div>
+              <span className="inline-flex items-center justify-center gap-1.5 shrink-0 px-4 py-2.5 rounded-lg font-semibold text-sm text-white min-h-[44px]" style={{ backgroundColor: "#00C853" }}>
+                Visit <ArrowRight size={14} />
+              </span>
+            </div>
+          </a>
+        </div>
+      </section>
+
       {/* STATS */}
       <section className="py-16 bg-white">
         <div className="container px-4">
