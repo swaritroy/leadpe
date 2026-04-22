@@ -285,6 +285,18 @@ export default function Admin() {
         .eq("status", "pending_verification")
         .order("created_at", { ascending: false });
       setPendingPayments(paymentsData || []);
+      // Persist a lightweight cache so revisits feel instant
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          profiles: profilesData || [],
+          deployments: deploymentsData || [],
+          leads: leadsData || [],
+          earnings: earningsData || [],
+          buildRequests: buildRequestsData || [],
+          availableCoders: (profilesData || []).filter((p: any) => p.role === "vibe_coder"),
+          ts: Date.now(),
+        }));
+      } catch {}
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -364,9 +376,11 @@ export default function Admin() {
   };
   
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    // First load: silent if cache exists, else show loader
+    fetchData(!!cached);
+    const interval = setInterval(() => fetchData(true), 5 * 60 * 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData]);
   
   // Metrics
@@ -691,7 +705,7 @@ export default function Admin() {
             <span className="font-bold text-xl text-[#00C853]">Admin ⚡</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={fetchData} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
+            <button onClick={() => fetchData(true)} className="p-2 rounded-full hover:bg-white/5 transition-colors" title="Refresh data">
               <RefreshCw size={18} style={{ color: "#00E676" }} />
             </button>
             <span className="text-sm text-muted-foreground hidden sm:inline">
