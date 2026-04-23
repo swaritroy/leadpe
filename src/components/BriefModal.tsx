@@ -364,7 +364,14 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
       });
 
       if (!report.passed) {
-        setDeployError({ type: "quality_failed", message: `Score: ${report.score}/100`, detail: report.issues.join("\n") });
+        const detailParts: string[] = [];
+        if (report.issues?.length) detailParts.push(report.issues.join("\n"));
+        if (report.aiSuggestions) detailParts.push("\n— AI Suggestions —\n" + report.aiSuggestions);
+        setDeployError({
+          type: "quality_failed",
+          message: `Score: ${report.score}/100`,
+          detail: detailParts.join("\n") || "Quality check did not pass.",
+        });
         setSubmitting(false);
         return;
       }
@@ -451,7 +458,7 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+      className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center" onClick={onClose}>
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25 }}
         className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-[720px] sm:rounded-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}>
@@ -480,8 +487,8 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
           ))}
         </div>
 
-        {/* TAB CONTENT */}
-        <div className="flex-1 overflow-y-auto">
+        {/* TAB CONTENT — extra bottom padding on mobile so Submit button clears the dashboard's bottom nav and OS bars */}
+        <div className="flex-1 overflow-y-auto pb-[88px] sm:pb-0">
           {/* ═══ PROMPT TAB ═══ */}
           {activeTab === "prompt" && (
             <div className="p-4">
