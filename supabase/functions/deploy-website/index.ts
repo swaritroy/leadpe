@@ -91,6 +91,21 @@ serve(async (req) => {
       const projectData = await createResp.json();
       console.log("Project create response:", createResp.status);
 
+      // ★ FIX: catch project-create failures (except harmless "already exists")
+      if (!createResp.ok && projectData?.error?.code !== "project_already_exists") {
+        const code = projectData?.error?.code || `HTTP_${createResp.status}`;
+        const msg = projectData?.error?.message || "Vercel project creation failed";
+        return new Response(
+          JSON.stringify({
+            success: false,
+            stage: "project_create",
+            error: `${code}: ${msg}`,
+            hint: hintForCode(code, msg),
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
       // Step 2: Trigger deployment
       const deployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
         method: "POST",
@@ -105,14 +120,22 @@ serve(async (req) => {
       const deployData = await deployResp.json();
 
       if (!deployResp.ok) {
+        const code = deployData?.error?.code || `HTTP_${deployResp.status}`;
+        const msg = deployData?.error?.message || "Deployment trigger failed";
         return new Response(
-          JSON.stringify({ error: deployData.error?.message || "Deployment failed" }),
-          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          JSON.stringify({
+            success: false,
+            stage: "deploy_trigger",
+            error: `${code}: ${msg}`,
+            hint: hintForCode(code, msg),
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
       const deploymentId = deployData.id;
       const deployUrl = `https://${deployData.url}`;
+      const inspectorUrl = deployData.inspectorUrl || `https://vercel.com/deployments/${deploymentId}`;
 
       // Step 3: Poll deployment status (max 3 minutes)
       let finalState = "BUILDING";
@@ -129,13 +152,34 @@ serve(async (req) => {
           const statusData = await statusResp.json();
           finalState = statusData.readyState || statusData.state || "BUILDING";
           if (statusData.url) finalUrl = `https://${statusData.url}`;
-          
+
           // Capture build error details
           if (finalState === "ERROR") {
-            buildError = statusData.errorMessage || statusData.error?.message || "Build failed on Vercel";
+            buildError = statusData.errorMessage || statusData.error?.message || "";
+
+            // ★ FIX: fetch real build event logs for the actual webpack/vite/npm message
+            try {
+              const evResp = await fetch(
+                `${VERCEL_API}/v2/deployments/${deploymentId}/events?builds=1&direction=backward&limit=20`,
+                { headers }
+              );
+              if (evResp.ok) {
+                const events = await evResp.json();
+                const arr = Array.isArray(events) ? events : (events?.events || []);
+                const lastErr = arr.reverse().find((e: any) =>
+                  e?.type === "stderr" || e?.type === "error" || /error|failed/i.test(e?.text || e?.payload?.text || "")
+                );
+                const errText = lastErr?.text || lastErr?.payload?.text || "";
+                if (errText) buildError = buildError ? `${buildError}\n${errText}` : errText;
+              }
+            } catch (logErr) {
+              console.error("Could not fetch build events:", logErr);
+            }
+
+            if (!buildError) buildError = "Build failed on Vercel (no error message available)";
             console.error("Deployment ERROR:", buildError);
           }
-          
+
           if (finalState === "READY" || finalState === "ERROR") break;
         } catch (e) {
           console.error("Poll error:", e);
