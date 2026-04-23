@@ -205,6 +205,28 @@ export default function StudioAuth() {
             </div>
           )}
 
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading || !agreed}
+            className="w-full h-[48px] rounded-xl border flex items-center justify-center gap-3 transition-all disabled:opacity-60 mb-5"
+            style={{ borderColor: "#E0E0E0", backgroundColor: "#fff", color: "#1A1A1A", fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 15 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.55-.2-2.28H12v4.32h5.92a5.07 5.07 0 0 1-2.2 3.32v2.76h3.55c2.08-1.92 3.27-4.74 3.27-8.12z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.27-2.66l-3.55-2.76c-.98.66-2.24 1.05-3.72 1.05-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.94l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+            </svg>
+            {loading ? "Opening Google..." : "Continue with Google"}
+          </button>
+
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
+            <span style={{ fontSize: 12, color: "#999", fontFamily: "DM Sans, sans-serif" }}>or use email</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: "#E0E0E0" }} />
+          </div>
+
           <AnimatePresence mode="wait">
             {tab === "join" ? (
               <motion.form key="join" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleJoinSubmit} className="space-y-4">
