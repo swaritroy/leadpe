@@ -642,6 +642,20 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                             </ul>
                           )}
 
+                          {/* Not included (only when expanded) */}
+                          {expandedPkg === p.id && p.id === "basic" && (
+                            <div className="rounded-lg px-2.5 py-2 mb-2.5" style={{ backgroundColor: "#FFF5F5", border: "1px dashed #FCA5A5" }}>
+                              <p className="text-[10px] font-bold mb-1" style={{ color: "#B91C1C" }}>Not in Basic:</p>
+                              <p className="text-[10px]" style={{ color: "#7F1D1D" }}>✗ Booking calendar  ✗ Online payment  ✗ Login portal  ✗ Blog  ✗ Chatbot</p>
+                            </div>
+                          )}
+                          {expandedPkg === p.id && p.id === "standard" && (
+                            <div className="rounded-lg px-2.5 py-2 mb-2.5" style={{ backgroundColor: "#FFF5F5", border: "1px dashed #FCA5A5" }}>
+                              <p className="text-[10px] font-bold mb-1" style={{ color: "#B91C1C" }}>Not in Standard:</p>
+                              <p className="text-[10px]" style={{ color: "#7F1D1D" }}>✗ Online payment  ✗ Login portal  ✗ Live booking calendar</p>
+                            </div>
+                          )}
+
                           {/* Revision policy */}
                           <div className="rounded-lg px-2.5 py-1.5 mb-2.5" style={{ backgroundColor: "#F8F8F8" }}>
                             <p className="text-[10px]" style={{ color: "#999" }}>
