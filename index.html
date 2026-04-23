@@ -6,15 +6,12 @@
     <meta name="theme-color" content="#00C853" />
     <link rel="canonical" href="https://leadpe.online" />
 
-    <!-- Favicons (multi-size for Google mobile search + browsers + iOS) -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Favicon (LeadPe green logo) -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="application-name" content="LeadPe" />
     <meta name="apple-mobile-web-app-title" content="LeadPe" />
-
-    <!-- Sitelinks Searchbox / Site name signal for Google -->
     <meta name="site-name" content="LeadPe" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +19,8 @@
     <link rel="preconnect" href="https://vlmdctanuarrmngkrvng.supabase.co">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <title>LeadPe — Website Nahi? Customer Nahi.</title>
-    <meta name="description" content="LeadPe builds professional AI-powered websites for Indian local businesses in 48 hours. Customers directly on WhatsApp. Starting at ₹800." />
+    <title>LeadPe — Website Rs.800 | 48 Ghante | India</title>
+    <meta name="description" content="48 ghante mein website banwao. Rs.800 mein. Doctor, CA, coaching, shop sab ke liye. Customers seedha WhatsApp pe. Bihar, UP, Jharkhand." />
     <meta name="author" content="LeadPe" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="geo.region" content="IN-BR" />
@@ -32,31 +29,19 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="LeadPe" />
-    <meta property="og:title" content="LeadPe — Website Nahi? Customer Nahi." />
-    <meta property="og:description" content="Launch your AI-built business website in 48 hours. Pay only for results. Starting at ₹800." />
+    <meta property="og:title" content="LeadPe — Website Rs.800 | 48 Ghante | India" />
+    <meta property="og:description" content="48 ghante mein website banwao. Rs.800 mein. Customers seedha WhatsApp pe." />
     <meta property="og:url" content="https://leadpe.online" />
     <meta property="og:image" content="https://leadpe.online/og-default.jpg" />
     <meta property="og:locale" content="en_IN" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="LeadPe — Website Nahi? Customer Nahi." />
-    <meta name="twitter:description" content="Launch your AI-built business website in 48 hours. Starting at ₹800." />
+    <meta name="twitter:title" content="LeadPe — Website Rs.800 | 48 Ghante | India" />
+    <meta name="twitter:description" content="48 ghante mein website banwao. Rs.800 mein. Customers seedha WhatsApp pe." />
     <meta name="twitter:image" content="https://leadpe.online/og-default.jpg" />
 
-    <!-- JSON-LD: Standalone Organization with Logo (Google logo eligibility) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "LeadPe",
-      "alternateName": "LeadPe — AI Website Distribution",
-      "url": "https://leadpe.online",
-      "logo": "https://leadpe.online/logo.png"
-    }
-    </script>
-
-    <!-- JSON-LD: WebSite + Organization + Service -->
+    <!-- JSON-LD: Clean professional schema (no fake reviews) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -67,68 +52,142 @@
           "url": "https://leadpe.online",
           "name": "LeadPe",
           "description": "Website Nahi? Customer Nahi.",
-          "publisher": { "@id": "https://leadpe.online/#organization" },
+          "inLanguage": ["hi", "en-IN"],
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://leadpe.online/?s={search_term_string}",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://leadpe.online/?s={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
           }
         },
         {
           "@type": "Organization",
-          "@id": "https://leadpe.online/#organization",
+          "@id": "https://leadpe.online/#org",
+          "name": "LeadPe",
+          "alternateName": "leadpe",
+          "url": "https://leadpe.online",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://leadpe.online/favicon.svg",
+            "width": 32,
+            "height": 32
+          },
+          "description": "India ka AI-powered website platform. 48 ghante mein website. Rs.800 se. Customers seedha WhatsApp pe.",
+          "foundingDate": "2026",
+          "founder": {
+            "@type": "Person",
+            "name": "Swarit Roy",
+            "jobTitle": "CEO and Founder",
+            "worksFor": { "@id": "https://leadpe.online/#org" }
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Hajipur",
+            "addressLocality": "Hajipur",
+            "addressRegion": "Bihar",
+            "postalCode": "844101",
+            "addressCountry": "IN"
+          },
+          "areaServed": [
+            { "@type": "State", "name": "Bihar" },
+            { "@type": "State", "name": "Uttar Pradesh" },
+            { "@type": "State", "name": "Jharkhand" }
+          ],
+          "slogan": "Website Nahi? Customer Nahi.",
+          "sameAs": [
+            "https://www.instagram.com/leadpe",
+            "https://swarit.me"
+          ],
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Basic Website",
+              "price": "800",
+              "priceCurrency": "INR",
+              "description": "Professional website 48 ghante mein"
+            },
+            {
+              "@type": "Offer",
+              "name": "Growth Plan",
+              "price": "299",
+              "priceCurrency": "INR",
+              "description": "Monthly customers on WhatsApp"
+            }
+          ]
+        },
+        {
+          "@type": "LocalBusiness",
+          "@id": "https://leadpe.online/#local",
           "name": "LeadPe",
           "url": "https://leadpe.online",
-          "logo": "https://leadpe.online/logo.png",
-          "description": "India's AI-powered website distribution platform for local businesses.",
-          "foundingDate": "2026",
-          "founder": { "@type": "Person", "name": "Swarit Roy" },
+          "telephone": "+919973383902",
+          "email": "support@leadpe.online",
           "address": {
             "@type": "PostalAddress",
             "addressLocality": "Hajipur",
             "addressRegion": "Bihar",
+            "postalCode": "844101",
             "addressCountry": "IN"
           },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service",
-            "availableLanguage": ["English", "Hindi"]
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "25.6938",
+            "longitude": "85.2096"
           },
-          "sameAs": ["https://leadpe.lovable.app"]
-        },
-        {
-          "@type": "Service",
-          "name": "AI Website Building Service",
-          "provider": { "@id": "https://leadpe.online/#organization" },
-          "description": "Professional AI-built business website in 48 hours starting at ₹800.",
-          "areaServed": { "@type": "Country", "name": "India" },
-          "offers": [
-            { "@type": "Offer", "name": "Basic Website", "price": "800", "priceCurrency": "INR", "description": "Professional website in 48 hours" },
-            { "@type": "Offer", "name": "Growth Plan", "price": "299", "priceCurrency": "INR", "description": "Monthly customer delivery on WhatsApp" }
-          ]
-        },
-        {
-          "@type": "Review",
-          "itemReviewed": { "@id": "https://leadpe.online/#organization" },
-          "author": { "@type": "Organization", "name": "Shiva Study Centre", "url": "https://www.shivastudycentre.org" },
-          "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
-          "reviewBody": "LeadPe built our coaching centre's website in 48 hours. Inquiries started coming on WhatsApp within the first week.",
-          "publisher": { "@id": "https://leadpe.online/#organization" }
-        },
-        {
-          "@type": "CreativeWork",
-          "name": "Shiva Study Centre Website",
-          "url": "https://www.shivastudycentre.org",
-          "creator": { "@id": "https://leadpe.online/#organization" },
-          "description": "Live client website built by LeadPe — coaching centre in Hajipur, Bihar."
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+            "opens": "09:00",
+            "closes": "21:00"
+          },
+          "priceRange": "Rs.800 - Rs.3,000",
+          "image": "https://leadpe.online/favicon.svg"
         },
         {
           "@type": "FAQPage",
           "mainEntity": [
-            { "@type": "Question", "name": "How much does a website cost on LeadPe?", "acceptedAnswer": { "@type": "Answer", "text": "A Basic LeadPe website costs ₹800 one-time. Delivered in 48 hours." } },
-            { "@type": "Question", "name": "How long does it take to build my website?", "acceptedAnswer": { "@type": "Answer", "text": "48 hours — your professional website goes live in two days." } },
-            { "@type": "Question", "name": "How do customers contact me?", "acceptedAnswer": { "@type": "Answer", "text": "Every customer inquiry is sent directly to your WhatsApp in real time." } },
-            { "@type": "Question", "name": "Will my website always stay live?", "acceptedAnswer": { "@type": "Answer", "text": "Yes — your LeadPe website stays live forever. We never take it down." } }
+            {
+              "@type": "Question",
+              "name": "Website banwane mein kitna paisa lagta hai?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "LeadPe pe Basic website sirf Rs.800 mein milti hai. Delivery 48 ghante mein guaranteed."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Website kitne time mein ready hogi?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sirf 48 ghante — do din mein aapki professional website live ho jayegi."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Kya website hamesha live rahegi?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Haan. LeadPe pe website hamesha live rehti hai. Kabhi band nahi hoti. Yeh hamara promise hai."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Customers kaise contact karenge?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Har customer seedha aapke WhatsApp number pe message karega. Real-time notification milega."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Vibe coder kaise bane?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "leadpe.online/studio pe jaao. Phone number se register karo. AI se websites banao aur Rs.480 se Rs.1,800 per website kamao."
+              }
+            }
           ]
         }
       ]

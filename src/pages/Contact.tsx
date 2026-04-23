@@ -42,8 +42,8 @@ export default function Contact() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="Contact LeadPe | Talk to Our Team"
-        description="Reach the LeadPe team for support, partnerships, demos and renewals. We respond on WhatsApp and email."
+        title="Contact LeadPe | Hajipur Bihar"
+        description="LeadPe support team se contact karein. WhatsApp +91 99733 83902. Hajipur, Bihar. 24 ghante mein reply."
         path="/contact"
       />
       <Navbar />

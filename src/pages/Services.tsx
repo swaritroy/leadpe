@@ -38,8 +38,8 @@ export default function Services() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="Services | LeadPe — AI Websites, Lead Capture & Local SEO"
-        description="Professional AI-built websites, WhatsApp lead capture, local SEO and 1-year hosting for Indian local businesses. Live in 48 hours."
+        title="Services & Pricing | LeadPe India"
+        description="LeadPe services — Basic Rs.800, Standard Rs.1500, Premium Rs.3000. Growth plan Rs.299/month. WhatsApp leads included."
         path="/services"
       />
       <Navbar />
