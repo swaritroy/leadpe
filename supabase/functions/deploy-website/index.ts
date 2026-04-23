@@ -414,11 +414,29 @@ serve(async (req) => {
 
           // Trigger redeployment so VITE_LEADPE_MODE=live takes effect
           if (githubOrg && githubRepo) {
+            // Resolve repoId via GitHub API to avoid Vercel-GitHub-app dependency
+            let repoIdLive: string | null = null;
+            let refLive = "main";
+            try {
+              const ghResp2 = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+                headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "LeadPe-Deploy" },
+              });
+              if (ghResp2.ok) {
+                const gh2 = await ghResp2.json();
+                repoIdLive = String(gh2.id);
+                refLive = gh2.default_branch || "main";
+              }
+            } catch (_e) { /* fallback below */ }
+
+            const gitSource = repoIdLive
+              ? { type: "github", repoId: repoIdLive, ref: refLive }
+              : { type: "github", org: githubOrg, repo: githubRepo, ref: refLive };
+
             const redeployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
               method: "POST", headers,
               body: JSON.stringify({
                 name: projectName,
-                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+                gitSource,
                 projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
               }),
             });
