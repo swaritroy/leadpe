@@ -343,6 +343,7 @@ async function submitLeadPeLead(){
 
 function buildCTOPrompt(data: Record<string, string>): { system: string; user: string } {
   const profile = getDesignProfile(data.business_type || "Other");
+  const scope = getPackageScope(data.package_id);
   const supabaseUrl = data.supabaseUrl || "https://vlmdctanuarrmngkrvng.supabase.co";
   const supabaseKey = data.supabaseKey || "";
   const businessId = data.businessId || "";
