@@ -21,7 +21,9 @@ export default function Payment() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const plan = searchParams.get("plan") || "growth";
-  const amount = parseInt(searchParams.get("amount") || MONTHLY_PRICE.toString());
+  const baseAmount = parseInt(searchParams.get("amount") || MONTHLY_PRICE.toString());
+  const referralDiscount = Math.min(baseAmount, (profile as any)?.referral_discount || 0);
+  const amount = Math.max(0, baseAmount - referralDiscount);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showUpi, setShowUpi] = useState(false);
   const [gateChecked, setGateChecked] = useState(false);
