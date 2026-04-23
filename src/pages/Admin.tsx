@@ -1118,6 +1118,9 @@ export default function Admin() {
                       return (
                         <tr key={c.id} className="border-t border-border">
                           <td className="p-4 font-medium">{c.full_name}</td>
+                          <td className="p-4 text-sm text-muted-foreground">
+                            {c.email && !c.email.endsWith("@leadpe.com") ? c.email : <span className="text-muted-foreground/60">—</span>}
+                          </td>
                           <td className="p-4 text-sm text-muted-foreground">{c.whatsapp_number}</td>
                           <td className="p-4 text-sm">{coderDeployments.length}</td>
                           <td className="p-4 text-sm" style={{ color: "#00E676" }}>{activeSites}</td>
