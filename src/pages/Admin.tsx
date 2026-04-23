@@ -1151,7 +1151,10 @@ export default function Admin() {
                         <span className="font-semibold">{c.full_name}</span>
                         <span className="font-bold" style={{ color: "#00E676" }}>₹{unpaid.toLocaleString()}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-3">{c.whatsapp_number} • {activeSites} active sites</div>
+                      <div className="text-xs text-muted-foreground mb-1">{c.whatsapp_number} • {activeSites} active sites</div>
+                      {c.email && !c.email.endsWith("@leadpe.com") && (
+                        <div className="text-xs text-muted-foreground mb-3 truncate">{c.email}</div>
+                      )}
                       <div className="flex gap-2">
                         <button onClick={() => sendWhatsApp(c.whatsapp_number, `Hi ${c.full_name}!`)} className="flex-1 py-2 rounded-lg text-xs border border-border text-center">WhatsApp</button>
                         {unpaid > 0 && <button onClick={() => markPayoutPaid(c.id)} className="flex-1 py-2 rounded-lg text-xs text-black font-medium text-center" style={{ backgroundColor: "#00E676" }}>Mark Paid</button>}
