@@ -350,10 +350,22 @@ serve(async (req) => {
         );
       }
 
-      const cleaned = br.github_url.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const cleaned = br.github_url.replace(/^https?:\/\//, "").replace(/^github\.com\//, "").replace(/\/$/, "");
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
       const githubRepo = parts[1]?.replace(".git", "");
+
+      // Detect default branch for live redeploy
+      let liveBranch = "main";
+      try {
+        const repoResp = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+          headers: { "User-Agent": "LeadPe-Deploy" },
+        });
+        if (repoResp.ok) {
+          const m = await repoResp.json();
+          if (m?.default_branch) liveBranch = m.default_branch;
+        }
+      } catch { /* default to main */ }
 
       const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
       const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
