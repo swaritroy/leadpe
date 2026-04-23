@@ -86,7 +86,7 @@ serve(async (req) => {
                 "Business: " + businessName + "\n" +
                 "Type: " + businessType + "\n" +
                 "City: " + city + "\n" +
-                "You have 47 hours.\n" +
+                "You have 20 hours.\n" +
                 "Accept now: leadpe.online/studio"
             }
           });
