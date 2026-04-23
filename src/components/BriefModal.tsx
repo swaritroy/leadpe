@@ -8,6 +8,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 import { notifyAdmin } from "@/lib/notify";
+import { getPackageById } from "@/lib/packages";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
