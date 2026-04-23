@@ -503,9 +503,11 @@ export default function Admin() {
   const filteredCoders = vibeCoders.filter((c) => {
     const coderName = (c.full_name ?? "").toLowerCase();
     const coderWhatsapp = c.whatsapp_number ?? "";
+    const coderEmail = (c.email ?? "").toLowerCase();
     const matchesSearch =
       normalizedCoderSearch === "" ||
       coderName.includes(normalizedCoderSearch) ||
+      coderEmail.includes(normalizedCoderSearch) ||
       coderWhatsapp.includes(coderSearch);
     return matchesSearch;
   });
