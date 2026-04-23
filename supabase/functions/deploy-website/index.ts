@@ -101,6 +101,7 @@ serve(async (req) => {
       }
       console.log(`[deploy] Repo ${githubOrg}/${githubRepo} branch=${defaultBranch}`);
 
+      const projectName = `leadpe-${(businessName || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20)}-${(city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10)}`.replace(/-+/g, "-").replace(/-$/, "");
 
       // Step 1: Create Vercel project
       const createResp = await fetch(`${VERCEL_API}/v9/projects`, {
@@ -147,7 +148,7 @@ serve(async (req) => {
         headers,
         body: JSON.stringify({
           name: projectName,
-          gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+          gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: defaultBranch },
           projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
         }),
       });
