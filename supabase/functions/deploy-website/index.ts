@@ -484,7 +484,7 @@ serve(async (req) => {
               method: "POST", headers,
               body: JSON.stringify({
                 name: projectName,
-                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: liveBranch },
                 projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
               }),
             });
