@@ -125,6 +125,7 @@ export default function Payment() {
             priceId={priceId}
             customerEmail={user?.email || undefined}
             userId={user?.id || ""}
+            referralDiscount={referralDiscount}
             returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
           />
         </div>
@@ -162,8 +163,28 @@ export default function Payment() {
 
           <div className="bg-white rounded-2xl mb-5" style={{ border: "2px solid #00C853", padding: 20 }}>
             <p style={{ fontFamily: font.heading, fontSize: 20, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>Growth Plan 💚</p>
-            <p style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹{MONTHLY_PRICE} / month</p>
-            <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>Cancel anytime.</p>
+            {referralDiscount > 0 ? (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#666", marginBottom: 4 }}>
+                  <span>Original</span>
+                  <span style={{ textDecoration: "line-through" }}>₹{baseAmount}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "#00C853", fontWeight: 600, marginBottom: 8 }}>
+                  <span>🎁 Referral discount</span>
+                  <span>−₹{referralDiscount}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={{ fontSize: 14, color: "#1A1A1A", fontWeight: 600 }}>You pay</span>
+                  <span style={{ fontFamily: font.heading, fontSize: 32, fontWeight: 700, color: "#00C853" }}>₹{amount}</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#999", marginTop: 4 }}>per month · Cancel anytime.</p>
+              </div>
+            ) : (
+              <>
+                <p style={{ fontFamily: font.heading, fontSize: 36, fontWeight: 700, color: "#00C853", marginBottom: 4 }}>₹{MONTHLY_PRICE} / month</p>
+                <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>Cancel anytime.</p>
+              </>
+            )}
             {["Unlimited customers", "WhatsApp alert on every inquiry", "Custom subdomain", "Appear on Google", "Priority support", "Weekly Monday report"].map(f => (
               <div key={f} className="flex items-center gap-2 mb-1.5">
                 <Check size={14} style={{ color: "#00C853" }} />
