@@ -1099,6 +1099,7 @@ export default function Admin() {
                   <thead>
                     <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
+                      <th className="text-left p-4 text-sm font-medium">Email</th>
                       <th className="text-left p-4 text-sm font-medium">WhatsApp</th>
                       <th className="text-left p-4 text-sm font-medium">Sites Built</th>
                       <th className="text-left p-4 text-sm font-medium">Active Sites</th>
