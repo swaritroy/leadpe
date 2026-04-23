@@ -753,19 +753,30 @@ URL: ${data.logo_url}
     : `\n🖼️ LOGO:
 No logo provided by client. Create a professional text-based logo using the business name "${data.business_name}" with appropriate typography matching the design profile.`;
 
-  const photosInstruction = data.photos_urls
-    ? `\n📸 BUSINESS PHOTOS (PROVIDED BY CLIENT — USE THESE, NOT STOCK):
-${data.photos_urls}
+  // Normalise photos_urls to a list (could be array or comma/newline-separated string)
+  const photosRaw = data.photos_urls;
+  const photosList: string[] = Array.isArray(photosRaw)
+    ? photosRaw as unknown as string[]
+    : typeof photosRaw === "string" && photosRaw.trim()
+      ? photosRaw.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
+      : [];
 
-⚠️ CRITICAL: These are REAL photos of this actual business. Use them in:
-- Hero section as background or primary image
-- Gallery/portfolio section
-- About section
-- Service cards where relevant
-Do NOT replace these with generic stock photos. These photos make the website authentic and real.
-If a photo looks like food → use in menu/hero. If it looks like interior → use in gallery/about. If it shows people → use in team/about section.`
+  const photosInstruction = photosList.length > 0
+    ? `\n📸 BUSINESS PHOTOS (PROVIDED BY CLIENT — USE THESE EXACT URLs, NOT STOCK):
+The client uploaded ${photosList.length} real photo(s) of their actual business. Each URL below MUST be used in the website. Reference each one explicitly via <img src="..."> with descriptive alt text including "${data.business_name} ${data.city}".
+
+${photosList.map((u, i) => `  Photo ${i + 1}: ${u}`).join("\n")}
+
+⚠️ CRITICAL RULES FOR THESE PHOTOS:
+- Use Photo 1 as the hero background or hero side image
+- Spread the remaining photos across: Gallery section (all of them), About section (1-2), Service cards (where relevant)
+- Do NOT replace any of these with generic Unsplash stock photos
+- Add loading="lazy" except for Photo 1 (hero)
+- Add descriptive alt text for SEO: e.g. alt="${data.business_name} — interior view in ${data.city}"
+- If a photo looks like food → use in menu/hero. If interior → gallery/about. If people → team/about. If product → services/gallery.
+- These photos are the #1 reason this site will feel authentic — never skip any of them.`
     : `\n📸 PHOTOS:
-No business photos provided. Use high-quality, relevant stock photos matching these themes: ${profile.images}
+No business photos provided by client. Use high-quality, relevant stock photos matching these themes: ${profile.images}
 Use Unsplash URLs. Choose photos that look like real INDIAN businesses, not Western stock photos.
 Example Unsplash search terms: "${data.business_type} India", "Indian ${data.business_type?.toLowerCase()}", "${data.city} business"`;
 
