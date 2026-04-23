@@ -503,9 +503,11 @@ export default function Admin() {
   const filteredCoders = vibeCoders.filter((c) => {
     const coderName = (c.full_name ?? "").toLowerCase();
     const coderWhatsapp = c.whatsapp_number ?? "";
+    const coderEmail = (c.email ?? "").toLowerCase();
     const matchesSearch =
       normalizedCoderSearch === "" ||
       coderName.includes(normalizedCoderSearch) ||
+      coderEmail.includes(normalizedCoderSearch) ||
       coderWhatsapp.includes(coderSearch);
     return matchesSearch;
   });
@@ -1099,6 +1101,7 @@ export default function Admin() {
                   <thead>
                     <tr style={{ backgroundColor: "#F0FFF4" }}>
                       <th className="text-left p-4 text-sm font-medium">Name</th>
+                      <th className="text-left p-4 text-sm font-medium">Email</th>
                       <th className="text-left p-4 text-sm font-medium">WhatsApp</th>
                       <th className="text-left p-4 text-sm font-medium">Sites Built</th>
                       <th className="text-left p-4 text-sm font-medium">Active Sites</th>
@@ -1117,6 +1120,9 @@ export default function Admin() {
                       return (
                         <tr key={c.id} className="border-t border-border">
                           <td className="p-4 font-medium">{c.full_name}</td>
+                          <td className="p-4 text-sm text-muted-foreground">
+                            {c.email && !c.email.endsWith("@leadpe.com") ? c.email : <span className="text-muted-foreground/60">—</span>}
+                          </td>
                           <td className="p-4 text-sm text-muted-foreground">{c.whatsapp_number}</td>
                           <td className="p-4 text-sm">{coderDeployments.length}</td>
                           <td className="p-4 text-sm" style={{ color: "#00E676" }}>{activeSites}</td>
@@ -1147,7 +1153,10 @@ export default function Admin() {
                         <span className="font-semibold">{c.full_name}</span>
                         <span className="font-bold" style={{ color: "#00E676" }}>₹{unpaid.toLocaleString()}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-3">{c.whatsapp_number} • {activeSites} active sites</div>
+                      <div className="text-xs text-muted-foreground mb-1">{c.whatsapp_number} • {activeSites} active sites</div>
+                      {c.email && !c.email.endsWith("@leadpe.com") && (
+                        <div className="text-xs text-muted-foreground mb-3 truncate">{c.email}</div>
+                      )}
                       <div className="flex gap-2">
                         <button onClick={() => sendWhatsApp(c.whatsapp_number, `Hi ${c.full_name}!`)} className="flex-1 py-2 rounded-lg text-xs border border-border text-center">WhatsApp</button>
                         {unpaid > 0 && <button onClick={() => markPayoutPaid(c.id)} className="flex-1 py-2 rounded-lg text-xs text-black font-medium text-center" style={{ backgroundColor: "#00E676" }}>Mark Paid</button>}
