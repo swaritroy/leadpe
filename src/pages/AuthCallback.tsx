@@ -1,21 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { claimPendingReferral } from "@/lib/referral";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { refreshRole, refreshProfile } = useAuth();
   const [error, setError] = useState("");
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Detect Studio intent (Google sign-in initiated from /studio/auth)
+      const params = new URLSearchParams(location.search);
+      const intent = params.get("intent") || sessionStorage.getItem("oauth_intent") || "";
+      const isStudioIntent = intent === "studio";
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
         setError("Authentication failed. Please try again.");
-        setTimeout(() => navigate("/auth", { replace: true }), 2000);
+        setTimeout(() => navigate(isStudioIntent ? "/studio/auth" : "/auth", { replace: true }), 2000);
         return;
       }
 
@@ -31,6 +37,15 @@ export default function AuthCallback() {
         .eq("user_id", userId)
         .maybeSingle();
 
+      // If Studio intent and profile is fresh-business (default trigger), promote to vibe_coder
+      if (isStudioIntent && existingProfile && existingProfile.role === "business") {
+        await supabase.from("profiles").update({ role: "vibe_coder", status: "pending_vetting" }).eq("user_id", userId);
+        await supabase.from("user_roles").upsert({ user_id: userId, role: "vibe_coder" as any }, { onConflict: "user_id,role" });
+        existingProfile.role = "vibe_coder";
+      }
+
+      sessionStorage.removeItem("oauth_intent");
+
       await refreshRole();
       await refreshProfile();
 
@@ -38,7 +53,7 @@ export default function AuthCallback() {
         // Profile auto-created by trigger — wait and retry
         await new Promise(r => setTimeout(r, 1500));
         await refreshProfile();
-        navigate("/onboarding", { replace: true });
+        navigate(isStudioIntent ? "/dev/onboarding" : "/onboarding", { replace: true });
         return;
       }
 
@@ -66,7 +81,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate, refreshRole, refreshProfile]);
+  }, [navigate, refreshRole, refreshProfile, location.search]);
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F5FFF7" }}>

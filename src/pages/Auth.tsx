@@ -34,7 +34,7 @@ export default function Auth() {
     setLoading(true);
     setError("");
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result?.error) {
       setError((result.error as Error).message || "Google sign-in failed.");
