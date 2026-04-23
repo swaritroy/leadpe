@@ -64,19 +64,43 @@ serve(async (req) => {
     if (action === "deploy") {
       const { businessName, businessType, city, githubUrl, trialCode, buildRequestId, businessId } = data;
 
-      const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const cleaned = (githubUrl || "").replace(/^https?:\/\//, "").replace(/^github\.com\//, "").replace(/\/$/, "");
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
       const githubRepo = parts[1]?.replace(".git", "");
 
       if (!githubOrg || !githubRepo) {
         return new Response(
-          JSON.stringify({ error: "Invalid GitHub URL format" }),
-          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: "Invalid GitHub URL format. Use github.com/username/repo.", stage: "validate" }),
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
-      const projectName = `leadpe-${businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20)}-${city.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10)}`.replace(/-+/g, "-").replace(/-$/, "");
+      // Detect default branch (don't force "main")
+      let defaultBranch = "main";
+      try {
+        const repoResp = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+          headers: { "User-Agent": "LeadPe-Deploy" },
+        });
+        if (repoResp.ok) {
+          const repoMeta = await repoResp.json();
+          if (repoMeta?.default_branch) defaultBranch = repoMeta.default_branch;
+        } else if (repoResp.status === 404 || repoResp.status === 403) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              stage: "repo_access",
+              error: `GitHub repo not accessible (HTTP ${repoResp.status}). Make sure it is PUBLIC.`,
+              hint: "Open the repo on GitHub → Settings → Change visibility → Public.",
+            }),
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          );
+        }
+      } catch (e) {
+        console.warn("Default branch detection failed, using 'main':", e);
+      }
+      console.log(`[deploy] Repo ${githubOrg}/${githubRepo} branch=${defaultBranch}`);
+
 
       // Step 1: Create Vercel project
       const createResp = await fetch(`${VERCEL_API}/v9/projects`, {
