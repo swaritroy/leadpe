@@ -405,11 +405,29 @@ Business Type: ${data.business_type}
 City/Location: ${data.city}, India
 Owner Name: ${data.owner_name || "Owner"}
 WhatsApp Number: +91${data.whatsapp_number || data.whatsapp}
-Package: ${data.package_id || "standard"}
+Package: ${scope.label}
 Package Features to Build: ${data.package_features || "Standard website features"}
 Special Requirements: ${data.special_requirements || "None specified"}
 Reference Sites: ${data.reference_sites || "None"}
 ${contentEnhancement}
+
+╔══════════════════════════════════════════════════════════════════╗
+║              PACKAGE SCOPE — STRICT BOUNDARIES                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Package: ${scope.label}
+Total Pages: ${scope.pages}
+Delivery Window: ${scope.delivery}
+
+${scope.instruction}
+
+✅ MUST INCLUDE in this package:
+${scope.always_include.map((f) => `  - ${f}`).join("\n")}
+
+🚫 DO NOT INCLUDE in this package (scope creep is a quality-fail):
+${scope.never_include.map((f) => `  ✗ ${f}`).join("\n")}
+
+If the client's special requirements ask for something in the "DO NOT INCLUDE" list, politely substitute with the closest allowed alternative (e.g. replace "online payment" with "WhatsApp enquiry to pay").
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║              BUSINESS CONTEXT ANALYSIS                          ║
