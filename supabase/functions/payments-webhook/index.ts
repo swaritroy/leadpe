@@ -82,6 +82,13 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       activated_at: new Date().toISOString(),
     });
 
+    // ───── REFERRAL CONVERSION ─────
+    try {
+      await processReferralConversion(userId, session.metadata?.referralDiscountApplied);
+    } catch (e) {
+      console.error("processReferralConversion failed:", e);
+    }
+
     // Notify admin via Twilio + queue thank-you for client in Outbox
     try {
       await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin`, {
@@ -110,6 +117,102 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     } catch (e) {
       console.error("notify-admin call failed:", e);
     }
+  }
+}
+
+async function processReferralConversion(payerUserId: string, discountAppliedStr?: string) {
+  // Read payer profile to find referral code used
+  const { data: payerProfile } = await supabase
+    .from("profiles")
+    .select("referred_by, business_name, whatsapp_number")
+    .eq("user_id", payerUserId)
+    .maybeSingle();
+
+  const code = (payerProfile as any)?.referred_by;
+  if (!code) {
+    // Still clear discount if applied (defensive)
+    if (discountAppliedStr) {
+      await supabase.from("profiles").update({ referral_discount: 0 } as any).eq("user_id", payerUserId);
+    }
+    return;
+  }
+
+  // Find pending referral row
+  const { data: referralRow } = await supabase
+    .from("referrals")
+    .select("id, referrer_id, referrer_type, status")
+    .eq("referee_id", payerUserId)
+    .eq("referral_code", code)
+    .in("status", ["pending"])
+    .maybeSingle();
+
+  if (!referralRow) {
+    if (discountAppliedStr) {
+      await supabase.from("profiles").update({ referral_discount: 0 } as any).eq("user_id", payerUserId);
+    }
+    return;
+  }
+
+  const REWARD = 100;
+  const nowIso = new Date().toISOString();
+
+  // Look up referrer profile
+  const { data: referrerProfile } = await supabase
+    .from("profiles")
+    .select("user_id, role, referral_discount, referral_bonus_total, whatsapp_number")
+    .eq("user_id", (referralRow as any).referrer_id)
+    .maybeSingle();
+
+  if (!referrerProfile) return;
+
+  const isCoder =
+    (referrerProfile as any).role === "vibe_coder" ||
+    (referrerProfile as any).role === "developer" ||
+    (referralRow as any).referrer_type === "coder";
+
+  if (isCoder) {
+    // Add to coder earnings
+    await supabase.from("earnings").insert({
+      vibe_coder_id: (referrerProfile as any).user_id,
+      amount: REWARD,
+      type: "referral_bonus",
+      month: nowIso.slice(0, 7),
+      paid: false,
+    } as any);
+    await supabase.from("profiles").update({
+      referral_bonus_total: ((referrerProfile as any).referral_bonus_total || 0) + REWARD,
+    } as any).eq("user_id", (referrerProfile as any).user_id);
+  } else {
+    // Add credit to business referrer
+    await supabase.from("profiles").update({
+      referral_discount: ((referrerProfile as any).referral_discount || 0) + REWARD,
+    } as any).eq("user_id", (referrerProfile as any).user_id);
+  }
+
+  // Mark referral rewarded
+  await supabase.from("referrals").update({
+    status: "rewarded",
+    reward_amount: REWARD,
+    converted_at: nowIso,
+    rewarded_at: nowIso,
+  } as any).eq("id", (referralRow as any).id);
+
+  // Clear payer discount if it was applied
+  if (discountAppliedStr) {
+    await supabase.from("profiles").update({ referral_discount: 0 } as any).eq("user_id", payerUserId);
+  }
+
+  // Notify referrer over WhatsApp
+  if ((referrerProfile as any).whatsapp_number) {
+    const msg = isCoder
+      ? `🎉 Your LeadPe referral converted! ₹${REWARD} bonus added to your earnings.`
+      : `🎉 Your LeadPe referral converted! ₹${REWARD} credit added to your account — use it on your next order.`;
+    await supabase.from("scheduled_messages").insert({
+      to: (referrerProfile as any).whatsapp_number,
+      message: msg,
+      type: "referral_reward",
+      status: "pending",
+    } as any);
   }
 }
 
