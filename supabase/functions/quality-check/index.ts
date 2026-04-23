@@ -1,21 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 // NOTE: deno_dom is loaded LAZILY inside the handler to survive cold-boot WASM fetch failures.
 // If the WASM import fails, we fall back to pure string-matching checks instead of crashing.
-
-const ALLOWED_ORIGINS = [
-  "https://leadpe.lovable.app",
-  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
 
 interface CheckResult {
   key: string;
