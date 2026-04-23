@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import Business from "./pages/Business";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
+import ResetPassword from "./pages/ResetPassword";
 import Studio from "./pages/Studio";
 import StudioAuth from "./pages/StudioAuth";
 import GetWebsite from "./pages/GetWebsite";
@@ -79,6 +80,7 @@ const AppContent = () => {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/studio/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/checkout/return" element={<CheckoutReturn />} />
             <Route path="/ref/:code" element={<Referral />} />
 

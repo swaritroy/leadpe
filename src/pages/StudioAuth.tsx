@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { notifyAdmin } from "@/lib/notify";
+import ForgotPasswordDialog from "@/components/ForgotPasswordDialog";
 
 export default function StudioAuth() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function StudioAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   // Join fields
   const [jName, setJName] = useState("");
@@ -305,6 +307,11 @@ export default function StudioAuth() {
                   style={{ backgroundColor: "#00C853", color: "white", fontFamily: "DM Sans, sans-serif" }}>
                   {loading ? "Signing in..." : "Sign In →"}
                 </button>
+                <div className="text-center">
+                  <button type="button" onClick={() => setForgotOpen(true)} className="text-sm font-medium hover:underline" style={{ color: "#00C853", fontFamily: "DM Sans, sans-serif" }}>
+                    Forgot password?
+                  </button>
+                </div>
               </motion.form>
             )}
           </AnimatePresence>
@@ -315,6 +322,7 @@ export default function StudioAuth() {
           <Link to="/auth" className="font-medium" style={{ color: "#00C853" }}>Sign in here →</Link>
         </p>
       </motion.div>
+      <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} mode="studio" />
     </div>
   );
 }

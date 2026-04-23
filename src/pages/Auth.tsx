@@ -10,12 +10,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 import SEO from "@/components/SEO";
 import { notifyAdmin } from "@/lib/notify";
+import ForgotPasswordDialog from "@/components/ForgotPasswordDialog";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   // Sign In state
   const [siPhone, setSiPhone] = useState("");
@@ -269,6 +271,16 @@ export default function Auth() {
               >
                 {loading ? "Signing in..." : "Sign In →"}
               </button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: "#00C853", fontFamily: "DM Sans, sans-serif" }}
+                >
+                  Forgot password?
+                </button>
+              </div>
             </TabsContent>
 
             {/* CREATE ACCOUNT TAB */}
@@ -353,6 +365,7 @@ export default function Auth() {
           <Link to="/studio/auth" className="font-medium" style={{ color: "#00C853" }}>Join Studio →</Link>
         </p>
       </motion.div>
+      <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} mode="business" />
     </div>
   );
 }
