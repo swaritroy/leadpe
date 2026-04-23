@@ -213,6 +213,97 @@ function getDesignProfile(businessType: string) {
   return defaultProfile;
 }
 
+// ═══ PACKAGE-SPECIFIC SCOPE (what to build / what NOT to build) ═══
+const PACKAGE_SCOPE: Record<string, {
+  label: string; pages: number; delivery: string;
+  always_include: string[]; never_include: string[]; instruction: string;
+}> = {
+  basic: {
+    label: "Basic Website — ₹800",
+    pages: 5,
+    delivery: "48 hours",
+    always_include: [
+      "Professional homepage with hero section",
+      "Services / offerings page",
+      "About page",
+      "Gallery page",
+      "Contact page with WhatsApp button",
+      "Google Maps location embed",
+      "Mobile responsive design",
+      "Basic SEO meta tags",
+      "LeadPe lead capture widget (mandatory)",
+      "Footer with business details + viral LeadPe credit",
+    ],
+    never_include: [
+      "Online booking / appointment calendar system",
+      "Online payment / checkout integration",
+      "Student / patient login portal",
+      "Blog section",
+      "Video gallery",
+      "Live chat",
+      "Multiple staff / team profiles",
+      "Custom domain setup",
+      "WhatsApp chatbot automation",
+    ],
+    instruction:
+      "BUILD A BASIC 5-PAGE WEBSITE. Simple. Clean. Fast loading. Pages: Home, Services, About, Gallery, Contact. Must have: floating WhatsApp button + LeadPe lead capture widget. Do NOT add booking systems, payment, login portals, or blogs. Keep it focused — this is the ₹800 package and scope creep is not allowed.",
+  },
+  standard: {
+    label: "Standard Website — ₹1,500",
+    pages: 8,
+    delivery: "72 hours",
+    always_include: [
+      "Everything in Basic",
+      "Photo / image gallery section",
+      "Testimonials / reviews section",
+      "Team / staff introduction",
+      "FAQ section (5-6 questions)",
+      "AI-written content for all pages",
+      "Full local SEO optimisation",
+      "Social media links integration",
+      "Business hours display",
+    ],
+    never_include: [
+      "Online payment / checkout integration",
+      "Student / patient login portal",
+      "Live streaming",
+      "Advanced booking calendar with slot management",
+      "Multi-vendor / multi-tenant features",
+    ],
+    instruction:
+      "BUILD A STANDARD 8-PAGE WEBSITE. Professional, complete, well-designed. Include all Basic pages PLUS gallery, testimonials, team, FAQ, business hours. Add the business-specific sections listed in the package features. Write polished AI-generated content for every page. Do NOT add payment systems or user-login portals — this is the ₹1,500 package.",
+  },
+  premium: {
+    label: "Premium Website — ₹3,000",
+    pages: 12,
+    delivery: "5 days",
+    always_include: [
+      "Everything in Standard",
+      "Online appointment / booking enquiry system (form-based, no live calendar slots)",
+      "WhatsApp chatbot integration link",
+      "Blog section with 3 starter posts",
+      "Advanced animations and scroll effects",
+      "Newsletter signup",
+      "Multiple gallery sections",
+      "Google Business Profile integration hint",
+      "Advanced SEO with city-targeted pages",
+    ],
+    never_include: [
+      "Real-money payment processing",
+      "Patient / student authenticated login portal",
+      "Multi-language switcher (English only unless requested)",
+    ],
+    instruction:
+      "BUILD A PREMIUM 12-PAGE WEBSITE. Advanced, feature-rich, impressive. Include everything from Standard PLUS booking enquiry system, blog, chatbot link, animations. Add ALL business-specific premium features listed in the package features. Write comprehensive AI content. Optimise heavily for local SEO with city-targeted pages. This is the ₹3,000 premium package — make it look as professional as possible.",
+  },
+};
+
+function getPackageScope(packageId?: string) {
+  const id = (packageId || "basic").toLowerCase();
+  if (id === "complex") return PACKAGE_SCOPE.premium;
+  return PACKAGE_SCOPE[id] || PACKAGE_SCOPE.basic;
+}
+
 function getLeadWidgetHtml(businessId: string, supabaseUrl: string, supabaseKey: string): string {
   return `<!-- LeadPe Lead Capture Widget -->
 <div id="leadpe-widget">

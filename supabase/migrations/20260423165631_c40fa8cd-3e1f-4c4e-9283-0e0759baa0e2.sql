@@ -1,0 +1,1 @@
+UPDATE public.build_requests SET ai_prompt = NULL WHERE status IN ('pending','building') OR ai_prompt IS NULL OR length(coalesce(ai_prompt,'')) < 2000;
