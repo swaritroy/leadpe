@@ -30,27 +30,31 @@ serve(async (req) => {
     const results: string[] = [];
 
     // ─────────────────────────────────────
-    // CASE 0: Auto-assign to admin coder after 1 hour
+    // CASE 0: Auto-assign to admin coder when ≤20h remain
+    // (Build requests have a 48h SLA from creation. If still unassigned
+    //  with 20h or less left → auto-assign to admin so client gets delivery.)
     // ─────────────────────────────────────
     const ADMIN_CODER_ID = Deno.env.get("ADMIN_CODER_ID");
 
     if (ADMIN_CODER_ID) {
+      // 48h SLA - 20h remaining = older than 28h unassigned
+      const cutoff = new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString();
       const { data: unassigned } = await supabase
         .from("build_requests")
         .select("*")
         .eq("status", "pending")
         .is("assigned_coder_id", null)
-        .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+        .lt("created_at", cutoff);
 
       for (const build of (unassigned || [])) {
-        // Auto-assign to admin
+        // Auto-assign to admin with the remaining ~20h as the hard deadline
         await supabase
           .from("build_requests")
           .update({
             assigned_coder_id: ADMIN_CODER_ID,
             assigned_coder_name: "Admin Builder",
             status: "building",
-            hard_deadline: new Date(Date.now() + 47 * 60 * 60 * 1000).toISOString(),
+            hard_deadline: new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", build.id);
 
