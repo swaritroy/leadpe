@@ -34,8 +34,8 @@ const SOFTWARE_SCHEMA = {
 };
 
 const SEO = ({
-  title = "LeadPe — Website Rs.800 | 48 Ghante | India",
-  description = "48 ghante mein website banwao. Rs.800 mein. Customers seedha WhatsApp pe.",
+  title = "LeadPe — Websites in 48 Hours | India",
+  description = "Get a professional website in 48 hours from ₹800. Customer enquiries delivered to WhatsApp.",
   path = "",
   image = DEFAULT_IMAGE,
   type = "website",

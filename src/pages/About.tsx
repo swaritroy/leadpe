@@ -9,8 +9,8 @@ export default function About() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="LeadPe ke Baare Mein | leadpe.online"
-        description="LeadPe — India ka AI website platform. 48 ghante mein website, Rs.800 se. Hajipur, Bihar se shuru."
+        title="About LeadPe — Our Story"
+        description="LeadPe is India's AI website platform. Professional websites in 48 hours from ₹800. Founded in Hajipur, Bihar."
         path="/about"
       />
       <Navbar />

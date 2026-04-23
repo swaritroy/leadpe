@@ -42,8 +42,8 @@ export default function Contact() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="Contact LeadPe | Hajipur Bihar"
-        description="LeadPe support team se contact karein. WhatsApp +91 99733 83902. Hajipur, Bihar. 24 ghante mein reply."
+        title="Contact LeadPe — Hajipur, Bihar"
+        description="Reach LeadPe support over WhatsApp, email or phone. Based in Hajipur, Bihar — serving businesses across India."
         path="/contact"
       />
       <Navbar />
