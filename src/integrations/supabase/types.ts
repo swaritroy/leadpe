@@ -881,7 +881,10 @@ export type Database = {
           plan_type: string | null
           preferred_fee: number | null
           preferred_language: string | null
+          referral_bonus_total: number
+          referral_code: string | null
           referral_count: number | null
+          referral_discount: number
           referred_by: string | null
           role: string | null
           site_url: string | null
@@ -935,7 +938,10 @@ export type Database = {
           plan_type?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
+          referral_bonus_total?: number
+          referral_code?: string | null
           referral_count?: number | null
+          referral_discount?: number
           referred_by?: string | null
           role?: string | null
           site_url?: string | null
@@ -989,7 +995,10 @@ export type Database = {
           plan_type?: string | null
           preferred_fee?: number | null
           preferred_language?: string | null
+          referral_bonus_total?: number
+          referral_code?: string | null
           referral_count?: number | null
+          referral_discount?: number
           referred_by?: string | null
           role?: string | null
           site_url?: string | null
@@ -1141,6 +1150,45 @@ export type Database = {
           feedback?: string | null
           id?: string
           rating?: number
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          referee_id: string | null
+          referral_code: string
+          referrer_id: string
+          referrer_type: string
+          reward_amount: number
+          rewarded_at: string | null
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referee_id?: string | null
+          referral_code: string
+          referrer_id: string
+          referrer_type: string
+          reward_amount?: number
+          rewarded_at?: string | null
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referee_id?: string | null
+          referral_code?: string
+          referrer_id?: string
+          referrer_type?: string
+          reward_amount?: number
+          rewarded_at?: string | null
+          status?: string
         }
         Relationships: []
       }

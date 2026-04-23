@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { claimPendingReferral } from "@/lib/referral";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ export default function AuthCallback() {
       }
 
       const userId = session.user.id;
+
+      // Attribute referral if a /ref/CODE link was used pre-signup
+      await claimPendingReferral(userId);
 
       // Check if profile exists
       const { data: existingProfile } = await supabase

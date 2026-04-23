@@ -8,7 +8,7 @@ serve(async (req) => {
   }
 
   try {
-    const { priceId, quantity, customerEmail, userId, returnUrl, environment } = await req.json();
+    const { priceId, quantity, customerEmail, userId, returnUrl, environment, referralDiscount } = await req.json();
     if (!priceId || typeof priceId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(priceId)) {
       return new Response(JSON.stringify({ error: "Invalid priceId" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -27,14 +27,36 @@ serve(async (req) => {
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
 
+    // Apply referral discount only on one-time payments via price_data
+    const discountRupees = Math.max(0, parseInt(String(referralDiscount || 0), 10) || 0);
+    const useDiscount = !isRecurring && discountRupees > 0 && stripePrice.unit_amount;
+
+    let line_items: any;
+    if (useDiscount) {
+      const discountedAmount = Math.max(0, (stripePrice.unit_amount as number) - discountRupees * 100);
+      line_items = [{
+        price_data: {
+          currency: stripePrice.currency,
+          product: stripePrice.product as string,
+          unit_amount: discountedAmount,
+        },
+        quantity: quantity || 1,
+      }];
+    } else {
+      line_items = [{ price: stripePrice.id, quantity: quantity || 1 }];
+    }
+
     const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: stripePrice.id, quantity: quantity || 1 }],
+      line_items,
       mode: isRecurring ? "subscription" : "payment",
       ui_mode: "embedded",
       return_url: returnUrl || `${req.headers.get("origin")}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
       ...(customerEmail && { customer_email: customerEmail }),
       ...(userId && {
-        metadata: { userId },
+        metadata: {
+          userId,
+          ...(useDiscount && { referralDiscountApplied: String(discountRupees) }),
+        },
         ...(isRecurring && { subscription_data: { metadata: { userId } } }),
       }),
     });

@@ -18,6 +18,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { getPackageById } from "@/lib/packages";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import BriefModal from "@/components/BriefModal";
+import ReferralCard from "@/components/ReferralCard";
 
 interface BuildRequest {
   id: string;
@@ -896,6 +897,22 @@ export default function DevDashboard() {
                     </Button>
                   )}
                 </div>
+              </div>
+
+              {/* ═══ REFERRAL — BRING CLIENTS ═══ */}
+              <div className="mt-6">
+                <ReferralCard
+                  variant="coder"
+                  userId={user?.id}
+                  referralCode={(profile as any)?.referral_code}
+                  referralBonusTotal={(profile as any)?.referral_bonus_total || 0}
+                />
+              </div>
+
+              {/* Referral bonus line in earnings */}
+              <div className="mt-4 rounded-2xl p-4 border border-[#E0F2E9] bg-white shadow-sm flex justify-between items-center text-sm">
+                <span className="text-[#666] flex items-center gap-2"><Star size={14} className="text-[#00C853]"/> Referral Bonuses</span>
+                <span className="font-bold text-[#00C853]">₹{(profile as any)?.referral_bonus_total || 0}</span>
               </div>
             </motion.div>
           )}

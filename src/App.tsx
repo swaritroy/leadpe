@@ -31,6 +31,7 @@ import Refund from "./pages/Refund";
 import Contact from "./pages/Contact";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Referral from "./pages/Referral";
 
 // Protected pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
@@ -76,6 +77,7 @@ const AppContent = () => {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/checkout/return" element={<CheckoutReturn />} />
+            <Route path="/ref/:code" element={<Referral />} />
 
             {/* Onboarding — protected, business only */}
             <Route path="/onboarding" element={

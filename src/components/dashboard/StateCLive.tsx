@@ -4,6 +4,7 @@ import { Star, Lock, Globe, CheckCircle, Clock, AlertCircle, Edit3 } from "lucid
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ReferralCard from "@/components/ReferralCard";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
@@ -720,6 +721,16 @@ export default function StateCLive({ buildRequest, business, profile, leads, tri
 
       {/* ═══ CHANGE REQUEST (Growth plan) ═══ */}
       {isGrowthPlan && <ChangeRequestSection user={user} profile={profile} />}
+
+      {/* ═══ REFERRAL CARD ═══ */}
+      <div style={{ margin: "0 16px 16px" }}>
+        <ReferralCard
+          variant="business"
+          userId={user?.id}
+          referralCode={(profile as any)?.referral_code}
+          referralDiscount={(profile as any)?.referral_discount || 0}
+        />
+      </div>
 
       {/* ═══ CHANGE REQUEST UPSELL (Free plan) ═══ */}
       {isFreePlan && (
