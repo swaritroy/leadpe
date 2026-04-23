@@ -15,13 +15,15 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       // Detect Studio intent (Google sign-in initiated from /studio/auth)
       const params = new URLSearchParams(location.search);
-      const intent = params.get("intent") || sessionStorage.getItem("oauth_intent") || "";
+      const sessionIntent = sessionStorage.getItem("oauth_intent") || "";
+      const pathIntent = location.pathname === "/studio/auth/callback" ? "studio" : "";
+      const intent = params.get("intent") || sessionIntent || pathIntent;
       const isStudioIntent = intent === "studio";
 
       await logAuthEvent({
         event: "callback_started",
         intent: intent || null,
-        details: { source: params.get("intent") ? "url" : (sessionStorage.getItem("oauth_intent") ? "session" : "none") },
+        details: { source: params.get("intent") ? "url" : (sessionIntent ? "session" : (pathIntent ? "path" : "none")) },
       });
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
