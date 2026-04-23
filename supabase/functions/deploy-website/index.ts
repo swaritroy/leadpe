@@ -238,36 +238,32 @@ serve(async (req) => {
       }
 
       if (finalState === "ERROR") {
-        // Provide specific hints based on error
-        let hint = "Check your code and try again.";
-        const errLower = (buildError || "").toLowerCase();
-        if (errLower.includes("not found") || errLower.includes("404")) {
-          hint = "Repository not found. Make sure your GitHub repo is PUBLIC and the URL is correct.";
-        } else if (errLower.includes("no framework") || errLower.includes("no output")) {
-          hint = "No framework detected. Add an index.html to the root folder or ensure package.json has a build script.";
-        } else if (errLower.includes("build failed") || errLower.includes("exit code")) {
-          hint = "Build failed. Fix code errors in your project, push to GitHub, and try again.";
-        } else if (errLower.includes("domain") || errLower.includes("conflict")) {
-          hint = "This subdomain or project name is already taken. Try a different business name.";
-        } else if (errLower.includes("rate limit") || errLower.includes("429")) {
-          hint = "Too many deployments. Please wait a few minutes and try again.";
-        } else if (errLower.includes("permission") || errLower.includes("403")) {
-          hint = "Permission denied. Make sure the repository is PUBLIC, not private.";
-        } else if (errLower.includes("timeout")) {
-          hint = "Build took too long. Optimize your project or reduce dependencies.";
-        } else if (errLower.includes("install") || errLower.includes("npm")) {
-          hint = "npm install failed. Check your package.json for invalid dependencies.";
-        } else if (errLower.includes("memory") || errLower.includes("oom")) {
-          hint = "Build ran out of memory. Reduce project size or remove heavy dependencies.";
-        }
-
+        const hint = hintForCode("", buildError);
         return new Response(
           JSON.stringify({
             success: false,
+            stage: "build",
             error: buildError || "Build failed on deployment platform",
             hint,
             state: "ERROR",
             projectName,
+            inspectorUrl,
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Timeout (still BUILDING after 3 minutes)
+      if (finalState !== "READY") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            stage: "timeout",
+            error: `Build still running after 3 minutes (state: ${finalState})`,
+            hint: "Build is taking longer than expected. Check back in a few minutes via the Vercel inspector link.",
+            state: finalState,
+            projectName,
+            inspectorUrl,
           }),
           { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
