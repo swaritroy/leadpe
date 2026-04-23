@@ -33,6 +33,10 @@ interface Profile {
   plan_renewal_date: string | null;
   avatar_url: string | null;
   plan_type: string | null;
+  referral_code: string | null;
+  referral_discount: number | null;
+  referral_bonus_total: number | null;
+  referred_by: string | null;
 }
 
 interface AuthContextType {
