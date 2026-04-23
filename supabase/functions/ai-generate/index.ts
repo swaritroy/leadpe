@@ -304,6 +304,382 @@ function getPackageScope(packageId?: string) {
   return PACKAGE_SCOPE[id] || PACKAGE_SCOPE.basic;
 }
 
+// ═══ BUSINESS-SPECIFIC PREMIUM FEATURES (drives long, tailored prompts) ═══
+const BUSINESS_SPECIFIC_FEATURES: Record<string, { standard: string[]; premium: string[] }> = {
+  doctor: {
+    standard: [
+      "Appointment enquiry form (name, phone, preferred date, reason)",
+      "Services with consultation fees displayed transparently",
+      "Doctor qualifications & registration number block",
+      "Clinic timings table (Mon-Sun) with lunch break",
+    ],
+    premium: [
+      "Online appointment booking enquiry with date + time-slot picker (form-based)",
+      "Multiple doctor profiles with photos, specializations, experience",
+      "Patient testimonials carousel with star ratings",
+      "Health tips blog (3 starter SEO articles for the city)",
+      "Insurance / cashless payment information page",
+      "Emergency contact sticky banner (top of page, red)",
+      "Pre-consultation patient form (symptoms, history)",
+    ],
+  },
+  clinic: {
+    standard: [
+      "Department-wise services with fees",
+      "Multi-doctor profile cards",
+      "Insurance accepted list",
+      "Clinic photo gallery (interior, equipment)",
+    ],
+    premium: [
+      "Department-wise appointment booking enquiry",
+      "Doctor availability calendar (this week)",
+      "Health checkup package pricing (Basic / Standard / Premium body packages)",
+      "NABH / quality certifications showcase",
+      "Health blog with 3 starter posts",
+      "Emergency helpline sticky banner",
+    ],
+  },
+  coaching: {
+    standard: [
+      "Course / batch details page with eligibility, duration, fee",
+      "Top student results showcase (photos + ranks)",
+      "Faculty profiles with subjects + experience",
+      "Fee structure table by course",
+      "Online enquiry form (name, phone, course interest, class)",
+    ],
+    premium: [
+      "Online admission enquiry form with file upload (mark sheet)",
+      "Batch schedule grid (subject × time × faculty)",
+      "Result / rank announcement page with year-wise toppers",
+      "Study material downloads section (PDF previews)",
+      "Parent testimonials with audio/text quotes",
+      "Free demo class booking enquiry",
+      "Scholarship test announcement banner",
+      "Blog with 3 SEO articles (e.g. 'Best NEET coaching in {city}')",
+    ],
+  },
+  ca: {
+    standard: [
+      "Practice areas (ITR, GST, Audit, Company Reg, Tax Planning) detail page",
+      "Client testimonials section (business owner quotes)",
+      "Document checklist downloadable as PDF",
+      "Fee structure for common services",
+    ],
+    premium: [
+      "Free consultation booking enquiry with date picker",
+      "Industry-wise case studies (manufacturing, retail, services)",
+      "Tax tips blog (3 SEO posts targeted at {city} businesses)",
+      "Monthly compliance calendar widget",
+      "Newsletter signup for tax updates",
+      "Multiple service detail pages (one per practice area)",
+      "GST calculator embedded section",
+    ],
+  },
+  lawyer: {
+    standard: [
+      "Practice areas in detail (criminal, civil, family, property, corporate)",
+      "Case win statistics / years of practice",
+      "Free legal consultation enquiry form",
+      "Client testimonials anonymised",
+    ],
+    premium: [
+      "Consultation booking enquiry with date picker",
+      "Notable cases / landmark judgements section",
+      "Legal blog with 3 SEO posts (e.g. 'Property law in {city}')",
+      "Document checklist by case type (downloadable)",
+      "Multiple advocate profiles with bar council number",
+      "Emergency legal helpline sticky banner",
+    ],
+  },
+  restaurant: {
+    standard: [
+      "Full menu organised by category with prices",
+      "Food photo gallery (8-12 dishes)",
+      "Today's special / chef recommends section",
+      "Catering / bulk order enquiry form",
+    ],
+    premium: [
+      "Online ordering information & WhatsApp menu",
+      "Table reservation enquiry form (date, time, party size)",
+      "Chef's special weekly carousel",
+      "Events booking page (birthdays, parties, anniversaries)",
+      "Festival special menu seasonal section",
+      "Food blog with 3 SEO posts ('Best biryani in {city}')",
+      "Loyalty / membership programme page",
+    ],
+  },
+  salon: {
+    standard: [
+      "Service price list (haircut, color, facial, threading, etc.)",
+      "Before / after transformation gallery",
+      "Appointment enquiry form (service + preferred time)",
+      "Stylist / artist profiles",
+    ],
+    premium: [
+      "Online appointment booking enquiry with stylist + service + slot",
+      "Membership packages display (Bronze / Silver / Gold)",
+      "Gift voucher information & enquiry",
+      "Bridal package detail page (trial, day-of, party)",
+      "Loyalty programme page",
+      "Beauty blog with 3 SEO posts ('Best salon for bridal in {city}')",
+      "Instagram feed embed section",
+    ],
+  },
+  gym: {
+    standard: [
+      "Programs / classes grid (weights, cardio, yoga, zumba, crossfit)",
+      "Trainer profiles with certifications",
+      "Membership plans pricing (3 tiers)",
+      "Free trial class enquiry form",
+    ],
+    premium: [
+      "Online membership enquiry with goal selection",
+      "Body transformation gallery (before / after with consent)",
+      "Class schedule weekly grid",
+      "Personal training package detail page",
+      "Diet & nutrition consultation enquiry",
+      "Blog with 3 fitness SEO posts ('Best gym in {city}')",
+    ],
+  },
+  contractor: {
+    standard: [
+      "Completed project portfolio (6-8 builds)",
+      "Services list with brief descriptions",
+      "Free quote enquiry form",
+      "Materials & brand partners section",
+    ],
+    premium: [
+      "Project portfolio with detailed case studies",
+      "Free quote calculator (sq ft × rate)",
+      "Video walkthrough of key projects",
+      "Materials showcase with brand certifications",
+      "Warranty / guarantee policy page",
+      "Construction blog with 3 SEO posts",
+    ],
+  },
+  photographer: {
+    standard: [
+      "Portfolio tabs (weddings / portraits / events / corporate)",
+      "Package pricing with deliverables",
+      "Booking enquiry form (event date, type, location)",
+      "About the photographer with style & equipment",
+    ],
+    premium: [
+      "Detailed package comparison table (Basic / Standard / Premium shoots)",
+      "Pre-wedding shoot location ideas page",
+      "Client testimonials with event photos",
+      "Booking calendar enquiry (event date picker)",
+      "Photography blog with 3 SEO posts",
+      "Equipment & technique section",
+    ],
+  },
+};
+
+function getBusinessSpecific(businessType: string, packageId: string): string[] {
+  const t = (businessType || "").toLowerCase();
+  for (const [key, set] of Object.entries(BUSINESS_SPECIFIC_FEATURES)) {
+    if (t.includes(key)) {
+      if (packageId === "premium" || packageId === "complex") return set.premium;
+      if (packageId === "standard") return set.standard;
+      return [];
+    }
+  }
+  return [];
+}
+
+// ═══ EXTRA DEEP INSTRUCTION BLOCKS for Standard / Premium (forces longer prompts) ═══
+function getDeepPackageBlock(packageId: string, data: Record<string, string>, profile: { ctaStyle: string; conversionTips: string }): string {
+  const id = (packageId || "basic").toLowerCase();
+  const city = data.city || "the city";
+  const type = data.business_type || "business";
+
+  if (id === "standard") {
+    return `
+╔══════════════════════════════════════════════════════════════════╗
+║       STANDARD-TIER DEEP BUILD INSTRUCTIONS (₹1,500)            ║
+╚══════════════════════════════════════════════════════════════════╝
+
+This is the ₹1,500 Standard package — a polished, 8-page conversion-grade website.
+Every section below MUST be built with the exact depth described.
+
+1. HOMEPAGE (must take ~5 scroll screens):
+   - Hero: full-bleed image (use uploaded photo if available), bold H1 with "${city}" mention, sub-headline, primary CTA + secondary CTA, trust strip (years / customers / rating)
+   - "Why Choose Us" 4-pillar grid with icons + 2-line descriptions
+   - Services preview (top 4 services as cards linking to Services page)
+   - Featured testimonial block (1 large quote with photo + name + locality)
+   - Photo gallery preview (4 photos, link to gallery page)
+   - "Visit Us" mini-section with map preview + WhatsApp CTA
+   - LeadPe Lead Capture Widget BEFORE footer
+
+2. SERVICES PAGE:
+   - 6-8 services, each with: icon, title, 3-line description, indicative price (or "On enquiry"), individual WhatsApp CTA pre-filled with service name
+   - Section: "Our Process" — 4 numbered steps with icons
+   - Service-area FAQ (3 questions specific to ${type} pricing/duration)
+
+3. ABOUT PAGE:
+   - Owner photo + bio (mention "${data.owner_name || "the owner"}", years of experience, what makes them different)
+   - "Our Story" timeline (founded → milestones → today)
+   - Team section: 3-4 staff cards with photo + role + 1-line bio (use uploaded photos if available)
+   - Values / mission block
+
+4. GALLERY PAGE:
+   - Masonry / grid layout
+   - All uploaded business photos used here at full resolution
+   - Lightbox on click
+   - Categorised tabs if photos suggest multiple themes
+
+5. TESTIMONIALS PAGE / SECTION:
+   - 6 detailed testimonials with name, locality in ${city}, star rating, optional photo
+   - Use realistic Indian names from ${city}
+   - Mix short and long quotes for visual rhythm
+
+6. FAQ PAGE / SECTION:
+   - 8 questions matching real Google searches for "${type} in ${city}"
+   - Accordion UI, FAQ schema markup in <head>
+
+7. CONTACT PAGE:
+   - Hero: "Get in touch with ${data.business_name}"
+   - Two-column: contact info + map | LeadPe widget
+   - Business hours table (Mon-Sun)
+   - WhatsApp + Call buttons prominent
+   - Social media links row
+
+8. FOOTER (every page):
+   - 4-column on desktop: Brand+tagline | Quick links | Services | Contact
+   - Newsletter row above copyright
+   - Viral "Built with LeadPe 🌱" credit (mandatory)
+
+CONVERSION LAYER (apply across pages):
+- Sticky header with logo + nav + WhatsApp pill on right
+- Floating WhatsApp button bottom-right
+- Exit-intent or scroll-50% subtle banner offering free consultation (CSS only, no JS heavy libs)
+- ${profile.ctaStyle}
+- ${profile.conversionTips}
+
+CONTENT DEPTH:
+- Every page minimum 400 words of polished, ${city}-localised English copy
+- Hero H1 must mention "${city}"
+- Each service description must mention either "${city}" or a neighbourhood within it
+- AI-generated tone: trustworthy, local, expert
+`;
+  }
+
+  if (id === "premium" || id === "complex") {
+    return `
+╔══════════════════════════════════════════════════════════════════╗
+║       PREMIUM-TIER DEEP BUILD INSTRUCTIONS (₹3,000)             ║
+╚══════════════════════════════════════════════════════════════════╝
+
+This is the ₹3,000 Premium package — a flagship 12-page website that should
+feel like a ₹30,000 agency build. Every section below is MANDATORY and must
+be built with the exact depth described. The vibe coder MUST NOT skip any.
+
+PAGE STRUCTURE (12 pages — build them all):
+1. Home  2. About  3. Services (overview)  4. Service detail × 2 (top 2 services as their own pages)
+5. Gallery  6. Team  7. Testimonials  8. Pricing/Packages  9. Booking / Enquiry
+10. Blog (index)  11. Blog post sample × 2 (or single template ready)  12. Contact
+
+1. HOMEPAGE — premium hero treatment:
+   - Cinematic hero with parallax / Ken Burns effect on uploaded photo
+   - Animated stat counters (years / clients / rating / cities served)
+   - "Featured in" / press / certifications strip
+   - Services carousel with hover micro-interactions
+   - 3-step "How it works" with animated illustrations
+   - Featured project / case-study block
+   - Dual testimonial layout (text + video placeholder)
+   - Booking enquiry CTA section
+   - LeadPe widget + map combo
+
+2. ABOUT PAGE — story-driven:
+   - Owner spotlight: large photo, full bio, signature, social links
+   - Timeline of milestones (founded → expansions → recognition)
+   - Mission / vision / values 3-column with icons
+   - Press & awards grid
+
+3. SERVICES OVERVIEW + 2 DETAIL PAGES:
+   - Overview: all services with rich icons, descriptions, "Learn more" linking to detail pages
+   - Detail pages (top 2 most important services for ${type}):
+     * Hero with service-specific image
+     * What's included (checklist)
+     * Process (numbered steps)
+     * Pricing options (3 tiers)
+     * FAQ (4 questions specific to that service)
+     * Booking enquiry CTA pre-filled with service name
+
+4. GALLERY — premium showcase:
+   - Filterable gallery (category tabs)
+   - Lightbox with arrow navigation + captions
+   - All uploaded photos used; supplement with high-quality stock if needed
+   - Lazy-loaded with skeleton placeholders
+
+5. TEAM PAGE:
+   - Owner + senior staff cards with full bios, qualifications, social links
+   - Group photo if uploaded
+   - "Join us" mini-CTA at bottom
+
+6. TESTIMONIALS PAGE:
+   - 10+ testimonials, mix of text + star ratings + locality + (where realistic) photo
+   - Filter by service type
+   - Aggregate rating block (e.g. "4.9 / 5 from 200+ ${city} customers")
+
+7. PRICING / PACKAGES PAGE:
+   - 3-tier comparison table (Basic / Standard / Premium offerings of THIS business)
+   - "Most popular" highlight on middle tier
+   - FAQ specific to pricing
+   - Custom quote enquiry CTA
+
+8. BOOKING / ENQUIRY PAGE:
+   - Multi-field form (name, phone, email optional, service select, preferred date, preferred time, notes)
+   - Date picker, time-slot select (form-only, no live calendar slot management)
+   - Submits via the LeadPe widget POST schema (same business_id + leads endpoint)
+   - Confirmation screen with WhatsApp pre-filled deep link
+
+9. BLOG (index + 2 starter posts):
+   - Index: card grid with title, excerpt, date, category
+   - Each post: H1 title, hero image, 600+ word AI-written ${city}-targeted SEO content,
+     author block, related posts, share buttons, lead-magnet CTA mid-article
+   - Topics auto-generated for ${type} in ${city} (e.g. "Top 5 ${type} services in ${city} 2025")
+
+10. CONTACT PAGE:
+    - Premium contact layout: split hero with image + form
+    - Multiple contact methods (WhatsApp / call / email / map)
+    - Sticky LeadPe widget on the side on desktop
+    - Business hours with "Open now" live indicator (CSS / JS)
+
+GLOBAL PREMIUM ENHANCEMENTS:
+- Sticky transparent header that becomes solid on scroll
+- Smooth Framer Motion fade-in + stagger on every section
+- Animated scroll-progress bar at top
+- "Back to top" floating button
+- Newsletter signup in footer with success state
+- Social proof bar above footer ("Trusted by 500+ ${city} customers")
+- Cookie consent banner (lightweight)
+- 404 page with brand styling
+- Sitemap.xml + robots.txt
+
+SEO PREMIUM LAYER:
+- City-targeted landing copy on Home, Services, Blog
+- LocalBusiness + Service + FAQPage + BreadcrumbList JSON-LD schemas
+- OG image suggestions per page
+- Internal linking between Services ↔ Blog ↔ Booking
+
+CONVERSION PREMIUM LAYER:
+- ${profile.ctaStyle}
+- ${profile.conversionTips}
+- Multiple CTAs per page (above fold + mid + before footer)
+- Trust signals (badges, ratings, counts) repeated near each CTA
+- Urgency micro-copy ("Limited slots this week", seasonal offers)
+
+CONTENT DEPTH:
+- Every page minimum 600 words of polished, ${city}-localised English copy
+- Blog posts 600+ words each with H2/H3 structure
+- All copy must feel locally written, not generic — mention ${city} landmarks/areas where natural
+`;
+  }
+
+  return "";
+}
+
 function getLeadWidgetHtml(businessId: string, supabaseUrl: string, supabaseKey: string): string {
   return `<!-- LeadPe Lead Capture Widget -->
 <div id="leadpe-widget">
@@ -377,19 +753,30 @@ URL: ${data.logo_url}
     : `\n🖼️ LOGO:
 No logo provided by client. Create a professional text-based logo using the business name "${data.business_name}" with appropriate typography matching the design profile.`;
 
-  const photosInstruction = data.photos_urls
-    ? `\n📸 BUSINESS PHOTOS (PROVIDED BY CLIENT — USE THESE, NOT STOCK):
-${data.photos_urls}
+  // Normalise photos_urls to a list (could be array or comma/newline-separated string)
+  const photosRaw = data.photos_urls;
+  const photosList: string[] = Array.isArray(photosRaw)
+    ? photosRaw as unknown as string[]
+    : typeof photosRaw === "string" && photosRaw.trim()
+      ? photosRaw.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
+      : [];
 
-⚠️ CRITICAL: These are REAL photos of this actual business. Use them in:
-- Hero section as background or primary image
-- Gallery/portfolio section
-- About section
-- Service cards where relevant
-Do NOT replace these with generic stock photos. These photos make the website authentic and real.
-If a photo looks like food → use in menu/hero. If it looks like interior → use in gallery/about. If it shows people → use in team/about section.`
+  const photosInstruction = photosList.length > 0
+    ? `\n📸 BUSINESS PHOTOS (PROVIDED BY CLIENT — USE THESE EXACT URLs, NOT STOCK):
+The client uploaded ${photosList.length} real photo(s) of their actual business. Each URL below MUST be used in the website. Reference each one explicitly via <img src="..."> with descriptive alt text including "${data.business_name} ${data.city}".
+
+${photosList.map((u, i) => `  Photo ${i + 1}: ${u}`).join("\n")}
+
+⚠️ CRITICAL RULES FOR THESE PHOTOS:
+- Use Photo 1 as the hero background or hero side image
+- Spread the remaining photos across: Gallery section (all of them), About section (1-2), Service cards (where relevant)
+- Do NOT replace any of these with generic Unsplash stock photos
+- Add loading="lazy" except for Photo 1 (hero)
+- Add descriptive alt text for SEO: e.g. alt="${data.business_name} — interior view in ${data.city}"
+- If a photo looks like food → use in menu/hero. If interior → gallery/about. If people → team/about. If product → services/gallery.
+- These photos are the #1 reason this site will feel authentic — never skip any of them.`
     : `\n📸 PHOTOS:
-No business photos provided. Use high-quality, relevant stock photos matching these themes: ${profile.images}
+No business photos provided by client. Use high-quality, relevant stock photos matching these themes: ${profile.images}
 Use Unsplash URLs. Choose photos that look like real INDIAN businesses, not Western stock photos.
 Example Unsplash search terms: "${data.business_type} India", "Indian ${data.business_type?.toLowerCase()}", "${data.city} business"`;
 
@@ -428,6 +815,22 @@ ${scope.always_include.map((f) => `  - ${f}`).join("\n")}
 ${scope.never_include.map((f) => `  ✗ ${f}`).join("\n")}
 
 If the client's special requirements ask for something in the "DO NOT INCLUDE" list, politely substitute with the closest allowed alternative (e.g. replace "online payment" with "WhatsApp enquiry to pay").
+
+${(() => {
+  const bs = getBusinessSpecific(data.business_type || "", (data.package_id || "basic").toLowerCase());
+  if (bs.length === 0) return "";
+  return `╔══════════════════════════════════════════════════════════════════╗
+║   BUSINESS-SPECIFIC FEATURES FOR THIS PACKAGE (MANDATORY)        ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Because this is a ${data.business_type} on the ${scope.label} tier, the following
+sections are MANDATORY in addition to the generic package scope above. Build each one:
+
+${bs.map((f) => `  ★ ${f}`).join("\n")}
+`;
+})()}
+
+${getDeepPackageBlock((data.package_id || "basic").toLowerCase(), data, profile)}
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║              BUSINESS CONTEXT ANALYSIS                          ║
@@ -785,8 +1188,10 @@ Language: ${data.language || "english"}. Keep under 300 chars, use emojis, creat
     // build_prompt needs a much larger output budget + a stronger model.
     // Flash truncates ~5000-word structured outputs at its default cap.
     const isLong = type === "build_prompt";
+    const pkgId = (data?.package_id || "basic").toString().toLowerCase();
+    const isPremiumTier = pkgId === "premium" || pkgId === "complex" || pkgId === "standard";
     const model = isLong ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-    const maxTokens = isLong ? 16000 : 2048;
+    const maxTokens = isLong ? (isPremiumTier ? 32000 : 16000) : 2048;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
