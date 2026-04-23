@@ -118,9 +118,9 @@ serve(async (req) => {
     if (fetchedFileCount === 0) {
       return new Response(JSON.stringify({
         score: 0, passed: false, checks: {},
-        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: "Could not access any files. Make sure the repo is PUBLIC and has code on the 'main' branch." }],
-        issues: ["❌ Could not access repository files — is it public? Is branch 'main'?"],
-        fixes: ["Make the repository public and ensure code is pushed to the 'main' branch."],
+        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: `Could not access any files on branch '${defaultBranch}'. Make sure the repo is PUBLIC and your code is pushed to this branch.` }],
+        issues: [`❌ Could not access repository files on branch '${defaultBranch}'`],
+        fixes: [`Make the repository public and ensure code is pushed to the '${defaultBranch}' branch.`],
         aiSuggestions: "",
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
