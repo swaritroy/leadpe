@@ -1,174 +1,116 @@
 
 
 ## Goal
-Build a complete two-sided referral system where both businesses and vibe coders can refer new businesses to LeadPe. Each successful conversion gives the referrer ₹100 credit (businesses) or ₹100 cash bonus (coders), and the new business gets ₹100 off their first order.
+Two updates only — no UI redesign, no feature scope change.
+
+1. **Fix deploy failure reporting** so vibe coders see the *exact* reason a Vercel deployment failed (not a generic "Deploy failed").
+2. **Make the AI build prompt package-aware** so the scope of features (booking system, chatbot, e-commerce, animations, etc.) scales with Basic ₹800 / Standard ₹1,500 / Premium ₹3,000 / Custom ₹5,000+.
 
 ---
 
-## 1. Database changes
+## Fix 1 — Real deploy error surfaced end-to-end
 
-### New table: `referrals`
-```sql
-create table public.referrals (
-  id uuid primary key default gen_random_uuid(),
-  referrer_id uuid not null,           -- profile.user_id of referrer
-  referrer_type text not null,         -- 'business' | 'coder'
-  referee_id uuid,                     -- profile.user_id of new signup (null until signup)
-  referral_code text not null,         -- the code used (e.g. LP-AB12CD)
-  status text not null default 'pending', -- pending | converted | rewarded
-  reward_amount integer default 0,
-  converted_at timestamptz,
-  rewarded_at timestamptz,
-  created_at timestamptz default now()
-);
-create index idx_referrals_referrer on public.referrals(referrer_id);
-create index idx_referrals_code on public.referrals(referral_code);
+### `supabase/functions/deploy-website/index.ts` (action `deploy`)
+
+- **Catch project-create failures**: today, if `POST /v9/projects` fails (invalid URL, bad token, repo not connected to GitHub app, name collision, framework not detected), the response is parsed but never inspected — it falls through and the deployment call then fails with a confusing message. Add a check right after `createResp`: if `!createResp.ok` AND it's not the harmless `project_already_exists` (`409`), return `{ success:false, error, hint, stage:"project_create" }` immediately.
+- **Surface the deployment trigger error** with the full Vercel error code + message: `${err.code}: ${err.message}` (e.g. `repo_not_found`, `invalid_request`, `forbidden`).
+- **Fetch real build logs on ERROR state**: when polling returns `readyState === "ERROR"`, additionally call `GET /v2/deployments/{id}/events?builds=1&direction=backward&limit=20` and pick the last `error`/`stderr` event. Concatenate into `buildError` so the coder sees the actual webpack/vite/npm message (e.g. `Module not found: Can't resolve './App'`).
+- **Always include in the response**: `error` (raw Vercel reason), `hint` (human action), `stage` (`project_create` | `deploy_trigger` | `build` | `timeout`), and `inspectorUrl` (Vercel deployment URL the coder can open).
+- **Expand the hint dictionary** with Vercel-specific codes: `repo_not_found`, `not_authorized`, `missing_files`, `invalid_request`, `BUILD_UTILS_SPAWN_1`, `FUNCTION_INVOCATION_FAILED`, `MISSING_BUILD_SCRIPT`.
+
+### `src/lib/deployService.ts`
+
+- Extend `DeployResult` with `hint?: string`, `stage?: string`, `inspectorUrl?: string`.
+- **Stop swallowing the hint**: current code returns `{ success:false, error: data.error }` when `data?.error` exists, dropping `hint` and `inspectorUrl`. Pass them through.
+
+### `src/components/BriefModal.tsx`
+
+- `getErrorCard()` already renders `err.detail`. Update `handleSubmitGithub` so when `deployResult.success === false`, it builds `DeployError` with:
+  - `message = deployResult.error` (raw)
+  - `detail = deployResult.error` (always shown)
+  - plus a new line in detail when `deployResult.hint` exists: `"Suggested fix: …"`
+  - plus an inline "View on Vercel" link when `deployResult.inspectorUrl` exists (small text-button under steps).
+- Map `stage` → existing icons: `project_create → 🔧`, `deploy_trigger → 🚀`, `build → 🔴`, `timeout → ⏳`.
+- Keep all existing error categories — only add a new `deploy_failed` category that always shows the raw Vercel reason verbatim.
+
+---
+
+## Fix 2 — Package-aware prompt (just an update, not a rewrite)
+
+The existing CTO prompt in `supabase/functions/ai-generate/index.ts` already accepts `package_id` but ignores it. Add **one new constant + one inserted block** — no other edits.
+
+### Inside `ai-generate/index.ts`
+
+Add a small lookup `PACKAGE_SCOPE` mapping each package to **what to build vs. what NOT to build**:
+
+```text
+basic (₹800):       5 pages, WhatsApp button, contact form, Google Maps, basic SEO.
+                    DO NOT build: gallery > 4 photos, blog, booking, chatbot, animations, multi-language.
+
+standard (₹1,500):  All Basic + photo gallery (8-12), testimonials, AI-written long-form content,
+                    full SEO + schema, advanced lead capture, Google Business profile section.
+                    DO NOT build: online booking, chatbot, blog, e-commerce, custom dashboard.
+
+premium (₹3,000):   All Standard + ONLINE BOOKING SYSTEM (date/time picker → WhatsApp/email),
+                    WhatsApp chatbot stub, blog (3 sample posts), Framer-Motion animations,
+                    Hindi + English toggle, advanced analytics dashboard.
+                    DO NOT build: e-commerce, payment gateway, custom user dashboard.
+
+complex (₹5,000+):  Everything in Premium + e-commerce (cart, checkout), payment gateway
+                    (Razorpay test), custom admin dashboard, advanced 3rd-party integrations.
+                    Vibe coder decides exact scope per client.
 ```
-RLS:
-- Owners read own referrals (`referrer_id = auth.uid()` OR `referee_id = auth.uid()`)
-- Service role manages all
-- Authenticated insert when `referee_id = auth.uid()`
 
-### `profiles` columns to add
-- `referral_code text unique` — auto-filled `LP-XXXXXX` for every user
-- `referral_discount integer default 0` — credit balance in ₹
-- `referral_bonus_total integer default 0` — coder lifetime bonus
-- `referred_by` already exists ✅
+In `buildCTOPrompt`, append a **new mandatory section** before the "WEBSITE SECTIONS" block:
 
-### `handle_new_user` trigger update
-Generate `referral_code = 'LP-' || upper(substring(md5(random()::text), 1, 6))` on profile creation.
+```
+╔══ PACKAGE SCOPE — STRICT ══╗
+Client paid for: {package_name} (₹{price})
+Coder earning:  ₹{coder_earning}
+Delivery:       {deliveryDays} days
 
-### Backfill
-One-time UPDATE to give existing profiles a `referral_code`.
+✅ MUST BUILD (in scope, paid for):
+{scope.includes}
 
----
+❌ DO NOT BUILD (out of scope — upsell only):
+{scope.excludes}
 
-## 2. Routing
-
-`src/App.tsx` — add public route:
-```tsx
-<Route path="/ref/:code" element={<Referral />} />
+Why this matters:
+- Building extras = unpaid work for you.
+- Skipping required scope = quality audit fail.
+- If client asks for an out-of-scope feature, reply:
+  "That feature is part of the {next_tier} package. I can upgrade your plan."
 ```
 
----
+Also pass through `package_features` (the `WEBSITE_PACKAGES[].features` array, joined) so the LLM has both the human-readable feature list AND the strict scope rules.
 
-## 3. New page: `src/pages/Referral.tsx`
+### `src/components/BriefModal.tsx` & `src/pages/GetWebsite.tsx`
 
-- Read `:code` from URL params.
-- Validate the code exists by querying `profiles.referral_code`.
-- Show top banner (green `#00C853`):
-  > "Your friend invited you! Sign up and get ₹100 off your first website."
-- Save `localStorage.setItem('referral_code', code)` and `referral_pending_at` timestamp (24 h expiry).
-- Render the existing `<Auth />` flow underneath (reused, not duplicated).
-- After signup completes, the auth callback claims the code (see step 4).
+- `BriefModal`: when calling `ai-generate`, also send `package_id`, `package_name`, `package_price`, `coder_earning`, and the joined `package_features` from `WEBSITE_PACKAGES` (look up via `getPackageById(request.package_id)`).
+- `GetWebsite`: in the fast `fallbackPrompt` (used until Gemini enriches), append the same strict scope block in plain text so even the fallback is package-correct.
 
----
+### Package selection clarity (no UI change required)
 
-## 4. Signup attribution — `src/pages/AuthCallback.tsx`
+The user said *"package must be understandable with clarity"*. The `WEBSITE_PACKAGES.features` strings already drive the package picker UI in `GetWebsite.tsx`. Update **only the feature wording** in `src/lib/packages.ts` so each tier clearly signals what's exclusive to it:
 
-After session establishes and profile is loaded, run a `claimReferralCode()` helper:
-1. Read `localStorage.referral_code`.
-2. Look up `profiles` where `referral_code = code` to find `referrer_id` + `role`.
-3. Skip if `referrer_id == new_user_id` (self-refer).
-4. UPDATE new user's `profiles`: `referred_by = code`, `referral_discount = 100`.
-5. INSERT into `referrals`: referrer_id, referrer_type (business/coder), referee_id, referral_code, status=`pending`.
-6. `localStorage.removeItem('referral_code')`.
+- Basic: keep as-is (5 pages, WhatsApp, contact, Maps, basic SEO).
+- Standard: prefix exclusive items with the tier name → `"+ Photo gallery"`, `"+ AI-written content"`, `"+ Lead capture form"`.
+- Premium: prefix true upgrades → `"+ Online booking system"`, `"+ WhatsApp chatbot"`, `"+ Blog section"`, `"+ Framer Motion animations"`, `"+ Hindi + English toggle"`.
+- Custom: `"+ E-commerce / Cart"`, `"+ Payment gateway"`, `"+ Custom admin dashboard"`.
+
+That single wording tweak makes the package picker self-explanatory without touching any component.
 
 ---
 
-## 5. Business dashboard — `src/components/dashboard/StateCLive.tsx`
+## Files touched
 
-Add a new "Refer a Friend" card (rendered only when website is live):
+**Edited (no new files):**
+- `supabase/functions/deploy-website/index.ts` — surface project-create errors, fetch Vercel build-event logs, return `{error, hint, stage, inspectorUrl}`.
+- `src/lib/deployService.ts` — extend `DeployResult`, stop dropping `hint`/`inspectorUrl`.
+- `src/components/BriefModal.tsx` — show raw Vercel reason + hint + Vercel inspector link in `getErrorCard`; pass package fields to `ai-generate`.
+- `supabase/functions/ai-generate/index.ts` — add `PACKAGE_SCOPE` lookup + strict scope block in `buildCTOPrompt` (no rewrite of existing prompt).
+- `src/pages/GetWebsite.tsx` — append scope block to fallback prompt; pass package fields when inserting build request.
+- `src/lib/packages.ts` — small wording prefix on Standard/Premium/Custom features for picker clarity.
 
-- Heading: **"Refer a Friend — Both Win"**
-- Sub: "Refer any business — both of you get ₹100 off."
-- Read-only input: `https://leadpe.online/ref/{profile.referral_code}` + Copy icon.
-- WhatsApp share button → `https://wa.me/?text=` with prefilled English message:
-  > "I built my website on LeadPe — ₹800, ready in 48 hours, customers come straight to WhatsApp. Sign up with my link and we both get ₹100 off: https://leadpe.online/ref/CODE"
-- Stats row (3 mini cards), fetched from `referrals` where `referrer_id = me`:
-  - Invited: count of all rows
-  - Converted: count where status in (`converted`,`rewarded`)
-  - Credit earned: `referral_discount` from profile (₹)
-
-Same component logic encapsulated in a small reusable `<ReferralCard />` so the coder studio can reuse it.
-
----
-
-## 6. Apply discount at payment — `src/pages/Payment.tsx`
-
-Before rendering checkout:
-- Read `profile.referral_discount` (already in `useAuth`).
-- If `> 0`, show price breakdown:
-  ```
-  Original: ₹800
-  Referral discount: −₹100
-  You pay: ₹700
-  ```
-- Pass `referral_discount: 100` in the `create-checkout` edge function body so it can apply a Stripe coupon / `unit_amount` reduction.
-
-`supabase/functions/create-checkout/index.ts`:
-- Accept `referralDiscount` param. If > 0, compute `unit_amount = base − referralDiscount*100` using `price_data` (one-time payments only).
-- Add `metadata.referralDiscountApplied = '100'` so the webhook can clear it.
-
----
-
-## 7. Reward on conversion — `supabase/functions/payments-webhook/index.ts`
-
-Inside `handleCheckoutCompleted` after recording the payment:
-
-1. Fetch new payer's profile → read `referred_by` (the code).
-2. If `referred_by` is set and a `referrals` row with `status='pending'` exists for this referee:
-   - UPDATE that referral: `status='converted'`, `converted_at=now()`.
-   - Look up referrer profile via `referral_code`.
-   - **If referrer.role = 'business':** `referral_discount += 100`. Status → `rewarded`, `reward_amount=100`.
-   - **If referrer.role = 'vibe_coder':** insert `earnings` row `{ vibe_coder_id, type:'referral_bonus', amount:100, month: YYYY-MM }`, increment `profiles.referral_bonus_total += 100`. Status → `rewarded`.
-3. Clear payer's `referral_discount = 0` if `metadata.referralDiscountApplied` was set.
-4. Insert into `scheduled_messages` to notify referrer over WhatsApp:
-   > "Your referral converted! ₹100 credit added to your LeadPe account."
-
----
-
-## 8. Coder studio — `src/pages/DevDashboard.tsx`
-
-In the profile/earnings tab, add a "Bring Clients — Earn Extra" card:
-
-- Heading: **"Bring Clients — Earn Extra"**
-- Sub: "Bring a paying client — earn ₹100 bonus on top of your usual 60%."
-- How it works (4 numbered steps in English, matching user's request).
-- Important note (highlighted box): "₹100 bonus is paid only after your client pays for their first website."
-- Same shareable link `/ref/{code}` + WhatsApp button (English message tailored to coders).
-- Earnings list adds a line: **"Referral Bonuses: ₹{referral_bonus_total}"**.
-
----
-
-## 9. Files touched
-
-**Created**
-- `src/pages/Referral.tsx`
-- `src/components/ReferralCard.tsx` (shared between business + coder)
-- `src/lib/referral.ts` (claim helper, share message builders, link copy)
-- Migration: add columns + `referrals` table + trigger update + backfill
-
-**Edited**
-- `src/App.tsx` — add `/ref/:code` route
-- `src/pages/AuthCallback.tsx` — claim referral on signup
-- `src/pages/Payment.tsx` — show discount breakdown, pass to edge fn
-- `src/components/dashboard/StateCLive.tsx` — embed `<ReferralCard variant="business" />`
-- `src/pages/DevDashboard.tsx` — embed `<ReferralCard variant="coder" />` + bonus stat
-- `src/hooks/useAuth.tsx` — extend `Profile` type with `referral_code`, `referral_discount`, `referral_bonus_total`
-- `supabase/functions/create-checkout/index.ts` — accept + apply `referralDiscount`
-- `supabase/functions/payments-webhook/index.ts` — convert + reward logic + notify
-
-**Untouched**: visual design, brand tokens, all other dashboards, Stripe products, RLS on existing tables.
-
----
-
-## 10. Language note
-
-Per the existing **Language Policy** memory (English-only UI), all referral copy will be **clean English**, not Hinglish. Headings and CTAs:
-- "Refer a Friend — Both Win"
-- "Bring Clients — Earn Extra"
-- WhatsApp prefill messages in English.
-
-If you'd prefer Hinglish strings as written in the brief, say so before approval and I'll switch the copy.
+**Untouched:** all designs, dashboards, payment flow, referral flow, language policy.
 
