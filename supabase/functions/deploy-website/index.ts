@@ -22,6 +22,31 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ★ FIX: package-friendly hint dictionary keyed on Vercel error codes + free-text fallback
+function hintForCode(code: string, raw: string): string {
+  const c = (code || "").toLowerCase();
+  const r = (raw || "").toLowerCase();
+  // Vercel-specific error codes
+  if (c === "repo_not_found" || r.includes("repo_not_found")) return "GitHub repo not found by Vercel. Make sure the repo is PUBLIC and the URL is correct.";
+  if (c === "not_authorized" || c === "forbidden" || r.includes("not_authorized")) return "Vercel does not have access to this repo. Install the Vercel GitHub app on your account, then retry.";
+  if (c === "missing_files" || r.includes("missing_files")) return "Repo is missing required files. Push package.json and index.html / src/main.tsx, then retry.";
+  if (c === "invalid_request") return "Vercel rejected the request. Double-check the GitHub URL is in the form github.com/username/repo.";
+  if (c === "build_utils_spawn_1" || r.includes("build_utils_spawn_1")) return "Vercel build runner crashed. Usually a corrupt package-lock.json — delete it, run npm install locally, push, retry.";
+  if (c === "function_invocation_failed") return "A serverless function crashed at runtime. Check your API routes for unhandled errors.";
+  if (c === "missing_build_script" || r.includes("missing build script")) return 'package.json is missing a "build" script. Add `"build": "vite build"` and push.';
+  if (c === "rate_limited" || c === "too_many_requests") return "Too many deployments in a short window. Wait a few minutes and retry.";
+  // Free-text fallbacks (build logs)
+  if (r.includes("module not found") || r.includes("can't resolve") || r.includes("cannot find module")) return "A file or package import is missing. Check the imports in the file mentioned above and push the fix.";
+  if (r.includes("syntaxerror") || r.includes("unexpected token")) return "Syntax error in your code. Open the file from the log, fix the typo, push, retry.";
+  if (r.includes("npm err") || r.includes("eresolve") || r.includes("peer dep")) return "npm install failed — check package.json for incompatible versions or missing packages.";
+  if (r.includes("memory") || r.includes("heap out of memory")) return "Build ran out of memory. Reduce dependencies or split the project.";
+  if (r.includes("timeout")) return "Build took too long. Optimize dependencies or remove heavy packages.";
+  if (r.includes("not found") || r.includes("404")) return "Repository not found. Make sure your GitHub repo is PUBLIC and the URL is correct.";
+  if (r.includes("permission") || r.includes("403") || r.includes("private")) return "Permission denied. Make sure the repository is PUBLIC, not private.";
+  if (r.includes("no framework") || r.includes("no output")) return "No framework detected. Add an index.html to the root folder or ensure package.json has a build script.";
+  return "Open the Vercel inspector link below to see the full build log, fix the issue, push to GitHub, and retry.";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
