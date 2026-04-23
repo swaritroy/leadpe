@@ -52,6 +52,8 @@ serve(async (req) => {
     }
 
     const repoData = await repoApiResp.json();
+    const defaultBranch: string = repoData?.default_branch || "main";
+    console.log(`[quality-check] Default branch: ${defaultBranch}`);
 
     // ── STEP 2: Check if repo is empty ──
     if (repoData.size === 0 || (repoData.pushed_at === null)) {
@@ -64,7 +66,7 @@ serve(async (req) => {
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
-    // ── STEP 3: Fetch key files from repo ──
+    // ── STEP 3: Fetch key files from repo (use detected default branch) ──
     const filesToCheck = [
       "index.html", "public/index.html",
       "src/App.tsx", "src/App.jsx",
@@ -87,7 +89,7 @@ serve(async (req) => {
 
     const fetchPromises = filesToCheck.map(async (filePath) => {
       try {
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${filePath}`;
+        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${filePath}`;
         const res = await fetch(rawUrl);
         if (res.ok) {
           const text = await res.text();
@@ -111,7 +113,7 @@ serve(async (req) => {
     const files = results.filter(Boolean) as { path: string; content: string }[];
     const allContent = files.map(f => f.content).join("\n");
     const allLower = allContent.toLowerCase();
-    console.log(`[quality-check] Repo size=${repoData.size}, fetched ${fetchedFileCount}/${filesToCheck.length} files`);
+    console.log(`[quality-check] Repo size=${repoData.size}, branch=${defaultBranch}, fetched ${fetchedFileCount}/${filesToCheck.length} files`);
 
     if (fetchedFileCount === 0) {
       return new Response(JSON.stringify({
