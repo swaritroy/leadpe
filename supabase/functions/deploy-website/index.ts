@@ -53,27 +53,62 @@ serve(async (req) => {
     if (action === "deploy") {
       const { businessName, businessType, city, githubUrl, trialCode, buildRequestId, businessId } = data;
 
-      const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "").trim();
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
       const githubRepo = parts[1]?.replace(".git", "");
 
       if (!githubOrg || !githubRepo) {
         return new Response(
-          JSON.stringify({ error: "Invalid GitHub URL format" }),
+          JSON.stringify({ error: "Invalid GitHub URL format", hint: "Use: github.com/your-username/your-repo" }),
           { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
+      // Pre-flight: confirm the GitHub repo exists, is PUBLIC and non-empty.
+      // Vercel cannot pull a private/empty repo without the GitHub app linked,
+      // so we surface a clear error to the coder before calling Vercel.
+      const ghResp = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+        headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "LeadPe-Deploy" },
+      });
+
+      if (ghResp.status === 404) {
+        return new Response(
+          JSON.stringify({ error: "Repository not found", hint: "Check the URL and make sure the repo is PUBLIC. Format: github.com/username/repo" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+      if (!ghResp.ok) {
+        return new Response(
+          JSON.stringify({ error: "GitHub API error", hint: "GitHub blocked the lookup. Try again in a minute." }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+      const ghData = await ghResp.json();
+      if (ghData.private === true) {
+        return new Response(
+          JSON.stringify({ error: "Repository is private", hint: "Open the repo on GitHub → Settings → Change visibility → Public, then resubmit." }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+      if (ghData.size === 0) {
+        return new Response(
+          JSON.stringify({ error: "Repository is empty", hint: "Push your website code to the main branch on GitHub, then resubmit." }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+      const repoId = String(ghData.id);
+      const defaultBranch = ghData.default_branch || "main";
+
       const projectName = `leadpe-${businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20)}-${city.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10)}`.replace(/-+/g, "-").replace(/-$/, "");
 
-      // Step 1: Create Vercel project
+      // Step 1: Ensure Vercel project exists. Skip git linkage at project-create time
+      // (that requires the Vercel-GitHub app installed on the org); we deploy by repoId instead.
       const createResp = await fetch(`${VERCEL_API}/v9/projects`, {
         method: "POST",
         headers,
         body: JSON.stringify({
           name: projectName,
-          gitRepository: { type: "github", repo: `${githubOrg}/${githubRepo}` },
           framework: "vite",
           buildCommand: "npm run build",
           outputDirectory: "dist",
@@ -87,27 +122,30 @@ serve(async (req) => {
           ],
         }),
       });
-
       const projectData = await createResp.json();
-      console.log("Project create response:", createResp.status);
+      console.log("[deploy] project create status:", createResp.status, projectData?.error?.code || "ok");
 
-      // Step 2: Trigger deployment
+      // Step 2: Trigger deployment by repoId (works for any PUBLIC GitHub repo,
+      // no Vercel-GitHub app installation required on the user's account).
       const deployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
         method: "POST",
         headers,
         body: JSON.stringify({
           name: projectName,
-          gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
-          projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
+          gitSource: { type: "github", repoId, ref: defaultBranch },
+          projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist", installCommand: "npm install" },
         }),
       });
 
       const deployData = await deployResp.json();
 
       if (!deployResp.ok) {
+        const vMsg = deployData.error?.message || "Deployment failed";
+        let hint = "Make sure your repo is PUBLIC and has either index.html or package.json at the root.";
+        if (/not.*found|repo/i.test(vMsg)) hint = "Vercel could not pull the repo. Confirm it's PUBLIC and the URL is correct.";
         return new Response(
-          JSON.stringify({ error: deployData.error?.message || "Deployment failed" }),
-          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          JSON.stringify({ error: vMsg, hint }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -376,11 +414,29 @@ serve(async (req) => {
 
           // Trigger redeployment so VITE_LEADPE_MODE=live takes effect
           if (githubOrg && githubRepo) {
+            // Resolve repoId via GitHub API to avoid Vercel-GitHub-app dependency
+            let repoIdLive: string | null = null;
+            let refLive = "main";
+            try {
+              const ghResp2 = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+                headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "LeadPe-Deploy" },
+              });
+              if (ghResp2.ok) {
+                const gh2 = await ghResp2.json();
+                repoIdLive = String(gh2.id);
+                refLive = gh2.default_branch || "main";
+              }
+            } catch (_e) { /* fallback below */ }
+
+            const gitSource = repoIdLive
+              ? { type: "github", repoId: repoIdLive, ref: refLive }
+              : { type: "github", org: githubOrg, repo: githubRepo, ref: refLive };
+
             const redeployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
               method: "POST", headers,
               body: JSON.stringify({
                 name: projectName,
-                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+                gitSource,
                 projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
               }),
             });
