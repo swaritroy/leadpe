@@ -1,5 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { getCorsHeaders } from "../_shared/cors.ts";
+
+const ALLOWED_ORIGINS = [
+  "https://leadpe.lovable.app",
+  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
+  "https://leadpe.online",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 // ═══ DESIGN PROFILES BY BUSINESS TYPE ═══
 const designProfiles: Record<string, {
@@ -198,41 +213,6 @@ function getDesignProfile(businessType: string) {
   return defaultProfile;
 }
 
-// ═══ PACKAGE SCOPE — STRICT (drives what to build vs. what NOT to build) ═══
-const PACKAGE_SCOPE: Record<string, {
-  label: string; price: string; deliveryDays: number; coderEarning: string;
-  includes: string; excludes: string; nextTier: string;
-}> = {
-  basic: {
-    label: "Basic Website", price: "₹800", deliveryDays: 2, coderEarning: "₹480",
-    includes: "5 pages (Home, Services, About, Gallery up to 4 photos, Contact); WhatsApp floating button; simple contact form; Google Maps embed; basic SEO (title + meta only); LeadPe lead widget; viral footer.",
-    excludes: "Photo gallery > 4 photos; testimonials carousel; blog; online booking system; chatbot; Framer Motion animations; multi-language; e-commerce; payment gateway; custom dashboard.",
-    nextTier: "Standard (₹1,500)",
-  },
-  standard: {
-    label: "Standard Website", price: "₹1,500", deliveryDays: 3, coderEarning: "₹900",
-    includes: "Everything in Basic + photo gallery (8–12 photos); testimonials section; AI-written long-form content for every section; full SEO + JSON-LD LocalBusiness schema + FAQ schema; advanced lead capture form; Google Business profile section.",
-    excludes: "Online booking system (date/time picker); WhatsApp chatbot; blog; e-commerce / cart; payment gateway; custom admin dashboard; multi-language toggle.",
-    nextTier: "Premium (₹3,000)",
-  },
-  premium: {
-    label: "Premium Website", price: "₹3,000", deliveryDays: 5, coderEarning: "₹1,800",
-    includes: "Everything in Standard + ONLINE BOOKING SYSTEM (date + time picker that sends booking to WhatsApp/email); WhatsApp chatbot stub (rule-based replies); blog section with 3 starter posts; Framer Motion animations on scroll/hover; Hindi + English language toggle; advanced analytics dashboard section.",
-    excludes: "E-commerce / cart; payment gateway; custom user/admin dashboard; advanced 3rd-party integrations.",
-    nextTier: "Custom (₹5,000+)",
-  },
-  complex: {
-    label: "Custom Website", price: "₹5,000+", deliveryDays: 7, coderEarning: "₹3,000+",
-    includes: "Everything in Premium + e-commerce (cart, checkout); payment gateway (Razorpay test mode); custom admin dashboard; advanced 3rd-party integrations. Vibe coder decides exact scope per client requirements.",
-    excludes: "Nothing is out of scope — confirm scope with the client up front.",
-    nextTier: "—",
-  },
-};
-
-function getPackageScope(packageId: string) {
-  return PACKAGE_SCOPE[packageId] || PACKAGE_SCOPE.standard;
-}
-
 function getLeadWidgetHtml(businessId: string, supabaseUrl: string, supabaseKey: string): string {
   return `<!-- LeadPe Lead Capture Widget -->
 <div id="leadpe-widget">
@@ -379,26 +359,6 @@ Layout Specifications:
 ${logoInstruction}
 
 ${photosInstruction}
-
-╔══════════════════════════════════════════════════════════════════╗
-║              📦 PACKAGE SCOPE — STRICT (READ FIRST) 📦          ║
-╚══════════════════════════════════════════════════════════════════╝
-
-Client paid for: ${getPackageScope(data.package_id || "standard").label} (${getPackageScope(data.package_id || "standard").price})
-Coder earning:  ${getPackageScope(data.package_id || "standard").coderEarning}
-Delivery:       ${getPackageScope(data.package_id || "standard").deliveryDays} days
-
-✅ MUST BUILD (in scope, paid for):
-${getPackageScope(data.package_id || "standard").includes}
-
-❌ DO NOT BUILD (out of scope — upsell only):
-${getPackageScope(data.package_id || "standard").excludes}
-
-Why this matters:
-- Building extras = unpaid work for the vibe coder.
-- Skipping required scope = quality audit failure.
-- If the client asks for an out-of-scope feature, reply:
-  "That feature is part of the ${getPackageScope(data.package_id || "standard").nextTier} package. I can upgrade your plan."
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║              WEBSITE SECTIONS (BUILD ALL)                        ║

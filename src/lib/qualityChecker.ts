@@ -28,16 +28,8 @@ export async function checkWebsiteQuality(
 
     if (error) {
       console.error("Quality check error:", error);
-      // Surface the REAL underlying error message instead of a canned blob.
-      const ctxBody = (error as any)?.context?.body;
-      const reason = (error as any)?.message || (typeof ctxBody === "string" ? ctxBody : "") || "Edge function returned a non-2xx response.";
-      return getFailedReport(reason);
-    }
-
-    // If the function returned structured checkResults (even with an `error` field), preserve them
-    // so the user sees real diagnostics instead of a generic banner.
-    if (data && Array.isArray(data.checkResults) && data.checkResults.length > 0) {
-      return data as QualityReport;
+      // Return a FAILED report, not a passing one
+      return getFailedReport("Quality check service unavailable. Please try again.");
     }
 
     if (data?.error) {
@@ -47,8 +39,7 @@ export async function checkWebsiteQuality(
     return data as QualityReport;
   } catch (err) {
     console.error("Quality check failed:", err);
-    const reason = err instanceof Error ? err.message : "Network error during quality check.";
-    return getFailedReport(reason);
+    return getFailedReport("Network error during quality check. Check your connection and try again.");
   }
 }
 

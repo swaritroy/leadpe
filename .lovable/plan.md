@@ -1,219 +1,174 @@
 
+
 ## Goal
-
-Stabilize the full deployment pipeline so:
-1. repo submit no longer gets stuck at false `0/100`,
-2. demo deployment actually reaches Vercel and returns exact failure reasons,
-3. paid websites automatically switch from demo to live after payment,
-4. uploaded logo/photos always reach the vibe coder and the generated prompt.
-
-No redesign. Deployment + prompt-asset reliability only.
+Build a complete two-sided referral system where both businesses and vibe coders can refer new businesses to LeadPe. Each successful conversion gives the referrer ₹100 credit (businesses) or ₹100 cash bonus (coders), and the new business gets ₹100 off their first order.
 
 ---
 
-## What is actually broken now
+## 1. Database changes
 
-### 1) Preview-origin CORS is blocking deployment functions
-The current `deploy-website`, `quality-check`, `ai-generate`, and related functions use a hardcoded `ALLOWED_ORIGINS` list with only:
-- `leadpe.lovable.app`
-- one `id-preview--...lovable.app`
+### New table: `referrals`
+```sql
+create table public.referrals (
+  id uuid primary key default gen_random_uuid(),
+  referrer_id uuid not null,           -- profile.user_id of referrer
+  referrer_type text not null,         -- 'business' | 'coder'
+  referee_id uuid,                     -- profile.user_id of new signup (null until signup)
+  referral_code text not null,         -- the code used (e.g. LP-AB12CD)
+  status text not null default 'pending', -- pending | converted | rewarded
+  reward_amount integer default 0,
+  converted_at timestamptz,
+  rewarded_at timestamptz,
+  created_at timestamptz default now()
+);
+create index idx_referrals_referrer on public.referrals(referrer_id);
+create index idx_referrals_code on public.referrals(referral_code);
+```
+RLS:
+- Owners read own referrals (`referrer_id = auth.uid()` OR `referee_id = auth.uid()`)
+- Service role manages all
+- Authenticated insert when `referee_id = auth.uid()`
 
-But the active project preview is running from `*.lovableproject.com`. That means the browser can fail before the function is even reached. This matches the current symptom:
-- quality check shows generic failure / `0/100`
-- edge logs show boot/shutdown but almost no real requests
+### `profiles` columns to add
+- `referral_code text unique` — auto-filled `LP-XXXXXX` for every user
+- `referral_discount integer default 0` — credit balance in ₹
+- `referral_bonus_total integer default 0` — coder lifetime bonus
+- `referred_by` already exists ✅
 
-### 2) Quality audit is too fragile
-`quality-check` still assumes:
-- repo files are on `main`
-- the important files live only in a small hardcoded path list
+### `handle_new_user` trigger update
+Generate `referral_code = 'LP-' || upper(substring(md5(random()::text), 1, 6))` on profile creation.
 
-So a valid repo can still get a false low score if:
-- default branch is not `main`
-- the app structure is slightly different
-- the needed evidence is in another file
-
-### 3) Live deployment after payment is incomplete
-`deploy_live` exists in `deploy-website`, but the current Stripe payment path does not call it. So demo may exist, but after payment the site is not reliably redeployed as live.
-
-### 4) Business assets are not reliably attached to build requests
-`BriefModal` tries to read logo/photos from `request`, but `build_requests` does not store those fields. It sometimes falls back to `orders`, but that lookup is by `business_name`, which is unreliable. So uploaded logo/photos can be missing from the coder brief and fallback prompt.
-
----
-
-## Implementation plan
-
-### A. Fix CORS for all deployment-related edge functions
-Replace hardcoded exact-origin arrays with the same wildcard-style origin logic already used elsewhere:
-- allow `*.lovable.app`
-- allow `*.lovableproject.com`
-- allow `leadpe.online`
-- allow published app domain(s)
-
-Apply this to:
-- `supabase/functions/deploy-website/index.ts`
-- `supabase/functions/quality-check/index.ts`
-- `supabase/functions/ai-generate/index.ts`
-- `supabase/functions/generate-seo/index.ts`
-- any payment/deploy helper function still using the old static list
-
-Result:
-- preview can actually call deployment functions
-- quality check and deploy requests reach the backend instead of failing at the browser boundary
+### Backfill
+One-time UPDATE to give existing profiles a `referral_code`.
 
 ---
 
-### B. Make quality-check stop giving false `0/100`
-Keep the existing lazy `deno_dom` protection, but improve repo inspection so the score reflects the real repo:
+## 2. Routing
 
-#### In `supabase/functions/quality-check/index.ts`
-- detect the repo’s default branch from GitHub API instead of forcing `main`
-- fetch repo tree / contents from the detected branch, not just a tiny fixed list
-- still keep the focused checks, but search across all fetched code instead of only a few paths
-- preserve structured `checkResults`, `issues`, and `error` in every failure path
-- return the exact GitHub / build / parsing reason in the JSON body
-
-#### In `src/lib/qualityChecker.ts`
-- keep showing the raw reason from the edge function
-- if structured `checkResults` are present, never overwrite them with a generic failure blob
-
-#### In `src/components/BriefModal.tsx`
-- keep showing the exact failure reason
-- include AI suggestions and individual failed checks in the error card
-- keep the coder override button, but make the default path accurate enough that override is rarely needed
-
-Result:
-- real repos stop incorrectly scoring `0/100`
-- coders see the exact reason when a repo is actually bad
+`src/App.tsx` — add public route:
+```tsx
+<Route path="/ref/:code" element={<Referral />} />
+```
 
 ---
 
-### C. Make demo deployment reliable and debuggable
-Strengthen the Vercel flow in `supabase/functions/deploy-website/index.ts`:
+## 3. New page: `src/pages/Referral.tsx`
 
-- validate GitHub URL and repo owner/repo parsing more defensively
-- detect default branch before triggering deployment
-- use that detected branch instead of always forcing `main`
-- keep current exact error surfacing (`project_create`, `deploy_trigger`, `build`, `timeout`)
-- fetch build-event logs on Vercel `ERROR` and return the real build failure text
-- persist deployment diagnostics on the build request so failures are not lost after modal close
-
-#### Database migration
-Add non-breaking diagnostic columns to `build_requests`, for example:
-- `deployment_id`
-- `deploy_stage`
-- `deploy_error`
-- `deploy_hint`
-- `deploy_inspector_url`
-- `last_deploy_checked_at`
-
-Result:
-- repo submit can fail with exact actionable reason
-- admin/coder can re-open the request and still see the last deploy failure
+- Read `:code` from URL params.
+- Validate the code exists by querying `profiles.referral_code`.
+- Show top banner (green `#00C853`):
+  > "Your friend invited you! Sign up and get ₹100 off your first website."
+- Save `localStorage.setItem('referral_code', code)` and `referral_pending_at` timestamp (24 h expiry).
+- Render the existing `<Auth />` flow underneath (reused, not duplicated).
+- After signup completes, the auth callback claims the code (see step 4).
 
 ---
 
-### D. Make live deployment happen automatically after payment
-The Stripe payment flow currently upgrades plan data but does not reliably trigger `deploy_live`.
+## 4. Signup attribution — `src/pages/AuthCallback.tsx`
 
-#### In `supabase/functions/payments-webhook/index.ts`
-After successful one-time checkout:
-- locate the latest relevant `build_requests` row for that business
-- if a demo repo / GitHub URL exists, call `deploy-website` with `action: "deploy_live"`
-- pass `buildRequestId`, `subdomain`, and `userId`
-- on success, update `build_requests.live_url`, `live_deployed_at`, and final `status`
-- on failure, store exact deploy diagnostics on the row instead of silently marking success
-
-#### Review current status transitions
-Make the statuses consistent:
-- demo submit → `review` / `building`
-- successful demo → `demo_ready`
-- successful paid launch → `live`
-- failed launch → `failed`
-
-Result:
-- demo deployment works before payment
-- payment automatically promotes the website to live
+After session establishes and profile is loaded, run a `claimReferralCode()` helper:
+1. Read `localStorage.referral_code`.
+2. Look up `profiles` where `referral_code = code` to find `referrer_id` + `role`.
+3. Skip if `referrer_id == new_user_id` (self-refer).
+4. UPDATE new user's `profiles`: `referred_by = code`, `referral_discount = 100`.
+5. INSERT into `referrals`: referrer_id, referrer_type (business/coder), referee_id, referral_code, status=`pending`.
+6. `localStorage.removeItem('referral_code')`.
 
 ---
 
-### E. Fix logo/photos not reaching vibe coder and prompt
-Make assets part of the build-request snapshot instead of relying on fragile lookup-by-name.
+## 5. Business dashboard — `src/components/dashboard/StateCLive.tsx`
 
-#### Database migration
-Add to `build_requests`:
-- `logo_url text`
-- `photos_urls text[]`
-- `color_preference text`
+Add a new "Refer a Friend" card (rendered only when website is live):
 
-#### In `src/pages/GetWebsite.tsx`
-When creating `build_requests`, also store:
-- `logo_url`
-- `photos_urls`
-- `color_preference`
+- Heading: **"Refer a Friend — Both Win"**
+- Sub: "Refer any business — both of you get ₹100 off."
+- Read-only input: `https://leadpe.online/ref/{profile.referral_code}` + Copy icon.
+- WhatsApp share button → `https://wa.me/?text=` with prefilled English message:
+  > "I built my website on LeadPe — ₹800, ready in 48 hours, customers come straight to WhatsApp. Sign up with my link and we both get ₹100 off: https://leadpe.online/ref/CODE"
+- Stats row (3 mini cards), fetched from `referrals` where `referrer_id = me`:
+  - Invited: count of all rows
+  - Converted: count where status in (`converted`,`rewarded`)
+  - Credit earned: `referral_discount` from profile (₹)
 
-#### In `src/components/BriefModal.tsx`
-Read assets from the build request first, not only from `orders`.
-Use the same source for:
-- Info tab preview
-- AI prompt request payload
-- fallback prompt text
-
-#### In `supabase/functions/ai-generate/index.ts`
-No prompt rewrite. Only ensure the existing asset instructions always use:
-- the actual logo URL
-- the actual photo URLs
-- package scope already in place
-
-Result:
-- coder always sees the same assets the business uploaded
-- prompt reliably includes real logo/photos
+Same component logic encapsulated in a small reusable `<ReferralCard />` so the coder studio can reuse it.
 
 ---
 
-## Files to update
+## 6. Apply discount at payment — `src/pages/Payment.tsx`
 
-### Edge functions
-- `supabase/functions/deploy-website/index.ts`
-- `supabase/functions/quality-check/index.ts`
-- `supabase/functions/payments-webhook/index.ts`
-- `supabase/functions/ai-generate/index.ts`
-- `supabase/functions/generate-seo/index.ts` (CORS consistency)
+Before rendering checkout:
+- Read `profile.referral_discount` (already in `useAuth`).
+- If `> 0`, show price breakdown:
+  ```
+  Original: ₹800
+  Referral discount: −₹100
+  You pay: ₹700
+  ```
+- Pass `referral_discount: 100` in the `create-checkout` edge function body so it can apply a Stripe coupon / `unit_amount` reduction.
 
-### Frontend
-- `src/lib/qualityChecker.ts`
-- `src/lib/deployService.ts`
-- `src/components/BriefModal.tsx`
-- `src/pages/GetWebsite.tsx`
-
-### Database
-- new migration for `build_requests` asset snapshot + deployment diagnostics columns
+`supabase/functions/create-checkout/index.ts`:
+- Accept `referralDiscount` param. If > 0, compute `unit_amount = base − referralDiscount*100` using `price_data` (one-time payments only).
+- Add `metadata.referralDiscountApplied = '100'` so the webhook can clear it.
 
 ---
 
-## Validation after implementation
+## 7. Reward on conversion — `supabase/functions/payments-webhook/index.ts`
 
-1. Submit a valid public GitHub repo from preview:
-   - quality check runs from preview without CORS failure
-   - score is not falsely `0/100`
+Inside `handleCheckoutCompleted` after recording the payment:
 
-2. Submit an invalid repo:
-   - exact reason appears in modal
-   - stage + hint + inspector link are shown
+1. Fetch new payer's profile → read `referred_by` (the code).
+2. If `referred_by` is set and a `referrals` row with `status='pending'` exists for this referee:
+   - UPDATE that referral: `status='converted'`, `converted_at=now()`.
+   - Look up referrer profile via `referral_code`.
+   - **If referrer.role = 'business':** `referral_discount += 100`. Status → `rewarded`, `reward_amount=100`.
+   - **If referrer.role = 'vibe_coder':** insert `earnings` row `{ vibe_coder_id, type:'referral_bonus', amount:100, month: YYYY-MM }`, increment `profiles.referral_bonus_total += 100`. Status → `rewarded`.
+3. Clear payer's `referral_discount = 0` if `metadata.referralDiscountApplied` was set.
+4. Insert into `scheduled_messages` to notify referrer over WhatsApp:
+   > "Your referral converted! ₹100 credit added to your LeadPe account."
 
-3. Submit a valid repo:
-   - demo deploy reaches Vercel
-   - build request gets deployment metadata
+---
 
-4. Complete payment:
-   - webhook triggers live deployment automatically
-   - build request moves to `live`
-   - final live URL is saved
+## 8. Coder studio — `src/pages/DevDashboard.tsx`
 
-5. Upload logo/photos during onboarding:
-   - coder sees them in BriefModal
-   - prompt includes the same asset URLs
+In the profile/earnings tab, add a "Bring Clients — Earn Extra" card:
 
-## Technical notes
-- Vercel credentials are already configured; this is a flow/reliability issue, not a missing-token issue.
-- No page redesign is needed.
-- Database changes are additive only, so existing data remains compatible.
+- Heading: **"Bring Clients — Earn Extra"**
+- Sub: "Bring a paying client — earn ₹100 bonus on top of your usual 60%."
+- How it works (4 numbered steps in English, matching user's request).
+- Important note (highlighted box): "₹100 bonus is paid only after your client pays for their first website."
+- Same shareable link `/ref/{code}` + WhatsApp button (English message tailored to coders).
+- Earnings list adds a line: **"Referral Bonuses: ₹{referral_bonus_total}"**.
+
+---
+
+## 9. Files touched
+
+**Created**
+- `src/pages/Referral.tsx`
+- `src/components/ReferralCard.tsx` (shared between business + coder)
+- `src/lib/referral.ts` (claim helper, share message builders, link copy)
+- Migration: add columns + `referrals` table + trigger update + backfill
+
+**Edited**
+- `src/App.tsx` — add `/ref/:code` route
+- `src/pages/AuthCallback.tsx` — claim referral on signup
+- `src/pages/Payment.tsx` — show discount breakdown, pass to edge fn
+- `src/components/dashboard/StateCLive.tsx` — embed `<ReferralCard variant="business" />`
+- `src/pages/DevDashboard.tsx` — embed `<ReferralCard variant="coder" />` + bonus stat
+- `src/hooks/useAuth.tsx` — extend `Profile` type with `referral_code`, `referral_discount`, `referral_bonus_total`
+- `supabase/functions/create-checkout/index.ts` — accept + apply `referralDiscount`
+- `supabase/functions/payments-webhook/index.ts` — convert + reward logic + notify
+
+**Untouched**: visual design, brand tokens, all other dashboards, Stripe products, RLS on existing tables.
+
+---
+
+## 10. Language note
+
+Per the existing **Language Policy** memory (English-only UI), all referral copy will be **clean English**, not Hinglish. Headings and CTAs:
+- "Refer a Friend — Both Win"
+- "Bring Clients — Earn Extra"
+- WhatsApp prefill messages in English.
+
+If you'd prefer Hinglish strings as written in the brief, say so before approval and I'll switch the copy.
+

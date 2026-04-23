@@ -15,9 +15,6 @@ export interface DeployResult {
   projectName?: string;
   deploymentId?: string;
   error?: string;
-  hint?: string;
-  stage?: "project_create" | "deploy_trigger" | "build" | "timeout" | string;
-  inspectorUrl?: string;
 }
 
 export async function deployWebsite(request: DeployRequest): Promise<DeployResult> {
@@ -40,14 +37,8 @@ export async function deployWebsite(request: DeployRequest): Promise<DeployResul
       return { success: false, error: error.message };
     }
 
-    if (data?.error || data?.success === false) {
-      return {
-        success: false,
-        error: data.error || "Deployment failed",
-        hint: data.hint,
-        stage: data.stage,
-        inspectorUrl: data.inspectorUrl,
-      };
+    if (data?.error) {
+      return { success: false, error: data.error };
     }
 
     return {

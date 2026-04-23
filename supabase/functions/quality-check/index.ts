@@ -1,7 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { getCorsHeaders } from "../_shared/cors.ts";
-// NOTE: deno_dom is loaded LAZILY inside the handler to survive cold-boot WASM fetch failures.
-// If the WASM import fails, we fall back to pure string-matching checks instead of crashing.
+import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+
+const ALLOWED_ORIGINS = [
+  "https://leadpe.lovable.app",
+  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 interface CheckResult {
   key: string;
@@ -32,7 +45,6 @@ serve(async (req) => {
     }
 
     // ── STEP 1: Verify repo is accessible (not private) ──
-    console.log(`[quality-check] Fetching repo: ${owner}/${repo}`);
     const repoApiResp = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: { "User-Agent": "LeadPe-QualityChecker" },
     });
@@ -52,8 +64,6 @@ serve(async (req) => {
     }
 
     const repoData = await repoApiResp.json();
-    const defaultBranch: string = repoData?.default_branch || "main";
-    console.log(`[quality-check] Default branch: ${defaultBranch}`);
 
     // ── STEP 2: Check if repo is empty ──
     if (repoData.size === 0 || (repoData.pushed_at === null)) {
@@ -66,7 +76,7 @@ serve(async (req) => {
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
-    // ── STEP 3: Fetch key files from repo (use detected default branch) ──
+    // ── STEP 3: Fetch key files from repo ──
     const filesToCheck = [
       "index.html", "public/index.html",
       "src/App.tsx", "src/App.jsx",
@@ -89,7 +99,7 @@ serve(async (req) => {
 
     const fetchPromises = filesToCheck.map(async (filePath) => {
       try {
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${defaultBranch}/${filePath}`;
+        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${filePath}`;
         const res = await fetch(rawUrl);
         if (res.ok) {
           const text = await res.text();
@@ -113,30 +123,24 @@ serve(async (req) => {
     const files = results.filter(Boolean) as { path: string; content: string }[];
     const allContent = files.map(f => f.content).join("\n");
     const allLower = allContent.toLowerCase();
-    console.log(`[quality-check] Repo size=${repoData.size}, branch=${defaultBranch}, fetched ${fetchedFileCount}/${filesToCheck.length} files`);
 
     if (fetchedFileCount === 0) {
       return new Response(JSON.stringify({
         score: 0, passed: false, checks: {},
-        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: `Could not access any files on branch '${defaultBranch}'. Make sure the repo is PUBLIC and your code is pushed to this branch.` }],
-        issues: [`❌ Could not access repository files on branch '${defaultBranch}'`],
-        fixes: [`Make the repository public and ensure code is pushed to the '${defaultBranch}' branch.`],
+        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: "Could not access any files. Make sure the repo is PUBLIC and has code on the 'main' branch." }],
+        issues: ["❌ Could not access repository files — is it public? Is branch 'main'?"],
+        fixes: ["Make the repository public and ensure code is pushed to the 'main' branch."],
         aiSuggestions: "",
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
-    // Parse index.html — lazy import deno_dom so a WASM cold-boot failure
-    // doesn't crash the whole function. We fall back to pure string matching.
+    // Parse index.html
     let doc: any = null;
     if (indexHtml) {
       try {
-        const { DOMParser } = await import("https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts");
         const parser = new DOMParser();
         doc = parser.parseFromString(indexHtml, "text/html");
-      } catch (e) {
-        console.warn("[quality-check] deno_dom unavailable, falling back to string matching:", e instanceof Error ? e.message : e);
-        doc = null;
-      }
+      } catch { /* fallback to string matching */ }
     }
 
     const businessName = (businessData.name || "").toLowerCase().trim();

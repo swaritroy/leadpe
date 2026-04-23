@@ -25,31 +25,22 @@ export type Database = {
           business_type: string | null
           city: string | null
           coder_earning: number | null
-          color_preference: string | null
           created_at: string | null
           deadline: string | null
           demo_deployed_at: string | null
           demo_url: string | null
-          deploy_error: string | null
-          deploy_hint: string | null
-          deploy_inspector_url: string | null
-          deploy_stage: string | null
           deploy_url: string | null
           deployed_at: string | null
-          deployment_id: string | null
           github_url: string | null
           hard_deadline: string | null
           id: string
-          last_deploy_checked_at: string | null
           live_deployed_at: string | null
           live_url: string | null
-          logo_url: string | null
           max_revisions: number | null
           owner_name: string | null
           owner_whatsapp: string | null
           package_id: string | null
           package_price: number | null
-          photos_urls: string[] | null
           plan_selected: string | null
           practice_build: boolean | null
           reference_sites: string | null
@@ -70,31 +61,22 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           coder_earning?: number | null
-          color_preference?: string | null
           created_at?: string | null
           deadline?: string | null
           demo_deployed_at?: string | null
           demo_url?: string | null
-          deploy_error?: string | null
-          deploy_hint?: string | null
-          deploy_inspector_url?: string | null
-          deploy_stage?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
-          deployment_id?: string | null
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
-          last_deploy_checked_at?: string | null
           live_deployed_at?: string | null
           live_url?: string | null
-          logo_url?: string | null
           max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
           package_id?: string | null
           package_price?: number | null
-          photos_urls?: string[] | null
           plan_selected?: string | null
           practice_build?: boolean | null
           reference_sites?: string | null
@@ -115,31 +97,22 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           coder_earning?: number | null
-          color_preference?: string | null
           created_at?: string | null
           deadline?: string | null
           demo_deployed_at?: string | null
           demo_url?: string | null
-          deploy_error?: string | null
-          deploy_hint?: string | null
-          deploy_inspector_url?: string | null
-          deploy_stage?: string | null
           deploy_url?: string | null
           deployed_at?: string | null
-          deployment_id?: string | null
           github_url?: string | null
           hard_deadline?: string | null
           id?: string
-          last_deploy_checked_at?: string | null
           live_deployed_at?: string | null
           live_url?: string | null
-          logo_url?: string | null
           max_revisions?: number | null
           owner_name?: string | null
           owner_whatsapp?: string | null
           package_id?: string | null
           package_price?: number | null
-          photos_urls?: string[] | null
           plan_selected?: string | null
           practice_build?: boolean | null
           reference_sites?: string | null

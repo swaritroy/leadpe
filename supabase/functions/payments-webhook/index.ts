@@ -89,60 +89,6 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       console.error("processReferralConversion failed:", e);
     }
 
-    // ───── AUTO-DEPLOY LIVE WEBSITE ─────
-    // After successful payment, find the latest demo build for this user
-    // and promote it to live (custom domain + redeploy with VITE_LEADPE_MODE=live).
-    try {
-      const { data: profileRow } = await supabase
-        .from("profiles")
-        .select("subdomain, business_name")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      const { data: latestBuild } = await supabase
-        .from("build_requests")
-        .select("id, github_url, status, business_id")
-        .eq("business_id", userId)
-        .not("github_url", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (latestBuild?.id && latestBuild?.github_url) {
-        const subdomain = (profileRow as any)?.subdomain ||
-          ((profileRow as any)?.business_name || "site")
-            .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-            .slice(0, 30) || `site-${userId.slice(0, 6)}`;
-
-        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-        const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        console.log(`[payments-webhook] Triggering deploy_live for build_request=${latestBuild.id} subdomain=${subdomain}`);
-        const liveResp = await fetch(`${SUPABASE_URL}/functions/v1/deploy-website`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "deploy_live",
-            data: { buildRequestId: latestBuild.id, subdomain, userId },
-          }),
-        });
-        const liveJson = await liveResp.json().catch(() => ({}));
-        if (!liveResp.ok || liveJson?.error) {
-          console.error("[payments-webhook] deploy_live failed:", liveResp.status, liveJson);
-          await supabase.from("build_requests").update({
-            deploy_stage: "live_deploy_failed",
-            deploy_error: liveJson?.error || `HTTP ${liveResp.status}`,
-            last_deploy_checked_at: new Date().toISOString(),
-          } as any).eq("id", latestBuild.id);
-        } else {
-          console.log("[payments-webhook] deploy_live OK:", liveJson?.liveUrl);
-        }
-      } else {
-        console.log("[payments-webhook] No build_request with github_url found for user — skipping deploy_live");
-      }
-    } catch (e) {
-      console.error("[payments-webhook] auto deploy_live error:", e);
-    }
-
     // Notify admin via Twilio + queue thank-you for client in Outbox
     try {
       await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin`, {

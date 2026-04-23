@@ -260,7 +260,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
 </script>`;
 
       // 3. Build a fast fallback prompt immediately (AI prompt is enriched in the background after insert)
-      const fallbackPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\n\n📦 PACKAGE SCOPE — STRICT\nClient paid for: ${pkg.name} (₹${pkg.price})\nCoder earning: ₹${pkg.coderEarning}\nDelivery: ${pkg.deliveryDays} days\n\n✅ MUST BUILD: ${pkg.features.join(", ")}\n❌ DO NOT BUILD anything outside this scope — that is unpaid work. If the client asks for extras, reply: "That feature is part of a higher package. I can upgrade your plan."\n\n${oneLineDesc ? `Tagline: ${oneLineDesc}\n` : ""}${additionalDetails ? `Requirements: ${additionalDetails}\n` : ""}${logoUrl ? `\nLOGO: ${logoUrl}` : ""}\n${photoUrls.length > 0 ? `\nPHOTOS: ${photoUrls.join(", ")}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
+      const fallbackPrompt = `Build a professional ${businessType} website for ${businessName} in ${city}.\nWhatsApp: ${customerWhatsapp}\nColor: ${colorPref}\nPackage: ${pkg.name} (${pkg.features.join(", ")})\n${oneLineDesc ? `Tagline: ${oneLineDesc}` : ""}\n${additionalDetails ? `Requirements: ${additionalDetails}` : ""}\n${logoUrl ? `\nLOGO: ${logoUrl}` : ""}\n${photoUrls.length > 0 ? `\nPHOTOS: ${photoUrls.join(", ")}` : ""}\n\nMUST include LeadPe lead widget in contact section.\nMobile-first, SEO optimized for ${city}.`;
 
       // 4. Insert build request immediately (don't block on Gemini)
       const hardDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
@@ -281,10 +281,7 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           status: "pending",
           hard_deadline: hardDeadline,
           deadline: hardDeadline,
-          logo_url: logoUrl,
-          photos_urls: photoUrls.length > 0 ? photoUrls : null,
-          color_preference: colorPref,
-        } as any)
+        })
         .select("id")
         .single();
 
@@ -306,11 +303,8 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
                 one_line_description: oneLineDesc,
                 color_preference: colorPref === "rainbow" ? "Surprise me with a vibrant palette" : colorPref,
                 special_requirements: additionalDetails || "",
-                package_id: selectedPackage,
                 package_name: pkg.name,
-                package_price: pkg.price,
-                coder_earning: pkg.coderEarning,
-                package_features: pkg.features.join(", "),
+                package_features: getFeaturesForCategory(businessType)[getPackageTierFromId(selectedPackage)].join(", "),
                 lead_widget_html: leadWidgetHtml,
                 logo_url: logoUrl || "",
                 photos_urls: photoUrls.join(", "),
