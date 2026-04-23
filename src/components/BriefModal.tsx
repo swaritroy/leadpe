@@ -173,7 +173,8 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
         return;
       }
 
-      // Fetch order data for logo/photos and SEO data in parallel
+      // Prefer assets from the build_request snapshot (always reliable);
+      // fall back to the matching order only if the build_request doesn't have them yet.
       const [seoResult, orderResult] = await Promise.all([
         (supabase as any).from("business_seo")
           .select("*").eq("business_id", request.business_id || request.id).maybeSingle(),
@@ -188,6 +189,12 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
       const seoData = seoResult?.data || {};
       const orderData = orderResult?.data || {};
 
+      const logoUrl = (request as any).logo_url || orderData.logo_url || "";
+      const photosArr: string[] = ((request as any).photos_urls && (request as any).photos_urls.length > 0)
+        ? (request as any).photos_urls
+        : (orderData.photos_urls || []);
+      const colorPref = (request as any).color_preference || orderData.color_preference || "green";
+
       const { data, error } = await supabase.functions.invoke("ai-generate", {
         body: {
           type: "build_prompt",
@@ -197,7 +204,7 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
             city: request.city,
             owner_name: request.owner_name,
             whatsapp_number: request.owner_whatsapp?.replace(/\D/g, ""),
-            color_preference: orderData.color_preference || (request as any).color_preference || "green",
+            color_preference: colorPref,
             special_requirements: request.special_requirements || "",
             reference_sites: request.reference_sites || orderData.reference_site || "",
             one_line_description: orderData.business_description || "",
@@ -209,8 +216,8 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
             businessId: request.business_id || request.id,
             supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
             supabaseKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            logo_url: orderData.logo_url || "",
-            photos_urls: orderData.photos_urls?.length > 0 ? orderData.photos_urls.join("\n") : "",
+            logo_url: logoUrl,
+            photos_urls: photosArr.length > 0 ? photosArr.join("\n") : "",
             seo: seoData,
           },
         },

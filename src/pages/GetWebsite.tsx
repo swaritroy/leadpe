@@ -281,7 +281,10 @@ async function submitLeadPeLead(){var n=document.getElementById('lp-name').value
           status: "pending",
           hard_deadline: hardDeadline,
           deadline: hardDeadline,
-        })
+          logo_url: logoUrl,
+          photos_urls: photoUrls.length > 0 ? photoUrls : null,
+          color_preference: colorPref,
+        } as any)
         .select("id")
         .single();
 

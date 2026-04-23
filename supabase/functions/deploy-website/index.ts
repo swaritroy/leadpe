@@ -1,20 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const ALLOWED_ORIGINS = [
-  "https://leadpe.lovable.app",
-  "https://id-preview--22f543a5-dc93-422b-8514-e3fff158bc80.lovable.app",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const VERCEL_API = "https://api.vercel.com";
 
@@ -78,19 +64,44 @@ serve(async (req) => {
     if (action === "deploy") {
       const { businessName, businessType, city, githubUrl, trialCode, buildRequestId, businessId } = data;
 
-      const cleaned = githubUrl.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const cleaned = (githubUrl || "").replace(/^https?:\/\//, "").replace(/^github\.com\//, "").replace(/\/$/, "");
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
       const githubRepo = parts[1]?.replace(".git", "");
 
       if (!githubOrg || !githubRepo) {
         return new Response(
-          JSON.stringify({ error: "Invalid GitHub URL format" }),
-          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: "Invalid GitHub URL format. Use github.com/username/repo.", stage: "validate" }),
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
-      const projectName = `leadpe-${businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20)}-${city.toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10)}`.replace(/-+/g, "-").replace(/-$/, "");
+      // Detect default branch (don't force "main")
+      let defaultBranch = "main";
+      try {
+        const repoResp = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+          headers: { "User-Agent": "LeadPe-Deploy" },
+        });
+        if (repoResp.ok) {
+          const repoMeta = await repoResp.json();
+          if (repoMeta?.default_branch) defaultBranch = repoMeta.default_branch;
+        } else if (repoResp.status === 404 || repoResp.status === 403) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              stage: "repo_access",
+              error: `GitHub repo not accessible (HTTP ${repoResp.status}). Make sure it is PUBLIC.`,
+              hint: "Open the repo on GitHub → Settings → Change visibility → Public.",
+            }),
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          );
+        }
+      } catch (e) {
+        console.warn("Default branch detection failed, using 'main':", e);
+      }
+      console.log(`[deploy] Repo ${githubOrg}/${githubRepo} branch=${defaultBranch}`);
+
+      const projectName = `leadpe-${(businessName || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20)}-${(city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10)}`.replace(/-+/g, "-").replace(/-$/, "");
 
       // Step 1: Create Vercel project
       const createResp = await fetch(`${VERCEL_API}/v9/projects`, {
@@ -137,7 +148,7 @@ serve(async (req) => {
         headers,
         body: JSON.stringify({
           name: projectName,
-          gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+          gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: defaultBranch },
           projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
         }),
       });
@@ -211,28 +222,44 @@ serve(async (req) => {
         }
       }
 
-      // Step 4: Update build request based on final state
+      // Step 4: Update build request based on final state — always persist deploy diagnostics
       if (buildRequestId) {
+        const baseDiag = {
+          deployment_id: deploymentId,
+          deploy_inspector_url: inspectorUrl,
+          last_deploy_checked_at: new Date().toISOString(),
+        };
         if (finalState === "READY") {
           await supabase.from("build_requests").update({
+            ...baseDiag,
             demo_url: finalUrl,
             deploy_url: finalUrl,
             status: "demo_ready",
             deployed_at: new Date().toISOString(),
+            demo_deployed_at: new Date().toISOString(),
+            deploy_stage: "ready",
+            deploy_error: null,
+            deploy_hint: null,
           }).eq("id", buildRequestId);
         } else if (finalState === "ERROR") {
-          // Mark as failed — dashboard will show failure state
           await supabase.from("build_requests").update({
+            ...baseDiag,
             status: "failed",
             deploy_url: null,
+            deploy_stage: "build",
+            deploy_error: buildError || "Build failed on Vercel (no error message available)",
+            deploy_hint: hintForCode("", buildError),
           }).eq("id", buildRequestId);
         } else {
-          // Timeout — still building
           await supabase.from("build_requests").update({
+            ...baseDiag,
             demo_url: finalUrl,
             deploy_url: finalUrl,
             status: "review",
             deployed_at: new Date().toISOString(),
+            deploy_stage: "timeout",
+            deploy_error: `Build still running after 3 minutes (state: ${finalState})`,
+            deploy_hint: "Build is taking longer than expected. Check the Vercel inspector link.",
           }).eq("id", buildRequestId);
         }
       }
@@ -323,10 +350,22 @@ serve(async (req) => {
         );
       }
 
-      const cleaned = br.github_url.replace("https://", "").replace("http://", "").replace("github.com/", "");
+      const cleaned = br.github_url.replace(/^https?:\/\//, "").replace(/^github\.com\//, "").replace(/\/$/, "");
       const parts = cleaned.split("/").filter(Boolean);
       const githubOrg = parts[0];
       const githubRepo = parts[1]?.replace(".git", "");
+
+      // Detect default branch for live redeploy
+      let liveBranch = "main";
+      try {
+        const repoResp = await fetch(`https://api.github.com/repos/${githubOrg}/${githubRepo}`, {
+          headers: { "User-Agent": "LeadPe-Deploy" },
+        });
+        if (repoResp.ok) {
+          const m = await repoResp.json();
+          if (m?.default_branch) liveBranch = m.default_branch;
+        }
+      } catch { /* default to main */ }
 
       const bName = (br.business_name || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 20);
       const bCity = (br.city || "").toLowerCase().replace(/[^a-z0-9]/g, "-").substring(0, 10);
@@ -445,7 +484,7 @@ serve(async (req) => {
               method: "POST", headers,
               body: JSON.stringify({
                 name: projectName,
-                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: "main" },
+                gitSource: { type: "github", org: githubOrg, repo: githubRepo, ref: liveBranch },
                 projectSettings: { framework: "vite", buildCommand: "npm run build", outputDirectory: "dist" },
               }),
             });
