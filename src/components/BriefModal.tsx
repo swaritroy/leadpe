@@ -8,6 +8,7 @@ import { deployWebsite } from "@/lib/deployService";
 import { updateCoderEarnings } from "@/lib/earningsCalc";
 import { generateLeadWidgetCode } from "@/lib/leadWidget";
 import { notifyAdmin } from "@/lib/notify";
+import { getPackageById } from "@/lib/packages";
 
 const font = { heading: "Syne, sans-serif", body: "'DM Sans', sans-serif" };
 
@@ -19,13 +20,23 @@ interface BriefModalProps {
   onRefresh: () => void;
 }
 
-type ErrorType = "private_repo" | "invalid_url" | "empty_repo" | "no_build" | "build_failed" | "network" | "timeout" | "quality_failed" | "domain_taken" | null;
+type ErrorType = "private_repo" | "invalid_url" | "empty_repo" | "no_build" | "build_failed" | "deploy_failed" | "network" | "timeout" | "quality_failed" | "domain_taken" | null;
 
 interface DeployError {
   type: ErrorType;
   message: string;
   detail?: string;
+  hint?: string;
+  stage?: string;
+  inspectorUrl?: string;
 }
+
+const STAGE_ICON: Record<string, string> = {
+  project_create: "🔧",
+  deploy_trigger: "🚀",
+  build: "🔴",
+  timeout: "⏳",
+};
 
 function getErrorCard(err: DeployError, onRetry: () => void) {
   const configs: Record<string, { icon: string; title: string; steps?: string[]; retryLabel?: string }> = {
@@ -51,6 +62,10 @@ function getErrorCard(err: DeployError, onRetry: () => void) {
       steps: ["Your website has code errors", "Fix the errors and push again"],
       retryLabel: "I fixed it — Try again →",
     },
+    deploy_failed: {
+      icon: "🛑", title: "Deployment failed",
+      retryLabel: "I fixed it — Try again →",
+    },
     network: {
       icon: "📡", title: "Connection error",
       steps: ["Check your internet connection and try again"],
@@ -72,14 +87,33 @@ function getErrorCard(err: DeployError, onRetry: () => void) {
   };
 
   const cfg = configs[err.type || "network"] || configs.network;
+  const stageIcon = err.stage ? STAGE_ICON[err.stage] : null;
 
   return (
     <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: "#FEF2F2", border: "2px solid #EF4444" }}>
       <div className="flex items-center gap-2 mb-2">
-        <span style={{ fontSize: 24 }}>{cfg.icon}</span>
+        <span style={{ fontSize: 24 }}>{stageIcon || cfg.icon}</span>
         <span style={{ fontSize: 16, fontWeight: 700, color: "#DC2626" }}>❌ {cfg.title}</span>
       </div>
-      {err.detail && <p style={{ fontSize: 13, color: "#991B1B", marginBottom: 8 }}>{err.detail}</p>}
+
+      {/* Always show the raw Vercel reason verbatim when present */}
+      {err.detail && (
+        <div className="rounded-lg mb-2 p-2" style={{ backgroundColor: "#FFFFFF", border: "1px solid #FCA5A5" }}>
+          <p style={{ fontSize: 11, color: "#7F1D1D", fontWeight: 700, marginBottom: 2 }}>
+            Reason from Vercel{err.stage ? ` (stage: ${err.stage})` : ""}:
+          </p>
+          <pre style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: "#991B1B", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+            {err.detail}
+          </pre>
+        </div>
+      )}
+
+      {err.hint && (
+        <p style={{ fontSize: 13, color: "#7F1D1D", marginBottom: 8 }}>
+          <span style={{ fontWeight: 700 }}>Suggested fix:</span> {err.hint}
+        </p>
+      )}
+
       {cfg.steps && (
         <div className="space-y-1 mb-3">
           {cfg.steps.map((s, i) => (
@@ -87,6 +121,14 @@ function getErrorCard(err: DeployError, onRetry: () => void) {
           ))}
         </div>
       )}
+
+      {err.inspectorUrl && (
+        <a href={err.inspectorUrl} target="_blank" rel="noreferrer"
+          style={{ display: "inline-block", fontSize: 12, color: "#1E40AF", textDecoration: "underline", marginBottom: 8 }}>
+          View on Vercel ↗
+        </a>
+      )}
+
       <div className="flex gap-2">
         {cfg.retryLabel && (
           <button onClick={onRetry} style={{ flex: 1, backgroundColor: "#00C853", color: "#fff", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", minHeight: 44 }}>
@@ -160,6 +202,10 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
             reference_sites: request.reference_sites || orderData.reference_site || "",
             one_line_description: orderData.business_description || "",
             package_id: request.package_id || "standard",
+            package_name: getPackageById(request.package_id || "standard").name,
+            package_price: getPackageById(request.package_id || "standard").price,
+            coder_earning: request.coder_earning || getPackageById(request.package_id || "standard").coderEarning,
+            package_features: getPackageById(request.package_id || "standard").features.join(", "),
             businessId: request.business_id || request.id,
             supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
             supabaseKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -371,7 +417,16 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
         onClose();
         onRefresh();
       } else {
-        setDeployError(detectErrorType(deployResult.error || "Deployment failed"));
+        // ★ FIX: surface the real Vercel reason + hint + inspector link, never a generic "Deploy failed"
+        const rawErr = deployResult.error || "Deployment failed";
+        setDeployError({
+          type: "deploy_failed",
+          message: rawErr,
+          detail: rawErr,
+          hint: deployResult.hint,
+          stage: deployResult.stage,
+          inspectorUrl: deployResult.inspectorUrl,
+        });
       }
     } catch (e: any) {
       console.error("Submit error:", e);

@@ -22,6 +22,31 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ★ FIX: package-friendly hint dictionary keyed on Vercel error codes + free-text fallback
+function hintForCode(code: string, raw: string): string {
+  const c = (code || "").toLowerCase();
+  const r = (raw || "").toLowerCase();
+  // Vercel-specific error codes
+  if (c === "repo_not_found" || r.includes("repo_not_found")) return "GitHub repo not found by Vercel. Make sure the repo is PUBLIC and the URL is correct.";
+  if (c === "not_authorized" || c === "forbidden" || r.includes("not_authorized")) return "Vercel does not have access to this repo. Install the Vercel GitHub app on your account, then retry.";
+  if (c === "missing_files" || r.includes("missing_files")) return "Repo is missing required files. Push package.json and index.html / src/main.tsx, then retry.";
+  if (c === "invalid_request") return "Vercel rejected the request. Double-check the GitHub URL is in the form github.com/username/repo.";
+  if (c === "build_utils_spawn_1" || r.includes("build_utils_spawn_1")) return "Vercel build runner crashed. Usually a corrupt package-lock.json — delete it, run npm install locally, push, retry.";
+  if (c === "function_invocation_failed") return "A serverless function crashed at runtime. Check your API routes for unhandled errors.";
+  if (c === "missing_build_script" || r.includes("missing build script")) return 'package.json is missing a "build" script. Add `"build": "vite build"` and push.';
+  if (c === "rate_limited" || c === "too_many_requests") return "Too many deployments in a short window. Wait a few minutes and retry.";
+  // Free-text fallbacks (build logs)
+  if (r.includes("module not found") || r.includes("can't resolve") || r.includes("cannot find module")) return "A file or package import is missing. Check the imports in the file mentioned above and push the fix.";
+  if (r.includes("syntaxerror") || r.includes("unexpected token")) return "Syntax error in your code. Open the file from the log, fix the typo, push, retry.";
+  if (r.includes("npm err") || r.includes("eresolve") || r.includes("peer dep")) return "npm install failed — check package.json for incompatible versions or missing packages.";
+  if (r.includes("memory") || r.includes("heap out of memory")) return "Build ran out of memory. Reduce dependencies or split the project.";
+  if (r.includes("timeout")) return "Build took too long. Optimize dependencies or remove heavy packages.";
+  if (r.includes("not found") || r.includes("404")) return "Repository not found. Make sure your GitHub repo is PUBLIC and the URL is correct.";
+  if (r.includes("permission") || r.includes("403") || r.includes("private")) return "Permission denied. Make sure the repository is PUBLIC, not private.";
+  if (r.includes("no framework") || r.includes("no output")) return "No framework detected. Add an index.html to the root folder or ensure package.json has a build script.";
+  return "Open the Vercel inspector link below to see the full build log, fix the issue, push to GitHub, and retry.";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
@@ -91,6 +116,21 @@ serve(async (req) => {
       const projectData = await createResp.json();
       console.log("Project create response:", createResp.status);
 
+      // ★ FIX: catch project-create failures (except harmless "already exists")
+      if (!createResp.ok && projectData?.error?.code !== "project_already_exists") {
+        const code = projectData?.error?.code || `HTTP_${createResp.status}`;
+        const msg = projectData?.error?.message || "Vercel project creation failed";
+        return new Response(
+          JSON.stringify({
+            success: false,
+            stage: "project_create",
+            error: `${code}: ${msg}`,
+            hint: hintForCode(code, msg),
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
       // Step 2: Trigger deployment
       const deployResp = await fetch(`${VERCEL_API}/v13/deployments`, {
         method: "POST",
@@ -105,14 +145,22 @@ serve(async (req) => {
       const deployData = await deployResp.json();
 
       if (!deployResp.ok) {
+        const code = deployData?.error?.code || `HTTP_${deployResp.status}`;
+        const msg = deployData?.error?.message || "Deployment trigger failed";
         return new Response(
-          JSON.stringify({ error: deployData.error?.message || "Deployment failed" }),
-          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+          JSON.stringify({
+            success: false,
+            stage: "deploy_trigger",
+            error: `${code}: ${msg}`,
+            hint: hintForCode(code, msg),
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
       const deploymentId = deployData.id;
       const deployUrl = `https://${deployData.url}`;
+      const inspectorUrl = deployData.inspectorUrl || `https://vercel.com/deployments/${deploymentId}`;
 
       // Step 3: Poll deployment status (max 3 minutes)
       let finalState = "BUILDING";
@@ -129,13 +177,34 @@ serve(async (req) => {
           const statusData = await statusResp.json();
           finalState = statusData.readyState || statusData.state || "BUILDING";
           if (statusData.url) finalUrl = `https://${statusData.url}`;
-          
+
           // Capture build error details
           if (finalState === "ERROR") {
-            buildError = statusData.errorMessage || statusData.error?.message || "Build failed on Vercel";
+            buildError = statusData.errorMessage || statusData.error?.message || "";
+
+            // ★ FIX: fetch real build event logs for the actual webpack/vite/npm message
+            try {
+              const evResp = await fetch(
+                `${VERCEL_API}/v2/deployments/${deploymentId}/events?builds=1&direction=backward&limit=20`,
+                { headers }
+              );
+              if (evResp.ok) {
+                const events = await evResp.json();
+                const arr = Array.isArray(events) ? events : (events?.events || []);
+                const lastErr = arr.reverse().find((e: any) =>
+                  e?.type === "stderr" || e?.type === "error" || /error|failed/i.test(e?.text || e?.payload?.text || "")
+                );
+                const errText = lastErr?.text || lastErr?.payload?.text || "";
+                if (errText) buildError = buildError ? `${buildError}\n${errText}` : errText;
+              }
+            } catch (logErr) {
+              console.error("Could not fetch build events:", logErr);
+            }
+
+            if (!buildError) buildError = "Build failed on Vercel (no error message available)";
             console.error("Deployment ERROR:", buildError);
           }
-          
+
           if (finalState === "READY" || finalState === "ERROR") break;
         } catch (e) {
           console.error("Poll error:", e);
@@ -194,36 +263,32 @@ serve(async (req) => {
       }
 
       if (finalState === "ERROR") {
-        // Provide specific hints based on error
-        let hint = "Check your code and try again.";
-        const errLower = (buildError || "").toLowerCase();
-        if (errLower.includes("not found") || errLower.includes("404")) {
-          hint = "Repository not found. Make sure your GitHub repo is PUBLIC and the URL is correct.";
-        } else if (errLower.includes("no framework") || errLower.includes("no output")) {
-          hint = "No framework detected. Add an index.html to the root folder or ensure package.json has a build script.";
-        } else if (errLower.includes("build failed") || errLower.includes("exit code")) {
-          hint = "Build failed. Fix code errors in your project, push to GitHub, and try again.";
-        } else if (errLower.includes("domain") || errLower.includes("conflict")) {
-          hint = "This subdomain or project name is already taken. Try a different business name.";
-        } else if (errLower.includes("rate limit") || errLower.includes("429")) {
-          hint = "Too many deployments. Please wait a few minutes and try again.";
-        } else if (errLower.includes("permission") || errLower.includes("403")) {
-          hint = "Permission denied. Make sure the repository is PUBLIC, not private.";
-        } else if (errLower.includes("timeout")) {
-          hint = "Build took too long. Optimize your project or reduce dependencies.";
-        } else if (errLower.includes("install") || errLower.includes("npm")) {
-          hint = "npm install failed. Check your package.json for invalid dependencies.";
-        } else if (errLower.includes("memory") || errLower.includes("oom")) {
-          hint = "Build ran out of memory. Reduce project size or remove heavy dependencies.";
-        }
-
+        const hint = hintForCode("", buildError);
         return new Response(
           JSON.stringify({
             success: false,
+            stage: "build",
             error: buildError || "Build failed on deployment platform",
             hint,
             state: "ERROR",
             projectName,
+            inspectorUrl,
+          }),
+          { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Timeout (still BUILDING after 3 minutes)
+      if (finalState !== "READY") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            stage: "timeout",
+            error: `Build still running after 3 minutes (state: ${finalState})`,
+            hint: "Build is taking longer than expected. Check back in a few minutes via the Vercel inspector link.",
+            state: finalState,
+            projectName,
+            inspectorUrl,
           }),
           { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
