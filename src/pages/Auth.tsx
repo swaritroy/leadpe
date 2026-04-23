@@ -33,8 +33,9 @@ export default function Auth() {
     if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
     setLoading(true);
     setError("");
+    sessionStorage.setItem("oauth_intent", "business");
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: window.location.origin,
     });
     if (result?.error) {
       setError((result.error as Error).message || "Google sign-in failed.");
