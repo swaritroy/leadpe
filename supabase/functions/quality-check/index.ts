@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+// NOTE: deno_dom is loaded LAZILY inside the handler to survive cold-boot WASM fetch failures.
+// If the WASM import fails, we fall back to pure string-matching checks instead of crashing.
 
 const ALLOWED_ORIGINS = [
   "https://leadpe.lovable.app",
@@ -45,6 +46,7 @@ serve(async (req) => {
     }
 
     // ── STEP 1: Verify repo is accessible (not private) ──
+    console.log(`[quality-check] Fetching repo: ${owner}/${repo}`);
     const repoApiResp = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: { "User-Agent": "LeadPe-QualityChecker" },
     });
@@ -123,6 +125,7 @@ serve(async (req) => {
     const files = results.filter(Boolean) as { path: string; content: string }[];
     const allContent = files.map(f => f.content).join("\n");
     const allLower = allContent.toLowerCase();
+    console.log(`[quality-check] Repo size=${repoData.size}, fetched ${fetchedFileCount}/${filesToCheck.length} files`);
 
     if (fetchedFileCount === 0) {
       return new Response(JSON.stringify({
@@ -134,13 +137,18 @@ serve(async (req) => {
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
-    // Parse index.html
+    // Parse index.html — lazy import deno_dom so a WASM cold-boot failure
+    // doesn't crash the whole function. We fall back to pure string matching.
     let doc: any = null;
     if (indexHtml) {
       try {
+        const { DOMParser } = await import("https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts");
         const parser = new DOMParser();
         doc = parser.parseFromString(indexHtml, "text/html");
-      } catch { /* fallback to string matching */ }
+      } catch (e) {
+        console.warn("[quality-check] deno_dom unavailable, falling back to string matching:", e instanceof Error ? e.message : e);
+        doc = null;
+      }
     }
 
     const businessName = (businessData.name || "").toLowerCase().trim();
