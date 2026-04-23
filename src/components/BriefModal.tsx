@@ -673,6 +673,47 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
               {/* Error Card */}
               {deployError && getErrorCard(deployError, () => { setDeployError(null); handleSubmitGithub(); })}
 
+              {/* Coder-only escape hatch: quality check failed but coder is sure the site is fine → deploy anyway */}
+              {deployError?.type === "quality_failed" && profile?.role === "vibe_coder" && (
+                <button
+                  onClick={async () => {
+                    setDeployError(null);
+                    setSubmitting(true);
+                    try {
+                      await (supabase as any).from("build_requests").update({
+                        status: "review", github_url: githubUrl, submitted_at: new Date().toISOString(),
+                      }).eq("id", request.id);
+                      const deployResult: any = await deployWebsite({
+                        id: request.id, businessName: request.business_name, businessType: request.business_type,
+                        city: request.city, githubUrl, trialCode: "",
+                      }).catch((err) => ({ success: false, error: err?.message || "Deployment failed" }));
+                      if (deployResult.success && deployResult.deployUrl) {
+                        await (supabase as any).from("build_requests").update({
+                          status: "demo_ready", deploy_url: deployResult.deployUrl, deployed_at: new Date().toISOString(),
+                        }).eq("id", request.id);
+                        const coderEarn = request.coder_earning || Math.round((request.package_price || 800) * 0.60);
+                        await updateCoderEarnings(userId, { id: request.id, coder_earning: coderEarn, business_name: request.business_name });
+                        toast({ title: "🚀 Deployed (quality skipped)", description: deployResult.deployUrl });
+                        onClose(); onRefresh();
+                      } else {
+                        setDeployError({
+                          type: "deploy_failed",
+                          message: deployResult.error || "Deployment failed",
+                          detail: deployResult.error,
+                          hint: deployResult.hint,
+                          stage: deployResult.stage,
+                          inspectorUrl: deployResult.inspectorUrl,
+                        });
+                      }
+                    } finally { setSubmitting(false); }
+                  }}
+                  disabled={submitting}
+                  style={{ width: "100%", backgroundColor: "#fff", color: "#666", border: "1px dashed #999", borderRadius: 10, padding: "10px", fontSize: 12, cursor: "pointer", marginBottom: 12 }}
+                >
+                  ⚠️ Skip quality check & deploy anyway (coder override)
+                </button>
+              )}
+
               {/* Deployment Progress */}
               {(qualityChecking || submitting) && !deployError && (
                 <div className="rounded-xl p-4 mb-3 space-y-3" style={{ backgroundColor: "#F0FFF4", border: "1px solid #00C853" }}>
