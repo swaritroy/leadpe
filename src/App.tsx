@@ -43,6 +43,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const AdminMessages = lazy(() => import("./pages/AdminMessages"));
 const AdminAuthLogs = lazy(() => import("./pages/AdminAuthLogs"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
+const DeployStatus = lazy(() => import("./pages/DeployStatus"));
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,11 @@ const AppContent = () => {
             <Route path="/dev/onboarding" element={
               <StudioGuard>
                 <DevOnboarding />
+              </StudioGuard>
+            } />
+            <Route path="/dev/deploy/:id" element={
+              <StudioGuard>
+                <DeployStatus />
               </StudioGuard>
             } />
 
