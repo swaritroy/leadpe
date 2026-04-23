@@ -222,28 +222,44 @@ serve(async (req) => {
         }
       }
 
-      // Step 4: Update build request based on final state
+      // Step 4: Update build request based on final state — always persist deploy diagnostics
       if (buildRequestId) {
+        const baseDiag = {
+          deployment_id: deploymentId,
+          deploy_inspector_url: inspectorUrl,
+          last_deploy_checked_at: new Date().toISOString(),
+        };
         if (finalState === "READY") {
           await supabase.from("build_requests").update({
+            ...baseDiag,
             demo_url: finalUrl,
             deploy_url: finalUrl,
             status: "demo_ready",
             deployed_at: new Date().toISOString(),
+            demo_deployed_at: new Date().toISOString(),
+            deploy_stage: "ready",
+            deploy_error: null,
+            deploy_hint: null,
           }).eq("id", buildRequestId);
         } else if (finalState === "ERROR") {
-          // Mark as failed — dashboard will show failure state
           await supabase.from("build_requests").update({
+            ...baseDiag,
             status: "failed",
             deploy_url: null,
+            deploy_stage: "build",
+            deploy_error: buildError || "Build failed on Vercel (no error message available)",
+            deploy_hint: hintForCode("", buildError),
           }).eq("id", buildRequestId);
         } else {
-          // Timeout — still building
           await supabase.from("build_requests").update({
+            ...baseDiag,
             demo_url: finalUrl,
             deploy_url: finalUrl,
             status: "review",
             deployed_at: new Date().toISOString(),
+            deploy_stage: "timeout",
+            deploy_error: `Build still running after 3 minutes (state: ${finalState})`,
+            deploy_hint: "Build is taking longer than expected. Check the Vercel inspector link.",
           }).eq("id", buildRequestId);
         }
       }
