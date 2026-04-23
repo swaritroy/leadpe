@@ -202,6 +202,10 @@ export default function BriefModal({ request, profile, userId, onClose, onRefres
             reference_sites: request.reference_sites || orderData.reference_site || "",
             one_line_description: orderData.business_description || "",
             package_id: request.package_id || "standard",
+            package_name: getPackageById(request.package_id || "standard").name,
+            package_price: getPackageById(request.package_id || "standard").price,
+            coder_earning: request.coder_earning || getPackageById(request.package_id || "standard").coderEarning,
+            package_features: getPackageById(request.package_id || "standard").features.join(", "),
             businessId: request.business_id || request.id,
             supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
             supabaseKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -413,7 +417,16 @@ Connect GitHub → PUBLIC repo → Branch "main" → Submit in LeadPe Studio.`;
         onClose();
         onRefresh();
       } else {
-        setDeployError(detectErrorType(deployResult.error || "Deployment failed"));
+        // ★ FIX: surface the real Vercel reason + hint + inspector link, never a generic "Deploy failed"
+        const rawErr = deployResult.error || "Deployment failed";
+        setDeployError({
+          type: "deploy_failed",
+          message: rawErr,
+          detail: rawErr,
+          hint: deployResult.hint,
+          stage: deployResult.stage,
+          inspectorUrl: deployResult.inspectorUrl,
+        });
       }
     } catch (e: any) {
       console.error("Submit error:", e);
