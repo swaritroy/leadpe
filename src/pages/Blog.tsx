@@ -10,8 +10,8 @@ export default function Blog() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="LeadPe Blog — Website Tips India"
-        description="LeadPe Blog — website tips, business growth ideas aur digital marketing advice Indian businesses ke liye. Hindi + English."
+        title="LeadPe Blog — Website & Growth Tips"
+        description="Practical website tips, business growth ideas and digital marketing advice for Indian small businesses."
         path="/blog"
         schema={{
           "@context": "https://schema.org",

@@ -155,8 +155,8 @@ export default function StudioAuth() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="LeadPe Studio — Vibe Coder Bano"
-        description="LeadPe Studio join karo. AI se websites banao. Rs.480 se Rs.1,800 per website kamao. Ghar se. Bihar, India."
+        title="LeadPe Studio — Become a Vibe Coder"
+        description="Join LeadPe Studio. Build websites with AI and earn ₹480–₹1,800 per project. Work from anywhere in India."
         path="/studio/auth"
         noindex
       />
