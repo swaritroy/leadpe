@@ -10,9 +10,23 @@ export default function Blog() {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F5FFF7" }}>
       <SEO
-        title="LeadPe Blog — Website & Business Growth Tips for India"
-        description="Practical guides for Indian local businesses on websites, WhatsApp marketing, Google SEO, and getting more customers online."
+        title="LeadPe Blog — Website Tips India"
+        description="LeadPe Blog — website tips, business growth ideas aur digital marketing advice Indian businesses ke liye. Hindi + English."
         path="/blog"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          "name": "LeadPe Blog",
+          "url": "https://leadpe.online/blog",
+          "description": "Website tips aur business growth advice Indian businesses ke liye",
+          "publisher": {
+            "@type": "Organization",
+            "name": "LeadPe",
+            "url": "https://leadpe.online",
+            "logo": { "@type": "ImageObject", "url": "https://leadpe.online/favicon.svg" }
+          },
+          "inLanguage": ["hi", "en-IN"]
+        }}
       />
 
       {/* Header */}

@@ -3,23 +3,22 @@ Allow: /
 Allow: /about
 Allow: /services
 Allow: /contact
+Allow: /blog
+Allow: /studio
 Allow: /terms
 Allow: /privacy
 Allow: /refund
-Allow: /studio
-Allow: /business
 
+Disallow: /dashboard
+Disallow: /admin
 Disallow: /auth
 Disallow: /studio/auth
+Disallow: /studio/dashboard
 Disallow: /onboarding
-Disallow: /client/
-Disallow: /dev/
-Disallow: /admin
-Disallow: /payment
-Disallow: /checkout/
-Disallow: /demo/
 
-# AI crawlers welcome
+User-agent: Googlebot
+Allow: /
+
 User-agent: GPTBot
 Allow: /
 
@@ -27,9 +26,6 @@ User-agent: ClaudeBot
 Allow: /
 
 User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://leadpe.online/sitemap.xml

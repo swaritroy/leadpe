@@ -31,12 +31,11 @@ const SOFTWARE_SCHEMA = {
   operatingSystem: "Web",
   description: "Launch a professional AI-built business website in 48 hours. Pay only for results.",
   offers: { "@type": "Offer", price: "800", priceCurrency: "INR" },
-  aggregateRating: { "@type": "AggregateRating", ratingValue: "4.9", ratingCount: "120" },
 };
 
 const SEO = ({
-  title = "LeadPe | AI-Powered Website Distribution for Local Businesses",
-  description = "India's AI-Powered Digital Distribution. Live in 48 Hours. Pay Only for Results.",
+  title = "LeadPe — Website Rs.800 | 48 Ghante | India",
+  description = "48 ghante mein website banwao. Rs.800 mein. Customers seedha WhatsApp pe.",
   path = "",
   image = DEFAULT_IMAGE,
   type = "website",
