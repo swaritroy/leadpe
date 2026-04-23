@@ -77,6 +77,7 @@ const AppContent = () => {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/studio/auth/callback" element={<AuthCallback />} />
             <Route path="/checkout/return" element={<CheckoutReturn />} />
             <Route path="/ref/:code" element={<Referral />} />
 
