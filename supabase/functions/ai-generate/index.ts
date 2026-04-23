@@ -1188,8 +1188,10 @@ Language: ${data.language || "english"}. Keep under 300 chars, use emojis, creat
     // build_prompt needs a much larger output budget + a stronger model.
     // Flash truncates ~5000-word structured outputs at its default cap.
     const isLong = type === "build_prompt";
+    const pkgId = (data?.package_id || "basic").toString().toLowerCase();
+    const isPremiumTier = pkgId === "premium" || pkgId === "complex" || pkgId === "standard";
     const model = isLong ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-    const maxTokens = isLong ? 16000 : 2048;
+    const maxTokens = isLong ? (isPremiumTier ? 32000 : 16000) : 2048;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
