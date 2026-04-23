@@ -672,6 +672,12 @@ Language: ${data.language || "english"}. Keep under 300 chars, use emojis, creat
       });
     }
 
+    // build_prompt needs a much larger output budget + a stronger model.
+    // Flash truncates ~5000-word structured outputs at its default cap.
+    const isLong = type === "build_prompt";
+    const model = isLong ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+    const maxTokens = isLong ? 16000 : 2048;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -679,11 +685,12 @@ Language: ${data.language || "english"}. Keep under 300 chars, use emojis, creat
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        max_tokens: maxTokens,
       }),
     });
 
@@ -705,6 +712,12 @@ Language: ${data.language || "english"}. Keep under 300 chars, use emojis, creat
 
     const result = await response.json();
     const text = result.choices?.[0]?.message?.content || "";
+    const finishReason = result.choices?.[0]?.finish_reason;
+    console.log(`ai-generate type=${type} model=${model} finish=${finishReason} chars=${text.length}`);
+
+    if (isLong && finishReason === "length") {
+      console.warn("Prompt was truncated by output cap; consider raising max_tokens further.");
+    }
 
     return new Response(JSON.stringify({ result: text }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
