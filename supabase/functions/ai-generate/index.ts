@@ -396,6 +396,26 @@ ${logoInstruction}
 ${photosInstruction}
 
 ╔══════════════════════════════════════════════════════════════════╗
+║              📦 PACKAGE SCOPE — STRICT (READ FIRST) 📦          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Client paid for: ${getPackageScope(data.package_id || "standard").label} (${getPackageScope(data.package_id || "standard").price})
+Coder earning:  ${getPackageScope(data.package_id || "standard").coderEarning}
+Delivery:       ${getPackageScope(data.package_id || "standard").deliveryDays} days
+
+✅ MUST BUILD (in scope, paid for):
+${getPackageScope(data.package_id || "standard").includes}
+
+❌ DO NOT BUILD (out of scope — upsell only):
+${getPackageScope(data.package_id || "standard").excludes}
+
+Why this matters:
+- Building extras = unpaid work for the vibe coder.
+- Skipping required scope = quality audit failure.
+- If the client asks for an out-of-scope feature, reply:
+  "That feature is part of the ${getPackageScope(data.package_id || "standard").nextTier} package. I can upgrade your plan."
+
+╔══════════════════════════════════════════════════════════════════╗
 ║              WEBSITE SECTIONS (BUILD ALL)                        ║
 ╚══════════════════════════════════════════════════════════════════╝
 
