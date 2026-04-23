@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          email: string | null
+          error: string | null
+          event: string
+          id: string
+          intent: string | null
+          new_role: string | null
+          previous_role: string | null
+          promoted: boolean | null
+          redirect_to: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          error?: string | null
+          event: string
+          id?: string
+          intent?: string | null
+          new_role?: string | null
+          previous_role?: string | null
+          promoted?: boolean | null
+          redirect_to?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          error?: string | null
+          event?: string
+          id?: string
+          intent?: string | null
+          new_role?: string | null
+          previous_role?: string | null
+          promoted?: boolean | null
+          redirect_to?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       build_requests: {
         Row: {
           admin_notified: boolean | null
