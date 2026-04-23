@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
@@ -31,6 +32,21 @@ export default function StudioAuth() {
   const [siPassword, setSiPassword] = useState("");
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+
+  const handleGoogleSignIn = useCallback(async () => {
+    if (!agreed) { setError("Please agree to the Terms and Conditions."); return; }
+    setLoading(true);
+    setError("");
+    // Mark intent so AuthCallback promotes the new account to vibe_coder
+    sessionStorage.setItem("oauth_intent", "studio");
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/auth/callback?intent=studio`,
+    });
+    if (result?.error) {
+      setError((result.error as Error).message || "Google sign-in failed.");
+      setLoading(false);
+    }
+  }, [agreed]);
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
