@@ -816,6 +816,22 @@ ${scope.never_include.map((f) => `  ✗ ${f}`).join("\n")}
 
 If the client's special requirements ask for something in the "DO NOT INCLUDE" list, politely substitute with the closest allowed alternative (e.g. replace "online payment" with "WhatsApp enquiry to pay").
 
+${(() => {
+  const bs = getBusinessSpecific(data.business_type || "", (data.package_id || "basic").toLowerCase());
+  if (bs.length === 0) return "";
+  return `╔══════════════════════════════════════════════════════════════════╗
+║   BUSINESS-SPECIFIC FEATURES FOR THIS PACKAGE (MANDATORY)        ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Because this is a ${data.business_type} on the ${scope.label} tier, the following
+sections are MANDATORY in addition to the generic package scope above. Build each one:
+
+${bs.map((f) => `  ★ ${f}`).join("\n")}
+`;
+})()}
+
+${getDeepPackageBlock((data.package_id || "basic").toLowerCase(), data, profile)}
+
 ╔══════════════════════════════════════════════════════════════════╗
 ║              BUSINESS CONTEXT ANALYSIS                          ║
 ╚══════════════════════════════════════════════════════════════════╝
