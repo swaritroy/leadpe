@@ -118,20 +118,31 @@ export default function AdminResets() {
       toast({ title: "No user_id", description: "Cannot reset — request has no linked user.", variant: "destructive" });
       return;
     }
+    const ok = window.confirm(
+      `Set new password for ${r.user_name || r.user_phone}?\n\nNew password: ${pw}\n\nThe user will need to use this password to sign in. Make sure to share it with them.`
+    );
+    if (!ok) return;
+
     setResetting((s) => ({ ...s, [r.id]: true }));
     const { data, error } = await supabase.functions.invoke("admin-reset-password", {
       body: { user_id: r.user_id, new_password: pw, request_id: r.id },
     });
     setResetting((s) => ({ ...s, [r.id]: false }));
-    if (error || (data as any)?.error) {
+
+    const errMsg = error?.message || (data as any)?.error;
+    if (errMsg) {
+      console.error("admin-reset-password failed:", { error, data });
       toast({
         title: "Reset failed",
-        description: error?.message || (data as any)?.error || "Unknown error",
+        description: errMsg,
         variant: "destructive",
       });
       return;
     }
-    toast({ title: "Password reset ✓", description: `New password set for ${r.user_name || r.user_phone}` });
+    toast({
+      title: "Password reset ✓",
+      description: `New password "${pw}" set for ${r.user_name || r.user_phone}. Share via WhatsApp now.`,
+    });
     setPwInputs((s) => ({ ...s, [r.id]: "" }));
     setRequests((prev) =>
       prev.map((x) => (x.id === r.id ? { ...x, status: "completed", completed_at: new Date().toISOString() } : x))
