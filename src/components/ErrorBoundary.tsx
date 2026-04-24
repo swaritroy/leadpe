@@ -47,11 +47,19 @@ class ErrorBoundary extends React.Component<
               Something went wrong
             </h1>
             <p
-              className="text-sm mb-6"
+              className="text-sm mb-4"
               style={{ color: "#666", fontFamily: "DM Sans, sans-serif" }}
             >
               The page encountered an error. Please try reloading.
             </p>
+            {this.state.error?.message && (
+              <pre
+                className="text-xs mb-6 px-3 py-2 rounded text-left overflow-auto max-h-40"
+                style={{ color: "#C62828", backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2", whiteSpace: "pre-wrap" }}
+              >
+                {this.state.error.message}
+              </pre>
+            )}
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleReload}
