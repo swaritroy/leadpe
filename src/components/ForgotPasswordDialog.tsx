@@ -36,11 +36,19 @@ export default function ForgotPasswordDialog({ open, onClose, mode }: Props) {
     e.preventDefault();
     setError("");
 
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
+    // Accept "9973383902", "+91 9973383902", or "9973383902@leadpe.com"
+    const cleaned = phone
+      .trim()
+      .replace(/@leadpe\.com$/i, "")
+      .replace(/\D/g, "")
+      .replace(/^91(?=\d{10}$)/, "")
+      .slice(-10);
+
+    if (cleaned.length !== 10 || !/^[6-9]/.test(cleaned)) {
       setError("Enter a valid 10-digit Indian mobile number.");
       return;
     }
+    const digits = cleaned;
 
     setLoading(true);
 
