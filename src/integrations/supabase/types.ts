@@ -920,6 +920,8 @@ export type Database = {
           gst: number | null
           id: string
           method: string | null
+          payer_phone: string | null
+          payer_upi_name: string | null
           plan: string | null
           status: string | null
           total: number | null
@@ -935,6 +937,8 @@ export type Database = {
           gst?: number | null
           id?: string
           method?: string | null
+          payer_phone?: string | null
+          payer_upi_name?: string | null
           plan?: string | null
           status?: string | null
           total?: number | null
@@ -950,6 +954,8 @@ export type Database = {
           gst?: number | null
           id?: string
           method?: string | null
+          payer_phone?: string | null
+          payer_upi_name?: string | null
           plan?: string | null
           status?: string | null
           total?: number | null
