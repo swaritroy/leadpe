@@ -873,6 +873,42 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_requests: {
+        Row: {
+          admin_note: string | null
+          completed_at: string | null
+          id: string
+          requested_at: string
+          status: string
+          user_id: string | null
+          user_name: string | null
+          user_phone: string
+          user_type: string
+        }
+        Insert: {
+          admin_note?: string | null
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id?: string | null
+          user_name?: string | null
+          user_phone: string
+          user_type?: string
+        }
+        Update: {
+          admin_note?: string | null
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id?: string | null
+          user_name?: string | null
+          user_phone?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           activated_at: string | null
