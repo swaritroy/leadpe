@@ -27,7 +27,9 @@ export default function Payment() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showUpi, setShowUpi] = useState(false);
   const [gateChecked, setGateChecked] = useState(false);
-  const [utrInput, setUtrInput] = useState("");
+  const [payerPhone, setPayerPhone] = useState("");
+  const [payerAmount, setPayerAmount] = useState(String(amount));
+  const [payerName, setPayerName] = useState("");
   const [upiCopied, setUpiCopied] = useState(false);
   const [upiLoading, setUpiLoading] = useState(false);
   const [upiSuccess, setUpiSuccess] = useState(false);
@@ -42,6 +44,10 @@ export default function Payment() {
     setGateChecked(true);
   }, [navigate]);
 
+  useEffect(() => {
+    setPayerAmount(String(amount));
+  }, [amount]);
+
   const priceId = "growth_monthly";
 
   const copyUpi = () => {
@@ -51,9 +57,20 @@ export default function Payment() {
   };
 
   const handleUpiConfirm = async () => {
-    const cleanUtr = utrInput.replace(/\D/g, "");
-    if (cleanUtr.length < 12) {
-      toast({ title: "Invalid UTR", description: "Please enter at least 12-digit transaction number.", variant: "destructive" });
+    const cleanPhone = payerPhone.replace(/\D/g, "");
+    const cleanAmount = parseInt(payerAmount.replace(/\D/g, ""), 10);
+    const cleanName = payerName.trim();
+
+    if (cleanPhone.length < 10) {
+      toast({ title: "Invalid number", description: "Please enter a valid 10-digit phone number.", variant: "destructive" });
+      return;
+    }
+    if (!cleanAmount || cleanAmount < 1) {
+      toast({ title: "Invalid amount", description: "Please enter the amount you paid.", variant: "destructive" });
+      return;
+    }
+    if (cleanName.length < 2) {
+      toast({ title: "Invalid name", description: "Please enter the name on your UPI account.", variant: "destructive" });
       return;
     }
 
@@ -62,9 +79,11 @@ export default function Payment() {
       await (supabase.from("payments") as any).insert({
         business_id: user?.id || null,
         business_name: profile?.business_name || null,
-        amount,
+        amount: cleanAmount,
+        total: cleanAmount,
         method: "upi_manual",
-        utr: cleanUtr,
+        payer_phone: cleanPhone,
+        payer_upi_name: cleanName,
         status: "pending_verification",
         plan: "growth",
       });
@@ -74,7 +93,7 @@ export default function Payment() {
         await supabase.functions.invoke("send-whatsapp", {
           body: {
             to: "919973383902",
-            message: `💰 MANUAL UPI PAYMENT\n━━━━━━━━━━━━\nBusiness: ${profile?.business_name || "Unknown"}\nAmount: ₹${amount}\nUTR: ${cleanUtr}\nUser: ${user?.email || ""}\n━━━━━━━━━━━━\nVERIFY at: leadpe.online/admin`,
+            message: `💰 MANUAL UPI PAYMENT\n━━━━━━━━━━━━\nBusiness: ${profile?.business_name || "Unknown"}\nPayer Number: +91${cleanPhone}\nAmount Paid: ₹${cleanAmount}\nUPI Name: ${cleanName}\nUser: ${user?.email || ""}\n━━━━━━━━━━━━\nVERIFY at: leadpe.online/admin`,
           },
         });
       } catch {}
@@ -233,21 +252,44 @@ export default function Payment() {
                 <p>1. Copy the UPI ID above</p>
                 <p>2. Open any UPI app (GPay, PhonePe, Paytm)</p>
                 <p>3. Send exactly ₹{amount}</p>
-                <p>4. Enter UTR below and confirm</p>
+                <p>4. Fill the details below and confirm</p>
+              </div>
+
+              <div className="mb-3">
+                <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Your Phone Number</label>
+                <Input
+                  value={payerPhone}
+                  onChange={(e) => setPayerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="10-digit number"
+                  inputMode="numeric"
+                  className="rounded-xl h-12"
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>Amount Paid (₹)</label>
+                <Input
+                  value={payerAmount}
+                  onChange={(e) => setPayerAmount(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="Enter amount"
+                  inputMode="numeric"
+                  className="rounded-xl h-12"
+                />
               </div>
 
               <div className="mb-4">
-                <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>UTR / Transaction ID</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "#1A1A1A" }}>UPI Name</label>
                 <Input
-                  value={utrInput}
-                  onChange={(e) => setUtrInput(e.target.value.replace(/\D/g, "").slice(0, 16))}
-                  placeholder="12-digit transaction number"
+                  value={payerName}
+                  onChange={(e) => setPayerName(e.target.value.slice(0, 60))}
+                  placeholder="Name on your UPI account"
                   className="rounded-xl h-12"
                 />
-                <p className="text-[11px] mt-1" style={{ color: "#999" }}>Find this in your UPI app after payment</p>
+                <p className="text-[11px] mt-1" style={{ color: "#999" }}>Same name as on your UPI app</p>
               </div>
 
-              <Button onClick={handleUpiConfirm} disabled={upiLoading || utrInput.length < 12}
+              <Button onClick={handleUpiConfirm}
+                disabled={upiLoading || payerPhone.length < 10 || !payerAmount || payerName.trim().length < 2}
                 className="w-full h-12 rounded-xl text-white font-semibold disabled:opacity-60" style={{ backgroundColor: "#00C853" }}>
                 {upiLoading ? (
                   <span className="flex items-center gap-2">

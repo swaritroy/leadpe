@@ -262,12 +262,12 @@ export default function Admin() {
       const coders = (profilesData || []).filter(p => p.role === "vibe_coder");
       setAvailableCoders(coders);
       
-      // Enrich build requests with coder names
+      // Enrich build requests with coder names — match by user_id (auth ID)
       const enrichedRequests = (buildRequestsData || []).map(request => {
-        const coder = coders.find(c => c.id === request.assigned_coder_id);
+        const coder = coders.find(c => c.user_id === request.assigned_coder_id || c.id === request.assigned_coder_id);
         return {
           ...request,
-          coder_name: coder?.full_name || "Unassigned"
+          coder_name: coder?.full_name || request.assigned_coder_name || "Unassigned"
         };
       });
       setBuildRequests(enrichedRequests);
@@ -539,55 +539,88 @@ export default function Admin() {
     fetchData();
   };
   
-  const assignCoder = async (requestId: string, coderId: string) => {
+  const assignCoder = async (requestId: string, profileRowId: string) => {
     try {
+      // CRITICAL: profileRowId is profiles.id from the dropdown.
+      // We must resolve to profiles.user_id (the auth user ID) so the coder
+      // dashboard query (.eq("assigned_coder_id", user.id)) finds it.
+      const coder = availableCoders.find(c => c.id === profileRowId);
+      if (!coder) throw new Error("Coder profile not found");
+      const coderUserId = (coder as any).user_id || profileRowId;
+
       const { error } = await (supabase as any).from("build_requests")
         .update({
           status: "building",
-          assigned_coder_id: coderId
+          assigned_coder_id: coderUserId,
+          assigned_coder_name: coder.full_name || "Coder",
         })
         .eq("id", requestId);
       
       if (error) throw error;
       
       const request = buildRequests.find(r => r.id === requestId);
-      const coder = availableCoders.find(c => c.id === coderId);
-      
-      if (request && coder) {
-        // Send WhatsApp to business owner
-        await sendWhatsApp(
-          request.owner_whatsapp,
-          `🎉 Great news ${request.owner_name}!\nYour website building has started.\nBuilder: ${coder.full_name}\nReady in: 48 hours 🚀\nLeadPe ⚡`
-        );
-        
+
+      // Optimistic update — no full reload, no page flicker
+      setBuildRequests(prev => prev.map(r =>
+        r.id === requestId
+          ? { ...r, status: "building", assigned_coder_id: coderUserId, coder_name: coder.full_name } as any
+          : r
+      ));
+
+      if (request) {
+        try {
+          await sendWhatsApp(
+            request.owner_whatsapp,
+            `🎉 Great news ${request.owner_name}!\nYour website building has started.\nBuilder: ${coder.full_name}\nReady in: 48 hours 🚀\nLeadPe ⚡`
+          );
+        } catch {}
+        // Notify the assigned coder over WhatsApp
+        if ((coder as any).whatsapp_number) {
+          try {
+            await sendWhatsApp(
+              (coder as any).whatsapp_number,
+              `📦 New build assigned!\n\nBusiness: ${request.business_name}\nCity: ${request.city}\nDeadline: 48h\n\nOpen LeadPe Studio to view the brief.`
+            );
+          } catch {}
+        }
+
         toast({
           title: "✅ Coder Assigned!",
           description: `${coder.full_name} assigned to ${request.business_name}`
         });
       }
-      
-      fetchData();
-    } catch (error) {
+
+      // Silent background refresh — does not flash loading
+      fetchData(true);
+    } catch (error: any) {
       console.error("Error assigning coder:", error);
       toast({
         title: "Error",
-        description: "Failed to assign coder",
+        description: error?.message || "Failed to assign coder",
         variant: "destructive"
       });
     }
   };
 
-  const assignCoderToOrder = async (orderId: string, coderId: string) => {
-    const coder = availableCoders.find((c) => c.id === coderId);
+  const assignCoderToOrder = async (orderId: string, profileRowId: string) => {
+    const coder = availableCoders.find((c) => c.id === profileRowId);
+    if (!coder) {
+      toast({ title: "Error", description: "Coder not found", variant: "destructive" });
+      return;
+    }
+    const coderUserId = (coder as any).user_id || profileRowId;
     await (supabase as any).from("orders").update({
       status: "building",
-      assigned_coder_id: coderId,
+      assigned_coder_id: coderUserId,
       assigned_coder_name: coder?.full_name || "Unknown",
     }).eq("id", orderId);
     const order = orders.find((o) => o.id === orderId);
     if (order) await logEvent(order.order_id, ORDER_EVENTS.CODER_ASSIGNED, coder?.full_name);
+    setOrders(prev => prev.map(o =>
+      o.id === orderId ? { ...o, status: "building", assigned_coder_id: coderUserId, assigned_coder_name: coder.full_name } : o
+    ));
     toast({ title: "Coder assigned!", description: `${coder?.full_name} assigned` });
-    fetchData();
+    fetchData(true);
   };
   
   const [vettingNotes, setVettingNotes] = useState<Record<string, string>>({});
@@ -642,33 +675,65 @@ export default function Admin() {
   const handleVerifyUpiPayment = async (payment: any) => {
     setActivatingPayment(payment.id);
     try {
-      // Update payment status
+      const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 1. Mark payment completed
       await (supabase as any).from("payments").update({
         status: "completed",
         activated_at: new Date().toISOString(),
       }).eq("id", payment.id);
 
-      // Find business profile and activate
       if (payment.business_id) {
+        // 2. Activate the profile to Growth
         await (supabase as any).from("profiles").update({
           website_status: "live",
           plan_status: "active",
+          plan_type: "growth",
           status: "active",
+          subscription_plan: "growth",
+          plan_renewal_date: oneYearFromNow,
         }).eq("user_id", payment.business_id);
 
-        // Get profile for WhatsApp
-        const { data: prof } = await (supabase as any).from("profiles")
+        // 3. Activate any owned business rows
+        await (supabase as any).from("businesses").update({
+          subscription_active: true,
+          subscription_expiry: oneYearFromNow,
+        }).eq("owner_id", payment.business_id);
+
+        // 4. Trigger live deployment for the latest build (if demo_ready)
+        const { data: br } = await (supabase as any).from("build_requests")
+          .select("id, status, github_url")
+          .eq("business_id", payment.business_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (br && br.github_url && (br.status === "demo_ready" || br.status === "review" || br.status === "approved")) {
+          const { data: prof } = await (supabase as any).from("profiles")
+            .select("subdomain, business_name")
+            .eq("user_id", payment.business_id)
+            .single();
+          const subdomain = prof?.subdomain || (prof?.business_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+          try {
+            await supabase.functions.invoke("deploy-website", {
+              body: { action: "deploy_live", data: { buildRequestId: br.id, subdomain, userId: payment.business_id } },
+            });
+          } catch (e) { console.error("deploy_live invoke failed:", e); }
+        }
+
+        // 5. Notify owner
+        const { data: prof2 } = await (supabase as any).from("profiles")
           .select("whatsapp_number, full_name, subdomain")
           .eq("user_id", payment.business_id)
           .single();
 
-        if (prof?.whatsapp_number) {
-          const siteUrl = prof.subdomain ? `${prof.subdomain}.leadpe.online` : "leadpe.online/dashboard";
+        if (prof2?.whatsapp_number) {
+          const siteUrl = prof2.subdomain ? `${prof2.subdomain}.leadpe.online` : "leadpe.online/dashboard";
           try {
             await supabase.functions.invoke("send-whatsapp", {
               body: {
-                to: `91${prof.whatsapp_number}`,
-                message: `✅ Payment verified!\n\nYour website is now LIVE! 🎉\n\nVisit: https://${siteUrl}\n\nYou'll start receiving leads directly on WhatsApp.\n\n— Team LeadPe ⚡`,
+                to: `91${prof2.whatsapp_number}`,
+                message: `✅ Payment verified!\n\nYour Growth plan is ACTIVE 🎉\n\nVisit: https://${siteUrl}\n\nYou'll start receiving leads directly on WhatsApp.\n\n— Team LeadPe ⚡`,
               },
             });
           } catch {}
@@ -676,8 +741,9 @@ export default function Admin() {
       }
 
       toast({ title: "✅ Payment verified!", description: `${payment.business_name} activated` });
-      fetchData();
+      fetchData(true);
     } catch (err) {
+      console.error("verify upi error:", err);
       toast({ title: "Error", description: "Failed to verify payment", variant: "destructive" });
     }
     setActivatingPayment(null);
@@ -1702,9 +1768,10 @@ export default function Admin() {
                     <div key={p.id} className="border border-[#E0F2E9] rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4">
                       <div className="flex-1 space-y-1">
                         <p className="font-bold text-sm">{p.business_name || "Unknown Business"}</p>
-                        <p className="text-xs text-muted-foreground">Amount: <span className="font-bold text-foreground">₹{p.amount || p.total || "—"}</span></p>
+                        <p className="text-xs text-muted-foreground">Amount Paid: <span className="font-bold text-foreground">₹{p.amount || p.total || "—"}</span></p>
+                        <p className="text-xs text-muted-foreground">Payer Number: <span className="font-mono text-foreground">{p.payer_phone || "—"}</span></p>
+                        <p className="text-xs text-muted-foreground">UPI Name: <span className="font-semibold text-foreground">{p.payer_upi_name || "—"}</span></p>
                         <p className="text-xs text-muted-foreground">Plan: <span className="font-semibold">{p.plan || "—"}</span></p>
-                        <p className="text-xs font-mono" style={{ color: "#00C853" }}>UTR: {p.utr || "Not provided"}</p>
                         <p className="text-xs text-muted-foreground">
                           {p.created_at ? new Date(p.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                         </p>
