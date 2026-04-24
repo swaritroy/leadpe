@@ -64,6 +64,7 @@ serve(async (req) => {
     }
 
     const repoData = await repoApiResp.json();
+    const defaultBranch: string = repoData.default_branch || "main";
 
     // ── STEP 2: Check if repo is empty ──
     if (repoData.size === 0 || (repoData.pushed_at === null)) {
@@ -97,26 +98,36 @@ serve(async (req) => {
     let hasNextConfig = false;
     let fetchedFileCount = 0;
 
-    const fetchPromises = filesToCheck.map(async (filePath) => {
-      try {
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${filePath}`;
-        const res = await fetch(rawUrl);
-        if (res.ok) {
-          const text = await res.text();
-          fetchedFileCount++;
-          if (filePath === "index.html" || filePath === "public/index.html") indexHtml = text;
-          if (filePath === "package.json") {
-            packageJson = text;
-            try { packageJsonParsed = JSON.parse(text); } catch { /* ignore */ }
+    // Try the actual default branch first; fall back to main/master if needed.
+    const branchesToTry = Array.from(new Set([defaultBranch, "main", "master"]));
+
+    async function tryFetchFile(filePath: string): Promise<{ path: string; content: string } | null> {
+      for (const branch of branchesToTry) {
+        try {
+          const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`;
+          const res = await fetch(rawUrl);
+          if (res.ok) {
+            const text = await res.text();
+            return { path: filePath, content: text };
           }
-          if (filePath.includes("vite.config")) hasViteConfig = true;
-          if (filePath.includes("next.config")) hasNextConfig = true;
-          return { path: filePath, content: text };
-        } else {
-          await res.text();
-        }
-      } catch { /* skip */ }
+        } catch { /* try next branch */ }
+      }
       return null;
+    }
+
+    const fetchPromises = filesToCheck.map(async (filePath) => {
+      const result = await tryFetchFile(filePath);
+      if (result) {
+        fetchedFileCount++;
+        if (filePath === "index.html" || filePath === "public/index.html") indexHtml = result.content;
+        if (filePath === "package.json") {
+          packageJson = result.content;
+          try { packageJsonParsed = JSON.parse(result.content); } catch { /* ignore */ }
+        }
+        if (filePath.includes("vite.config")) hasViteConfig = true;
+        if (filePath.includes("next.config")) hasNextConfig = true;
+      }
+      return result;
     });
 
     const results = await Promise.all(fetchPromises);
@@ -127,9 +138,9 @@ serve(async (req) => {
     if (fetchedFileCount === 0) {
       return new Response(JSON.stringify({
         score: 0, passed: false, checks: {},
-        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: "Could not access any files. Make sure the repo is PUBLIC and has code on the 'main' branch." }],
-        issues: ["❌ Could not access repository files — is it public? Is branch 'main'?"],
-        fixes: ["Make the repository public and ensure code is pushed to the 'main' branch."],
+        checkResults: [{ key: "repo_access", label: "Repository Access", passed: false, fix: `Could not access any files on branches: ${branchesToTry.join(", ")}. Make sure the repo is PUBLIC and has standard project files at the root.` }],
+        issues: [`❌ Could not access repository files on branches: ${branchesToTry.join(", ")}`],
+        fixes: ["Make the repository public and push your code to the default branch."],
         aiSuggestions: "",
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }

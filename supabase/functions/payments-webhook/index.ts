@@ -89,6 +89,13 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       console.error("processReferralConversion failed:", e);
     }
 
+    // ───── AUTOMATIC DEMO → LIVE DEPLOY ─────
+    try {
+      await triggerAutoLiveDeploy(userId);
+    } catch (e) {
+      console.error("triggerAutoLiveDeploy failed:", e);
+    }
+
     // Notify admin via Twilio + queue thank-you for client in Outbox
     try {
       await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin`, {
@@ -117,6 +124,49 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     } catch (e) {
       console.error("notify-admin call failed:", e);
     }
+  }
+}
+
+async function triggerAutoLiveDeploy(userId: string) {
+  // Look up latest build_request for this user
+  const { data: br } = await supabase.from("build_requests")
+    .select("id, status, github_url, business_name")
+    .eq("business_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!br) return;
+  const status = (br as any).status;
+  const githubUrl = (br as any).github_url;
+
+  // Only trigger if the build is ready for live promotion
+  if (!githubUrl || !["demo_ready", "review", "approved"].includes(status)) return;
+
+  const { data: prof } = await supabase.from("profiles")
+    .select("subdomain, business_name, whatsapp_number")
+    .eq("user_id", userId)
+    .single();
+
+  const subdomain = (prof as any)?.subdomain
+    || ((prof as any)?.business_name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+    || "site";
+
+  try {
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/deploy-website`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({
+        action: "deploy_live",
+        data: { buildRequestId: (br as any).id, subdomain, userId },
+      }),
+    });
+    console.log("[payments-webhook] deploy_live triggered for", userId);
+  } catch (e) {
+    console.error("[payments-webhook] deploy_live invoke error:", e);
   }
 }
 
