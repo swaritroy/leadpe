@@ -43,6 +43,7 @@ const DevOnboarding = lazy(() => import("./pages/DevOnboarding"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminMessages = lazy(() => import("./pages/AdminMessages"));
 const AdminAuthLogs = lazy(() => import("./pages/AdminAuthLogs"));
+const AdminResets = lazy(() => import("./pages/AdminResets"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 const DeployStatus = lazy(() => import("./pages/DeployStatus"));
 
@@ -147,6 +148,11 @@ const AppContent = () => {
             <Route path="/admin/auth-logs" element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminAuthLogs />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/resets" element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminResets />
               </ProtectedRoute>
             } />
 
