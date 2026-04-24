@@ -52,14 +52,15 @@ export default function ForgotPasswordDialog({ open, onClose, mode }: Props) {
 
     setLoading(true);
 
-    // Look up profile by whatsapp_number (works for both business and studio accounts)
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, role, whatsapp_number")
-      .eq("whatsapp_number", digits)
-      .maybeSingle();
+    // Logged-out users cannot read profiles directly, so use a secure backend lookup
+    const { data: lookupResult, error: lookupError } = await supabase.rpc(
+      "find_reset_user_by_phone",
+      { input_text: phone }
+    );
 
-    if (!profile) {
+    const profile = Array.isArray(lookupResult) ? lookupResult[0] : lookupResult;
+
+    if (lookupError || !profile) {
       setLoading(false);
       setError("This number is not registered. Please check and try again.");
       return;
