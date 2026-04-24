@@ -149,10 +149,10 @@ export default function ForgotPasswordDialog({ open, onClose, mode }: Props) {
                 Your registered phone number
               </label>
               <Input
-                type="text"
-                inputMode="text"
-                maxLength={32}
-                placeholder="98765 43210 or 9876543210@leadpe.com"
+                type="tel"
+                inputMode="numeric"
+                maxLength={24}
+                placeholder="98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="h-[48px] rounded-xl text-base"
