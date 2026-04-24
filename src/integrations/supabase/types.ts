@@ -1472,6 +1472,15 @@ export type Database = {
         Returns: boolean
       }
       expire_stale_requests: { Args: never; Returns: undefined }
+      find_reset_user_by_phone: {
+        Args: { input_text: string }
+        Returns: {
+          full_name: string
+          role: string
+          user_id: string
+          whatsapp_number: string
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean

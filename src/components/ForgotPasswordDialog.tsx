@@ -52,14 +52,15 @@ export default function ForgotPasswordDialog({ open, onClose, mode }: Props) {
 
     setLoading(true);
 
-    // Look up profile by whatsapp_number (works for both business and studio accounts)
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, role, whatsapp_number")
-      .eq("whatsapp_number", digits)
-      .maybeSingle();
+    // Logged-out users cannot read profiles directly, so use a secure backend lookup
+    const { data: lookupResult, error: lookupError } = await supabase.rpc(
+      "find_reset_user_by_phone",
+      { input_text: phone }
+    );
 
-    if (!profile) {
+    const profile = Array.isArray(lookupResult) ? lookupResult[0] : lookupResult;
+
+    if (lookupError || !profile) {
       setLoading(false);
       setError("This number is not registered. Please check and try again.");
       return;
@@ -148,10 +149,10 @@ export default function ForgotPasswordDialog({ open, onClose, mode }: Props) {
                 Your registered phone number
               </label>
               <Input
-                type="text"
-                inputMode="text"
-                maxLength={32}
-                placeholder="98765 43210 or 9876543210@leadpe.com"
+                type="tel"
+                inputMode="numeric"
+                maxLength={24}
+                placeholder="98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="h-[48px] rounded-xl text-base"
